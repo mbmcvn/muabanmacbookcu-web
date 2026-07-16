@@ -1,0 +1,1 @@
+export function SalesProcess() { return <section className="section"><h2>Cách mua máy</h2><ol><li>Trao đổi với MBMC.</li><li>Xác nhận đúng máy và tình trạng.</li><li>Đặt cọc sau khi đã thống nhất.</li><li>Nhận máy hoặc giao hàng.</li></ol></section>; }

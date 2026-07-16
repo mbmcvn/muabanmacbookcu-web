@@ -1,0 +1,1 @@
+export function InventoryEmptyState() { return <section className="inventory-state"><h2>Chưa có chiếc máy khớp hoàn toàn.</h2><p>Thử thay đổi bộ lọc hoặc nhắn MBMC để tìm cấu hình phù hợp.</p></section>; }

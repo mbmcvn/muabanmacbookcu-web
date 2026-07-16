@@ -1,0 +1,1 @@
+export function IncludedItems({ items }: { items: string[] }) { if (!items.length) return null; return <section className="section"><h2>Phụ kiện đi kèm</h2><ul>{items.map((item) => <li key={item}>{item}</li>)}</ul></section>; }
