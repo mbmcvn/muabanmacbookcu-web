@@ -20,23 +20,24 @@ export async function generateMetadata({ params }: DetailPageProps): Promise<Met
   const { slug } = await params;
   const machine = await getPublicMachineBySlug(slug);
   if (!machine) notFound();
-  const description = machine.mbmcSummary ?? machine.conditionSummary ?? `${machine.title} đang được MBMC công khai thông tin và kiểm định.`;
+  const summary = machine.summary;
+  const description = machine.expertSummary ?? summary.conditionSummary;
   return {
-    title: `${machine.title} · ${machine.machineId}`,
+    title: `${summary.displayName} · ${summary.code}`,
     description,
     alternates: { canonical: await canonicalMachineUrl(slug) },
     openGraph: {
-      title: `${machine.title} · ${machine.machineId}`,
+      title: `${summary.displayName} · ${summary.code}`,
       description,
       type: "website",
       url: await canonicalMachineUrl(slug),
-      images: [{ url: machine.coverImage.url, alt: machine.coverImage.alt }],
+      images: [{ url: summary.coverImage.url, alt: summary.coverImage.alt }],
     },
   };
 }
 
 export default async function PublicMachinePage({ params }: DetailPageProps) {
   const machine = await getPublicMachineBySlug((await params).slug);
-  if (!machine || machine.images.length === 0) notFound();
+  if (!machine) notFound();
   return <><PublicMachineDetailView machine={machine} /><PublicMachineStickyBar machine={machine} /></>;
 }

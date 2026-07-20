@@ -1,6 +1,9 @@
-import type { PublicMachineCard, PublicMachineDetail } from "@/models";
+import type {
+  PublicMachineDetailV1,
+  PublicMachineSummaryV1,
+} from "@/models";
 
 export interface PublicMachineRepository {
-  list(): Promise<PublicMachineCard[]>;
-  getBySlug(slug: string): Promise<PublicMachineDetail | null>;
+  list(): Promise<PublicMachineSummaryV1[]>;
+  getBySlug(slug: string): Promise<PublicMachineDetailV1 | null>;
 }
