@@ -50,6 +50,12 @@ export function formatStorage(gigabytes: number): string {
     : `${gigabytes} GB`;
 }
 
+export function formatCompactStorage(gigabytes: number): string {
+  return gigabytes >= 1024 && gigabytes % 1024 === 0
+    ? `${gigabytes / 1024}TB`
+    : `${gigabytes}GB`;
+}
+
 export function formatMachineConfiguration(input: {
   chip: string;
   ramGb: number;
