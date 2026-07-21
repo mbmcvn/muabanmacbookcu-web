@@ -1,22 +1,12 @@
-import { formatCompactStorage } from "../../../../lib/presentation/machine.ts";
+import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../../../lib/presentation/machine.ts";
 
 export interface MachineCardBatteryFact {
   label: "Pin" | "Lần sạc";
   value: string;
 }
 
-const PROCESSOR_TOKENS = [
-  /\s*(?:[-–—·|,/]\s*)?\b(?:Apple\s+)?M[1-3](?:\s+(?:Pro|Max|Ultra))?\b(?:\s*[-–—·|,/])?/gi,
-  /\s*(?:[-–—·|,/]\s*)?\bIntel\s+(?:Core\s+)?i[3579]\b(?:\s*[-–—·|,/])?/gi,
-];
-
 export function formatMachineCardDisplayName(displayName: string): string {
-  return PROCESSOR_TOKENS
-    .reduce((name, processor) => name.replace(processor, " "), displayName)
-    .replace(/\s*([-–—·|,/])\s*(?=\1|$)/g, " ")
-    .replace(/^\s*[-–—·|,/]+\s*|\s*[-–—·|,/]+\s*$/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return formatPublicMachineDisplayName(displayName);
 }
 
 export function formatMachineCardSpecs(input: {
@@ -25,12 +15,7 @@ export function formatMachineCardSpecs(input: {
   storageGb: number | null;
   color: string | null;
 }): string {
-  return [
-    input.chip ?? "Chưa rõ chip",
-    input.ramGb === null ? "Chưa rõ" : `${input.ramGb}GB`,
-    input.storageGb === null ? "Chưa rõ" : `${formatCompactStorage(input.storageGb)} SSD`,
-    input.color,
-  ].filter((value): value is string => value !== null).join(" · ");
+  return formatPublicMachineSpecs(input);
 }
 
 export function getMachineCardBatteryFact(

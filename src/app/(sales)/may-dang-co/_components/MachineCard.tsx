@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { PublicMachineSummaryV1 } from "@/models";
-import { formatCurrencyVnd, formatMachineAvailability } from "@/lib/presentation";
-import { formatMachineCardCondition, formatMachineCardDisplayName, formatMachineCardSpecs, getMachineCardBatteryFact } from "./machine-card-presentation";
+import { formatCurrencyVnd, formatMachineAvailability, formatPublicMachineDisplayName, formatPublicMachineSpecs } from "@/lib/presentation";
+import { formatMachineCardCondition, getMachineCardBatteryFact } from "./machine-card-presentation";
 
 export function MachineCard({ machine }: { machine: PublicMachineSummaryV1 }) {
   const price = formatCurrencyVnd(machine.price);
-  const displayName = formatMachineCardDisplayName(machine.displayName);
-  const specs = formatMachineCardSpecs({
+  const displayName = formatPublicMachineDisplayName(machine.displayName);
+  const specs = formatPublicMachineSpecs({
     chip: machine.chip,
     ramGb: machine.ramGb,
     storageGb: machine.ssdGb,

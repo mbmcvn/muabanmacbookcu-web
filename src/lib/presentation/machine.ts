@@ -56,6 +56,34 @@ export function formatCompactStorage(gigabytes: number): string {
     : `${gigabytes}GB`;
 }
 
+const PUBLIC_TITLE_PROCESSOR_TOKENS = [
+  /\s*(?:[-–—·|,/]\s*)?\b(?:Apple\s+)?M\d+(?:\s+(?:Pro|Max|Ultra))?\b(?:\s*[-–—·|,/])?/gi,
+  /\s*(?:[-–—·|,/]\s*)?\bIntel\s+(?:Core\s+)?i[3579]\b(?:\s*[-–—·|,/])?/gi,
+];
+
+export function formatPublicMachineDisplayName(displayName: string): string {
+  return PUBLIC_TITLE_PROCESSOR_TOKENS
+    .reduce((name, processor) => name.replace(processor, " "), displayName)
+    .replace(/\s*([-–—·|,/])\s*(?=\1|$)/g, " ")
+    .replace(/^\s*[-–—·|,/]+\s*|\s*[-–—·|,/]+\s*$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function formatPublicMachineSpecs(input: {
+  chip: string | null;
+  ramGb: number | null;
+  storageGb: number | null;
+  color?: string | null;
+}): string {
+  return [
+    input.chip,
+    input.ramGb === null ? null : `${input.ramGb}GB`,
+    input.storageGb === null ? null : `${formatCompactStorage(input.storageGb)} SSD`,
+    input.color ?? null,
+  ].filter((value): value is string => Boolean(value)).join(" · ");
+}
+
 export function formatMachineConfiguration(input: {
   chip: string;
   ramGb: number;

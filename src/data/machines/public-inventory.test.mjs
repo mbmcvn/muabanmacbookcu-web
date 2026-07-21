@@ -21,6 +21,10 @@ import { loadPublicInventoryState } from "./public-inventory-load-state.ts";
 import { nextOpenFilter, selectFacetValues, selectionKeepsFilterOpen } from "../../app/(sales)/may-dang-co/_components/inventory-filter-interaction.ts";
 import { formatMachineCardCondition, formatMachineCardDisplayName, formatMachineCardSpecs, getMachineCardBatteryFact } from "../../app/(sales)/may-dang-co/_components/machine-card-presentation.ts";
 import { buildDecisionFacts } from "../../app/(sales)/may/[slug]/_components/decision-facts-presentation.ts";
+import { clampGalleryIndex, galleryIndexAfterSwipe, resistGalleryDrag, resolveGalleryDragIndex, wrapGalleryIndex } from "../../app/(sales)/may/[slug]/_components/gallery-navigation.ts";
+import { classifyGalleryImageShape } from "../../app/(sales)/may/[slug]/_components/gallery-image-shape.ts";
+import { buildPublicSpecificationRows } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
+import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../lib/presentation/machine.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 
 function row(code="MBMC-A001",overrides={}){
@@ -418,4 +422,192 @@ test("open filter rotates only the chevron while the readable label stays uprigh
   assert.match(css,/\.facet-trigger\[aria-expanded="true"\] \.facet-trigger-chevron \{ transform: rotate\(180deg\); \}/);
   assert.doesNotMatch(css,/\.facet-trigger\[aria-expanded="true"\] span \{/);
   assert.doesNotMatch(css,/\.facet-trigger-label \{[^}]*transform/);
+});
+
+test("gallery navigation wraps and swipe uses one canonical image index",()=>{
+  assert.equal(wrapGalleryIndex(-1,5),4);
+  assert.equal(wrapGalleryIndex(5,5),0);
+  assert.equal(galleryIndexAfterSwipe(1,5,-60),2);
+  assert.equal(galleryIndexAfterSwipe(1,5,60),0);
+  assert.equal(galleryIndexAfterSwipe(1,5,10),1);
+});
+
+test("public gallery thumbnails arrows and primary image all control the shared viewer",()=>{
+  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
+  assert.match(gallery,/usePublicMachineMedia\(\)/);
+  assert.match(gallery,/onClick=\{\(\) => select\(imageIndex\)\}/);
+  assert.match(gallery,/onClick=\{previous\}[^>]*aria-label="Ảnh trước"/);
+  assert.match(gallery,/onClick=\{next\}[^>]*aria-label="Ảnh tiếp theo"/);
+  assert.match(gallery,/<SlidingImageTrack images=\{images\} index=\{index\} onSelect=\{select\} onOpen=\{openLightbox\}/);
+  assert.match(gallery,/aria-pressed=\{imageIndex === index\}/);
+});
+
+test("lightbox has dialog semantics Escape arrows scroll lock focus return and swipe",()=>{
+  const provider=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",import.meta.url),"utf8");
+  assert.match(provider,/role="dialog" aria-modal="true"/);
+  assert.match(provider,/event\.key === "Escape"/);
+  assert.match(provider,/event\.key === "ArrowLeft"/);
+  assert.match(provider,/event\.key === "ArrowRight"/);
+  assert.match(provider,/document\.body\.style\.overflow = "hidden"/);
+  assert.match(provider,/openerRef\.current\?\.focus\(\)/);
+  assert.match(provider,/<SlidingImageTrack images=\{images\} index=\{index\} onSelect=\{select\}/);
+  assert.match(provider,/querySelectorAll<HTMLElement>\("button:not\(:disabled\)"\)/);
+});
+
+test("carousel renders every image in one GPU-transformed horizontal track",()=>{
+  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(track,/className="carousel-track"/);
+  assert.match(track,/images\.map\(\(image, imageIndex\) => <div className="carousel-slide"/);
+  assert.match(track,/translate3d\(calc\(\$\{-index \* 100\}% \+ \$\{distanceX\}px\), 0, 0\)/);
+  assert.doesNotMatch(track,/const selected = images\[index\]/);
+  assert.match(css,/\.carousel-track \{[^}]*display: flex[^}]*transition: transform 400ms cubic-bezier\(\.22, 1, \.36, 1\)[^}]*will-change: transform/);
+  assert.match(css,/\.carousel-slide \{[^}]*flex: 0 0 100%[^}]*min-width: 100%/);
+});
+
+test("pointer drag updates transient transform with capture animation frames and boundary resistance",()=>{
+  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
+  assert.match(track,/setPointerCapture\(event\.pointerId\)/);
+  assert.match(track,/onPointerMove/);
+  assert.match(track,/requestAnimationFrame/);
+  assert.match(track,/setTrackPosition\(resistGalleryDrag\(index, images\.length, distanceX\), false\)/);
+  assert.match(track,/track\.dataset\.dragging = animate \? "false" : "true"/);
+  assert.ok(Math.abs(resistGalleryDrag(0,4,100)-28)<0.001);
+  assert.ok(Math.abs(resistGalleryDrag(3,4,-100)+28)<0.001);
+  assert.equal(resistGalleryDrag(1,4,-100),-100);
+});
+
+test("distance and velocity thresholds advance while small drags snap back and boundaries clamp",()=>{
+  const base={index:1,length:4,viewportWidth:400};
+  assert.equal(resolveGalleryDragIndex({...base,distanceX:-80,velocityX:-0.1}),2);
+  assert.equal(resolveGalleryDragIndex({...base,distanceX:-20,velocityX:-0.7}),2);
+  assert.equal(resolveGalleryDragIndex({...base,distanceX:-20,velocityX:-0.1}),1);
+  assert.equal(resolveGalleryDragIndex({index:0,length:4,viewportWidth:400,distanceX:100,velocityX:1}),0);
+  assert.equal(resolveGalleryDragIndex({index:3,length:4,viewportWidth:400,distanceX:-100,velocityX:-1}),3);
+  assert.equal(clampGalleryIndex(-1,4),0);
+  assert.equal(clampGalleryIndex(8,4),3);
+});
+
+test("lightbox and hero use the same sliding component and canonical provider index",()=>{
+  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
+  const provider=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",import.meta.url),"utf8");
+  assert.match(gallery,/SlidingImageTrack/);
+  assert.match(provider,/const \[index, setIndex\] = useState\(0\)/);
+  assert.match(provider,/lightbox-image"><SlidingImageTrack images=\{images\} index=\{index\}/);
+  assert.doesNotMatch(provider,/useState\([^)]*lightboxIndex/);
+});
+
+test("reduced motion removes long carousel transitions and no autoplay is introduced",()=>{
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  const provider=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",import.meta.url),"utf8");
+  assert.match(css,/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.carousel-track \{ transition-duration: \.01ms; \}/);
+  assert.doesNotMatch(provider,/setInterval|autoplay/i);
+});
+
+test("mobile gallery uses intrinsic shape to fill square photos and contain non-square photos",()=>{
+  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
+  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.equal(classifyGalleryImageShape(1000,1000),"square");
+  assert.equal(classifyGalleryImageShape(900,1000),"square");
+  assert.equal(classifyGalleryImageShape(1100,1000),"square");
+  assert.equal(classifyGalleryImageShape(1200,1000),"non-square");
+  assert.equal(classifyGalleryImageShape(800,1000),"non-square");
+  assert.match(track,/element\.naturalWidth, element\.naturalHeight/);
+  assert.match(gallery,/detail-main-image-square/);
+  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.detail-main-image-square \{ aspect-ratio: 1 \/ 1; \}/);
+  assert.match(css,/\.detail-main-image-square \.carousel-slide img \{ object-fit: cover; object-position: center; padding: 0; \}/);
+  assert.match(css,/\.detail-main-image:not\(\.detail-main-image-square\) \.carousel-slide img \{ object-fit: contain/);
+  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.detail-hero \{ grid-template-columns:/);
+});
+
+test("mobile detail keeps thumbnails and compact sticky CTA but removes bottom navigation",()=>{
+  const layout=readFileSync(new URL("../../app/(sales)/layout.tsx",import.meta.url),"utf8");
+  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
+  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(gallery,/className="detail-thumbnails"/);
+  assert.match(gallery,/onClick=\{\(\) => select\(imageIndex\)\}/);
+  assert.match(sticky,/className="public-machine-sticky"/);
+  assert.match(sticky,/summary\.displayName/);
+  assert.match(sticky,/formatCurrencyVnd\(summary\.price\)/);
+  assert.match(sticky,/Nhắn MBMC xác nhận máy/);
+  assert.doesNotMatch(layout,/MobileBottomNavigation|mobile-navigation/);
+  assert.doesNotMatch(css,/\.mobile-navigation/);
+  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/);
+});
+
+test("public hero inventory sticky and support surfaces share canonical naming",()=>{
+  const card=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx",import.meta.url),"utf8");
+  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
+  const detail=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
+  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
+  assert.equal(formatPublicMachineDisplayName("MacBook Pro Intel i5 2020 13 inch"),"MacBook Pro 2020 13 inch");
+  assert.equal(formatPublicMachineDisplayName("MacBook Pro M1 Pro 2021 16 inch"),"MacBook Pro 2021 16 inch");
+  assert.equal(formatPublicMachineSpecs({chip:"M1 Pro",ramGb:16,storageGb:1024,color:"Bạc"}),"M1 Pro · 16GB · 1TB SSD · Bạc");
+  assert.match(card,/formatPublicMachineDisplayName\(machine\.displayName\)/);
+  assert.match(card,/formatPublicMachineSpecs\(/);
+  assert.match(hero,/formatPublicMachineDisplayName\(summary\.displayName\)/);
+  assert.match(hero,/formatPublicMachineSpecs\(/);
+  assert.match(detail,/formatPublicMachineDisplayName\(summary\.displayName\)/);
+  assert.match(sticky,/formatPublicMachineDisplayName\(summary\.displayName\)/);
+  assert.match(sticky,/formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/);
+  assert.match(sticky,/public-machine-sticky-specs/);
+  assert.match(sticky,/public-machine-sticky-price/);
+});
+
+test("mobile sticky shows only canonical title and colorless specs while desktop retains price",()=>{
+  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
+  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  const stickyMarkup=sticky.slice(sticky.indexOf("export function PublicMachineStickyBar"));
+  assert.match(stickyMarkup,/formatPublicMachineDisplayName\(summary\.displayName\)/);
+  assert.match(stickyMarkup,/formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/);
+  assert.doesNotMatch(stickyMarkup,/formatPublicMachineSpecs\([^)]*color/);
+  assert.doesNotMatch(stickyMarkup,/<strong>\{summary\.displayName\}<\/strong>/);
+  assert.match(stickyMarkup,/<strong>\{displayName\}<\/strong>\{specs \? <span className="public-machine-sticky-specs">\{specs\}<\/span> : null\}/);
+  assert.match(stickyMarkup,/href=\{href\} aria-label=\{`Nhắn MBMC xác nhận \$\{summary\.code\} – \$\{displayName\}`\}/);
+  assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
+  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{ display: none; \}/);
+  assert.match(css,/\.public-machine-sticky-price \{ font-weight: 700; \}/);
+  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky div \{ row-gap: \.125rem; \}/);
+  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/);
+});
+
+test("detailed observation images open the same lightbox at their gallery index",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",import.meta.url),"utf8");
+  assert.match(source,/usePublicMachineMedia\(\)/);
+  assert.match(source,/startIndex \+ index/);
+  assert.match(source,/onOpen=\{openLightbox\}/);
+  assert.doesNotMatch(source,/Ảnh thực tế \{index \+ 1\}/);
+});
+
+test("desktop decision dossier places Passport before condition and mobile stacks them",()=>{
+  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.ok(dossier.indexOf("<PassportDossier")<dossier.indexOf("<DecisionFactGrid"));
+  assert.match(css,/\.decision-dossier \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.decision-dossier \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+});
+
+test("trusted technical rows render separately with compact storage and missing rows omitted",()=>{
+  const base=publicDetailBySlug([row("MBMC-SPECS",{ssd_gb:1024})],"mbmc-specs");
+  assert.ok(base);
+  const machine={...base,technicalSpecifications:{camera:"1080p",ports:"3 × Thunderbolt",touchId:true,internal_note:"private"}};
+  const rows=buildPublicSpecificationRows(machine);
+  assert.equal(rows.find(item=>item.label==="Lưu trữ")?.value,"1TB SSD");
+  assert.equal(rows.find(item=>item.label==="Camera")?.value,"1080p");
+  assert.equal(rows.find(item=>item.label==="Touch ID")?.value,"Có");
+  assert.equal(rows.some(item=>item.label==="internal_note"||item.value==="private"),false);
+  assert.equal(rows.some(item=>item.label==="Trọng lượng"),false);
+  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
+  assert.ok(view.indexOf("<DecisionDossier")<view.indexOf("<PublicSpecifications"));
+});
+
+test("final detail page order retains observation specs support and sticky CTA",()=>{
+  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
+  const sequence=["detail-breadcrumb","detail-hero","<DecisionDossier","<DetailedImages","<PublicSpecifications","<PoliciesAndSupport"];
+  for(let index=1;index<sequence.length;index++)assert.ok(view.indexOf(sequence[index-1])<view.indexOf(sequence[index]),sequence[index]);
+  const page=readFileSync(new URL("../../app/(sales)/may/[slug]/page.tsx",import.meta.url),"utf8");
+  assert.match(page,/<PublicMachineStickyBar machine=\{machine\}/);
 });
