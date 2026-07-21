@@ -230,11 +230,11 @@ dd { margin: 0; }
 .support-contact strong { font-size: 1.15rem; }
 .support-contact span { margin-bottom: .75rem; color: var(--muted); }
 .public-machine-sticky { position: fixed; inset: auto 0 0; z-index: 29; min-height: 4.5rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: .55rem max(1rem, env(safe-area-inset-right)) calc(.55rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border-top: 1px solid var(--border); background: rgba(255,255,255,.97); }
-.public-machine-sticky div { min-width: 0; display: grid; }
+.public-machine-sticky-identity { min-width: 0; display: grid; }
 .public-machine-sticky strong { overflow: hidden; font-size: .85rem; text-overflow: ellipsis; white-space: nowrap; }
 .public-machine-sticky span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .public-machine-sticky-specs { color: var(--muted); font-size: .76rem; }
-.public-machine-sticky-price { font-weight: 700; }
+.public-machine-sticky-price { font-weight: 700; white-space: nowrap; }
 .public-machine-sticky a { min-height: 2.9rem; display: inline-flex; align-items: center; padding: .5rem .8rem; border-radius: .4rem; background: var(--foreground); color: white; font-size: .88rem; font-weight: 680; text-decoration: none; }
 body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 
@@ -277,7 +277,12 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .decision-dossier { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
   .detail-decision { position: sticky; top: 1.5rem; }
   .evidence-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .public-machine-sticky { bottom: 0; padding-inline: max(2rem, calc((100vw - 72rem) / 2)); }
+  .public-machine-sticky { bottom: 0; grid-template-columns: minmax(16.25rem, 1fr) auto auto; grid-template-areas: "identity price cta"; grid-auto-flow: column; grid-auto-rows: auto; gap: 1.5rem; padding-inline: max(2rem, calc((100vw - 72rem) / 2)); }
+  .public-machine-sticky-identity { grid-area: identity; row-gap: .125rem; }
+  .public-machine-sticky strong { font-size: .92rem; line-height: 1.25; }
+  .public-machine-sticky-specs { font-size: .8rem; line-height: 1.25; }
+  .public-machine-sticky-price { grid-area: price; align-self: center; font-size: 1.25rem; line-height: 1; }
+  .public-machine-sticky > a { grid-area: cta; grid-column: auto; grid-row: 1; width: max-content; min-width: 13rem; max-width: none; justify-self: end; justify-content: center; white-space: nowrap; }
   body:has(.public-machine-sticky) .site-footer { padding-bottom: 6rem; }
 }
 
@@ -288,7 +293,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .passport-heading { display: block; }
   .passport-heading > strong { display: block; margin-top: 1rem; }
   .passport-summary > div { padding-block: .65rem; border-bottom: 1px solid #ecece8; }
-  .public-machine-sticky div { row-gap: .125rem; }
+  .public-machine-sticky-identity { row-gap: .125rem; }
   .public-machine-sticky strong { line-height: 1.2; }
   .public-machine-sticky-specs { line-height: 1.2; }
   .public-machine-sticky-price { display: none; }

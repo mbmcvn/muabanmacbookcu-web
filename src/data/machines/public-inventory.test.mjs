@@ -25,6 +25,7 @@ import { clampGalleryIndex, galleryIndexAfterSwipe, resistGalleryDrag, resolveGa
 import { classifyGalleryImageShape } from "../../app/(sales)/may/[slug]/_components/gallery-image-shape.ts";
 import { buildPublicSpecificationRows } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
 import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../lib/presentation/machine.ts";
+import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 
 function row(code="MBMC-A001",overrides={}){
@@ -566,12 +567,36 @@ test("mobile sticky shows only canonical title and colorless specs while desktop
   assert.doesNotMatch(stickyMarkup,/formatPublicMachineSpecs\([^)]*color/);
   assert.doesNotMatch(stickyMarkup,/<strong>\{summary\.displayName\}<\/strong>/);
   assert.match(stickyMarkup,/<strong>\{displayName\}<\/strong>\{specs \? <span className="public-machine-sticky-specs">\{specs\}<\/span> : null\}/);
-  assert.match(stickyMarkup,/href=\{href\} aria-label=\{`Nhắn MBMC xác nhận \$\{summary\.code\} – \$\{displayName\}`\}/);
+  assert.match(stickyMarkup,/href=\{MBMC_ZALO_URL\} target="_blank" rel="noopener noreferrer" aria-label="Nhắn MBMC xác nhận máy"/);
   assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
   assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{ display: none; \}/);
-  assert.match(css,/\.public-machine-sticky-price \{ font-weight: 700; \}/);
-  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky div \{ row-gap: \.125rem; \}/);
+  assert.match(css,/\.public-machine-sticky-price \{[^}]*font-weight: 700;[^}]*white-space: nowrap;/);
+  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-identity \{ row-gap: \.125rem; \}/);
   assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/);
+});
+
+test("desktop sticky separates identity price and Zalo CTA while mobile hides only price",()=>{
+  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
+  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
+  const contact=readFileSync(new URL("../../config/contact.ts",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.equal(MBMC_ZALO_URL,"https://zalo.me/0326147088");
+  assert.match(contact,/export const MBMC_ZALO_URL = "https:\/\/zalo\.me\/0326147088"/);
+  assert.match(sticky,/className="public-machine-sticky-identity"[\s\S]*?className="public-machine-sticky-price"[\s\S]*?<a href=\{MBMC_ZALO_URL\}/);
+  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-columns: minmax\(16\.25rem, 1fr\) auto auto[^}]*grid-template-areas: "identity price cta"[^}]*grid-auto-flow: column/);
+  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*grid-area: price[^}]*font-size: 1\.25rem;[^}]*line-height: 1;/);
+  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{ display: none; \}/);
+  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*grid-area: cta[^}]*grid-row: 1[^}]*width: max-content[^}]*max-width: none[^}]*white-space: nowrap/);
+  assert.doesNotMatch(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*(?:width: 100%|grid-column: 1 \/ -1|grid-column: 1 \/ span)/);
+  assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
+  for(const source of [hero,sticky]) {
+    const labels=[...source.matchAll(/>Nhắn MBMC xác nhận máy<\/a>/g)];
+    assert.ok(labels.length>0);
+    assert.equal((source.match(/href=\{MBMC_ZALO_URL\}/g)??[]).length,labels.length);
+    assert.equal((source.match(/target="_blank" rel="noopener noreferrer"/g)??[]).length,labels.length);
+  }
+  assert.doesNotMatch(hero,/Tin nhắn đã có sẵn|buildMachineContactHref/);
+  assert.match(hero,/Bạn có thể gửi:/);
 });
 
 test("detailed observation images open the same lightbox at their gallery index",()=>{

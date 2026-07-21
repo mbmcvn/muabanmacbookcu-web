@@ -6,6 +6,8 @@ export const contactChannels: ContactChannel[] = [
 
 export const phoneContact = contactChannels.find((channel) => channel.href.startsWith("tel:")) ?? null;
 
+export const MBMC_ZALO_URL = "https://zalo.me/0326147088";
+
 export function buildMachineContactHref(machineId: string, title: string): string {
   const subject = `Quan tâm máy ${machineId}`;
   const body = `Tôi đang quan tâm ${machineId} – ${title}.`;
