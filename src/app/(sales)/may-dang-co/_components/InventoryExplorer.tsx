@@ -24,6 +24,7 @@ import { InventoryEmptyState } from "./InventoryEmptyState";
 import { InventoryFilters, type FacetCountMap } from "./InventoryFilters";
 import { InventoryToolbar } from "./InventoryToolbar";
 import { MachineCatalog } from "./MachineCatalog";
+import { useContactChannel, withContactChannel } from "@/hooks/useContactChannel";
 
 const defaultState = (): InventoryUrlState => ({
   query: "",
@@ -32,6 +33,7 @@ const defaultState = (): InventoryUrlState => ({
 });
 
 export function InventoryExplorer({ machines }: { machines: PublicMachineSummaryV1[] }) {
+  const { channel } = useContactChannel();
   const [state, setState] = useState<InventoryUrlState>(defaultState);
   const normalized = useMemo(() => normalizePublicInventory(machines), [machines]);
 
@@ -44,7 +46,7 @@ export function InventoryExplorer({ machines }: { machines: PublicMachineSummary
 
   const commit = (next: InventoryUrlState, mode: "push" | "replace" = "push") => {
     setState(next);
-    const url = `${window.location.pathname}${serializeInventoryUrlState(next)}${window.location.hash}`;
+    const url = `${withContactChannel(`${window.location.pathname}${serializeInventoryUrlState(next)}`, channel)}${window.location.hash}`;
     window.history[mode === "push" ? "pushState" : "replaceState"](null, "", url);
   };
 

@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { PublicMachineDetailV1 } from "@/models";
+import { useContactChannel, withContactChannel } from "@/hooks/useContactChannel";
 import { formatPublicMachineDisplayName } from "@/lib/presentation";
 import { DetailedImages } from "./ConditionAndImages";
 import { DecisionDossier } from "./DecisionDossier";
@@ -10,7 +13,8 @@ import { PublicSpecifications } from "./SpecificationsAndRecommendation";
 import { PoliciesAndSupport } from "./SupportAndSticky";
 
 export function PublicMachineDetailView({ machine }: { machine: PublicMachineDetailV1 }) {
+  const { channel } = useContactChannel();
   const summary = machine.summary;
   const displayName = formatPublicMachineDisplayName(summary.displayName);
-  return <PublicMachineMediaProvider images={machine.gallery} title={displayName}><div className="container public-detail-page"><nav className="detail-breadcrumb" aria-label="Đường dẫn"><Link href="/may-dang-co">Máy đang có</Link><span aria-hidden="true">/</span><span>{displayName}{summary.color ? ` · ${summary.color}` : ""}</span></nav><div className="detail-hero"><PublicMachineGallery title={displayName} /><DecisionPanel machine={machine} /></div><DecisionDossier machine={machine} /><DetailedImages /><PublicSpecifications machine={machine} /><PoliciesAndSupport machine={machine} /></div></PublicMachineMediaProvider>;
+  return <PublicMachineMediaProvider images={machine.gallery} title={displayName}><div className="container public-detail-page"><nav className="detail-breadcrumb" aria-label="Đường dẫn"><Link href={withContactChannel("/may-dang-co", channel)}>Máy đang có</Link><span aria-hidden="true">/</span><span>{displayName}{summary.color ? ` · ${summary.color}` : ""}</span></nav><div className="detail-hero"><PublicMachineGallery title={displayName} /><DecisionPanel machine={machine} /></div><DecisionDossier machine={machine} /><DetailedImages /><PublicSpecifications machine={machine} /><PoliciesAndSupport machine={machine} /></div></PublicMachineMediaProvider>;
 }
