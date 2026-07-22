@@ -11,12 +11,12 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link className="brand" href={inventoryHref}>MBMC</Link>
+        <Link className="brand" href="https://muabanmacbookcu.com">MBMC</Link>
         <nav className="desktop-navigation" aria-label="Điều hướng chính">
           <Link aria-current="page" href={inventoryHref}>Máy đang có</Link>
           <a href="#chon-macbook">Chọn MacBook</a>
-          <a href="#chinh-sach">Chính sách</a>
-          <a href="#ban-may">Bán máy cho MBMC</a>
+          <a href="https://muabanmacbookcu.com/chinh-sach/bao-hanh/">Chính sách</a>
+          <a href="https://muabanmacbookcu.com/thumua/">Bán máy cho MBMC</a>
           <a className="header-contact" href={contactUrl ?? defaultContact.href}>{contactLabel ?? "Liên hệ"}</a>
         </nav>
         <div className="mobile-header-actions">
