@@ -1,7 +1,7 @@
 import type { PublicMachineDetailV1 } from "@/models";
 import { buildMachineEvidence } from "./machine-evidence-presentation";
 
-export function EvidenceAnchors({ machine }: { machine: PublicMachineDetailV1 }) {
+export function EvidenceAvailabilityAnchors({ machine }: { machine: PublicMachineDetailV1 }) {
   return <ul className="trust-anchors" aria-label="Thông tin đảm bảo"><li>Thông tin đã duyệt</li>{machine.summary.inspection.status === "not_available" ? null : <li>Có dữ liệu kiểm định</li>}<li>MBMC Passport</li></ul>;
 }
 

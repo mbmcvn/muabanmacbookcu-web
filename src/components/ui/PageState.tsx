@@ -27,7 +27,3 @@ export function PageState({
     </Container>
   );
 }
-
-export function PageStatusMessage({ children }: { children: ReactNode }) {
-  return <p role="status">{children}</p>;
-}

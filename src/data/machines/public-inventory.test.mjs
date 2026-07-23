@@ -327,6 +327,8 @@ test("meaningless appearance and unavailable inspection placeholders are omitted
   assert.equal(facts.some(fact=>fact.label==="Kiểm định"),false);
   const decisionSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",import.meta.url),"utf8");
   const passportSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",import.meta.url),"utf8");
+  assert.match(decisionSource,/export function EvidenceAvailabilityAnchors/);
+  assert.doesNotMatch(decisionSource,/export function EvidenceAnchors/);
   assert.doesNotMatch(decisionSource,/\["Kiểm định"|Chưa có dữ liệu kiểm định/);
   assert.doesNotMatch(passportSource,/passport\.inspection\.status === "not_available" \? "Chưa có dữ liệu"/);
 });

@@ -34,7 +34,7 @@ Code identifiers use English versions of these terms. Existing public DTO keys a
 
 ### Shared page states
 
-`PageState` and `PageStatusMessage` provide one semantic implementation for loading, empty, unavailable, not-found, and retry states. Callers still choose their existing wrapper element, class, heading level, role, copy, and action, so the rendered visual language and public behavior remain unchanged.
+`PageState` provides one semantic implementation for loading, empty, not-found, and retry states. The single unavailable status remains a direct semantic element. Callers still choose their existing wrapper element, class, heading level, role, copy, and action, so the rendered visual language and public behavior remain unchanged.
 
 Future pages can add consistent states without copying page-shell markup or inventing new state semantics.
 
@@ -46,7 +46,7 @@ Future Decision Dossier and Recommendation surfaces can reuse the contact behavi
 
 ### Machine Evidence terminology
 
-The active detail implementation now uses `MachineEvidence`, `EvidenceAnchors`, and `MachineEvidenceGrid` internally. This replaces ambiguous “Trust and Facts” naming while preserving all visible copy and DTO fields.
+The active detail implementation now uses `MachineEvidence`, `EvidenceAvailabilityAnchors`, and `MachineEvidenceGrid` internally. This replaces ambiguous “Trust and Facts” naming while preserving all visible copy and DTO fields. The anchors describe evidence availability and trust-supporting signals; they do not represent the underlying Evidence.
 
 The distinction prepares the codebase for future Known/Unknown and provenance work:
 
