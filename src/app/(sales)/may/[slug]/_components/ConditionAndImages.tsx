@@ -13,5 +13,5 @@ export function DetailedImages() {
   const { images: gallery, openLightbox } = usePublicMachineMedia();
   const images = gallery.slice(1);
   if (!images.length) return null;
-  return <section className="detail-section" aria-labelledby="images-heading"><header><p className="eyebrow">Kiểm tra bằng hình ảnh</p><h2 id="images-heading">Quan sát từng phần của máy</h2></header><ImageGrid images={images} startIndex={1} onOpen={openLightbox} /></section>;
+  return <section className="detail-section" aria-labelledby="images-heading"><header><p className="eyebrow">Hình ảnh công khai</p><h2 id="images-heading">Quan sát thêm về chiếc máy</h2></header><ImageGrid images={images} startIndex={1} onOpen={openLightbox} /></section>;
 }
