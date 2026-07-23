@@ -7,11 +7,13 @@ import { useContactChannel } from "@/hooks/useContactChannel";
 type ContactActionLinkProps = Omit<
   ComponentProps<"a">,
   "aria-label" | "children" | "href" | "rel" | "target"
->;
+> & {
+  label?: string;
+};
 
-export function ContactActionLink(props: ContactActionLinkProps) {
+export function ContactActionLink({ label: requestedLabel, ...props }: ContactActionLinkProps) {
   const { contactUrl, contactLabel } = useContactChannel();
-  const label = contactLabel ?? "Nhắn MBMC xác nhận máy";
+  const label = requestedLabel ?? contactLabel ?? "Nhắn MBMC xác nhận máy";
 
   return (
     <a

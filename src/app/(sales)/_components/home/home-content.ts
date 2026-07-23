@@ -4,6 +4,7 @@ export const homepageContent = {
     title: "Mua MacBook cũ không nên là một canh bạc.",
     description:
       "MBMC giúp bạn hiểu rõ nhu cầu của mình, hiểu rõ từng chiếc máy và tự tin với quyết định trước khi mua.",
+    guidanceAction: "Nhắn MBMC để chọn máy phù hợp",
     inventoryAction: "Xem máy đang có",
   },
   uncertainty: {
@@ -58,5 +59,21 @@ export const homepageContent = {
           "MBMC giải thích lý do và phần chưa chắc chắn; quyết định cuối cùng vẫn là của bạn.",
       },
     ],
+  },
+  guidance: {
+    eyebrow: "Chọn máy cùng MBMC",
+    title: "Bắt đầu từ nhu cầu, không phải từ tên model.",
+    description:
+      "Bạn có thể kể cho MBMC về công việc, ngân sách và điều mình còn lo. Một người thật sẽ cùng bạn làm rõ ưu tiên và những đánh đổi cần cân nhắc — đây không phải tư vấn tự động.",
+    action: "Nhắn MBMC để chọn máy phù hợp",
+    note: "Bạn không cần biết sẵn mình nên chọn Air hay Pro, 8GB hay 16GB.",
+  },
+  closing: {
+    eyebrow: "Bước tiếp theo",
+    title: "Bạn không cần quyết định ngay.",
+    description:
+      "Chỉ cần bắt đầu từ điều còn chưa rõ. Xem những máy đang có, hoặc trò chuyện với MBMC để cùng làm rõ lựa chọn.",
+    guidanceAction: "Nhắn MBMC để chọn máy phù hợp",
+    inventoryAction: "Xem tất cả máy đang có",
   },
 } as const;

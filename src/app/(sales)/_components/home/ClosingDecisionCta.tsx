@@ -3,14 +3,14 @@ import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { homepageContent } from "./home-content";
 import styles from "./Home.module.css";
 
-export function HomeHero() {
-  const content = homepageContent.hero;
+export function ClosingDecisionCta() {
+  const content = homepageContent.closing;
 
   return (
-    <section className={styles.hero} aria-labelledby="home-title">
+    <section className={styles.closing} aria-labelledby="closing-title">
       <p className={styles.eyebrow}>{content.eyebrow}</p>
-      <h1 id="home-title">{content.title}</h1>
-      <p className={styles.heroDescription}>{content.description}</p>
+      <h2 id="closing-title">{content.title}</h2>
+      <p>{content.description}</p>
       <div className={styles.actions}>
         <ContactActionLink
           className={styles.primaryAction}
