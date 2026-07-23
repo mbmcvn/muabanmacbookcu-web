@@ -169,6 +169,7 @@ dd { margin: 0; }
 .primary-action { background: var(--foreground); color: white; }
 .secondary-action { background: transparent; }
 .contact-context { margin: .75rem 0 0; color: var(--muted); font-size: .84rem; }
+.decision-hook { max-width: 44rem; margin: 2rem 0 0; color: var(--muted); line-height: 1.65; }
 .trust-anchors { display: flex; flex-wrap: wrap; gap: .55rem 1.15rem; margin: 0 0 1rem; padding: .8rem 0; border-block: 1px solid var(--border); list-style: none; color: #44443f; font-size: .86rem; }
 .trust-anchors li { position: relative; padding-left: 1.15rem; }
 .trust-anchors li::before { content: ""; position: absolute; left: 0; top: .63em; width: .38rem; height: .38rem; border-radius: 50%; background: var(--accent); }
@@ -183,7 +184,7 @@ dd { margin: 0; }
 .detail-facts dt { margin-bottom: .45rem; color: var(--muted); font-size: .78rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
 .detail-facts dd { min-width: 0; overflow-wrap: break-word; word-break: normal; white-space: normal; font-weight: 610; line-height: 1.45; }
 .detail-facts .detail-fact-wide { grid-column: 1 / -1; }
-.decision-dossier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: 4rem; }
+.decision-dossier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: 2rem; }
 .decision-dossier > .detail-section { min-width: 0; height: 100%; margin: 0; padding: 1.25rem; border: 1px solid var(--border-strong); border-radius: .6rem; background: var(--surface); }
 .decision-dossier > .detail-section > header { margin-bottom: 1rem; }
 .decision-dossier > .recommendation-section { grid-column: 1 / -1; height: auto; }
