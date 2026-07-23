@@ -1324,7 +1324,8 @@ The sticky machine-specific contact action remains available as an existing util
 
 - The summary contains one short paragraph.
 - It does not repeat specifications.
-- It asks the customer to review fit, non-fit and public limitations before deciding to contact MBMC.
+- When balanced fit content exists, it asks the customer to review fit, non-fit and public limitations before deciding to contact MBMC.
+- When balanced fit content is unavailable, it says so and directs the customer to the verified and public-limitation sections instead of pointing to omitted content.
 - It does not describe the machine as recommended, best, preferred or suitable for the current visitor.
 
 ### Suitable / Not Suitable publication policy
