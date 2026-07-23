@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { projectPublicCandidates, publicDetailBySlug, publicSummaries } from "./project-public-candidates.ts";
 import {
@@ -27,6 +27,7 @@ import { buildPublicSpecificationRows } from "../../app/(sales)/may/[slug]/_comp
 import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../lib/presentation/machine.ts";
 import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
+import { selectHomepageMachines } from "../../app/(sales)/_components/home/homepage-machine-selection.ts";
 
 function row(code="MBMC-A001",overrides={}){
   const revision=3;
@@ -397,7 +398,7 @@ test("mobile cards are horizontal with image left and content right while tablet
 
 test("mobile card keeps title specs price condition and CTA without inspection placeholders",()=>{
   const card=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx",import.meta.url),"utf8");
-  for(const token of ["<h2>{displayName}</h2>","{specs}","{price}","machine-card-condition","Xem máy"])assert.equal(card.includes(token),true,token);
+  for(const token of ["<Heading>{displayName}</Heading>","Heading = \"h2\"","{specs}","{price}","machine-card-condition","Xem máy"])assert.equal(card.includes(token),true,token);
   assert.doesNotMatch(card,/Kiểm định|machine\.inspection/);
   assert.match(card,/className="machine-code"/);
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
@@ -600,7 +601,7 @@ test("desktop sticky separates identity price and Zalo CTA while mobile hides on
   assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
   assert.match(contactAction,/target="_blank"/);
   assert.match(contactAction,/rel="noopener noreferrer"/);
-  assert.match(contactAction,/const label = contactLabel \?\? "Nhắn MBMC xác nhận máy"/);
+  assert.match(contactAction,/const label = requestedLabel \?\? "Nhắn MBMC xác nhận máy"/);
   assert.doesNotMatch(hero,/Tin nhắn đã có sẵn|buildMachineContactHref/);
   assert.match(hero,/Bạn có thể gửi:/);
 });
@@ -641,4 +642,89 @@ test("final detail page order retains observation specs support and sticky CTA",
   for(let index=1;index<sequence.length;index++)assert.ok(view.indexOf(sequence[index-1])<view.indexOf(sequence[index]),sequence[index]);
   const page=readFileSync(new URL("../../app/(sales)/may/[slug]/page.tsx",import.meta.url),"utf8");
   assert.match(page,/<PublicMachineStickyBar machine=\{machine\}/);
+});
+
+test("homepage renders the first three machines in existing repository order",()=>{
+  const machines=["first","second","third","fourth"];
+  assert.deepEqual(selectHomepageMachines(machines),["first","second","third"]);
+  assert.deepEqual(selectHomepageMachines(machines.slice(0,2)),["first","second"]);
+});
+
+test("homepage sections retain the approved first-release order",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/_components/home/HomeView.tsx",import.meta.url),"utf8");
+  const sequence=[
+    "<HomeHero",
+    "<UncertaintyRecognition",
+    "<DecisionProblemFraming",
+    "<HowMbmcHelps",
+    "<HumanGuidanceEntry",
+    "<AvailableMachines",
+    "<HomeTrustOverview",
+    "<ClosingDecisionCta",
+  ];
+  for(let index=1;index<sequence.length;index++){
+    assert.ok(source.indexOf(sequence[index-1])<source.indexOf(sequence[index]),sequence[index]);
+  }
+});
+
+test("homepage has one page-level heading and contextual machine-card headings",()=>{
+  const files=[
+    "HomeHero.tsx",
+    "UncertaintyRecognition.tsx",
+    "DecisionProblemFraming.tsx",
+    "HowMbmcHelps.tsx",
+    "HumanGuidanceEntry.tsx",
+    "AvailableMachines.tsx",
+    "HomeTrustOverview.tsx",
+    "ClosingDecisionCta.tsx",
+  ];
+  const source=files.map(file=>readFileSync(new URL(`../../app/(sales)/_components/home/${file}`,import.meta.url),"utf8")).join("\n");
+  assert.equal(source.match(/<h1\b/g)?.length,1);
+  assert.match(source,/headingAs="h3"/);
+});
+
+test("homepage offers human-assisted guidance without automated recommendation UI",()=>{
+  const content=readFileSync(new URL("../../app/(sales)/_components/home/home-content.ts",import.meta.url),"utf8");
+  const guidance=readFileSync(new URL("../../app/(sales)/_components/home/HumanGuidanceEntry.tsx",import.meta.url),"utf8");
+  assert.match(content,/Nhắn MBMC để chọn máy phù hợp/);
+  assert.match(content,/Một người thật/);
+  assert.match(content,/đây không phải tư vấn tự động/);
+  assert.match(guidance,/<ContactActionLink/);
+  assert.doesNotMatch(guidance,/<form|quiz|score|disabled/);
+});
+
+test("homepage machine section links to full inventory and fails unavailable safely",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/_components/home/AvailableMachines.tsx",import.meta.url),"utf8");
+  const page=readFileSync(new URL("../../app/(sales)/page.tsx",import.meta.url),"utf8");
+  assert.match(source,/Xem tất cả máy đang có/);
+  assert.match(source,/href="\/may-dang-co"/);
+  assert.match(source,/state\.status === "unavailable"/);
+  assert.match(source,/Danh sách máy tạm thời chưa thể hiển thị/);
+  assert.doesNotMatch(source,/không có máy[^<]*tạm thời/i);
+  assert.match(page,/loadPublicInventoryState\(getAvailableMachines\)/);
+});
+
+test("homepage Trust copy stays within substantiated public boundaries",()=>{
+  const content=readFileSync(new URL("../../app/(sales)/_components/home/home-content.ts",import.meta.url),"utf8");
+  for(const supported of [
+    "một chiếc máy vật lý",
+    "mã nhận diện riêng",
+    "hợp đồng công khai",
+    "Ảnh công khai và phần mô tả tình trạng phải được chấp thuận",
+  ])assert.match(content,new RegExp(supported));
+  for(const unsupported of [
+    "kiểm định đầy đủ",
+    "lịch sử sửa chữa đầy đủ",
+    "lịch sử sở hữu đầy đủ",
+    "bảo hành toàn bộ",
+    "minh bạch tuyệt đối",
+  ])assert.doesNotMatch(content,new RegExp(unsupported,"i"));
+});
+
+test("first homepage release contains no Decision Stories component or placeholder",()=>{
+  const homeDirectory=new URL("../../app/(sales)/_components/home/",import.meta.url);
+  const view=readFileSync(new URL("HomeView.tsx",homeDirectory),"utf8");
+  const content=readFileSync(new URL("home-content.ts",homeDirectory),"utf8");
+  assert.equal(existsSync(new URL("DecisionStoriesPreview.tsx",homeDirectory)),false);
+  assert.doesNotMatch(`${view}\n${content}`,/Decision Stor|Chuyện người dùng|coming soon|sắp ra mắt/i);
 });
