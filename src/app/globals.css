@@ -184,18 +184,18 @@ dd { margin: 0; }
 .detail-facts dt { margin-bottom: .45rem; color: var(--muted); font-size: .78rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
 .detail-facts dd { min-width: 0; overflow-wrap: break-word; word-break: normal; white-space: normal; font-weight: 610; line-height: 1.45; }
 .detail-facts .detail-fact-wide { grid-column: 1 / -1; }
-.decision-dossier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: 2rem; }
-.decision-dossier > .detail-section { min-width: 0; height: 100%; margin: 0; padding: 1.25rem; border: 1px solid var(--border-strong); border-radius: .6rem; background: var(--surface); }
+.decision-dossier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; margin-top: 2rem; }
+.decision-dossier > .detail-section { min-width: 0; height: 100%; margin: 0; padding: clamp(1.25rem, 2vw, 1.5rem); border: 1px solid var(--border-strong); border-radius: .6rem; background: var(--surface); }
 .decision-dossier > .detail-section > header { margin-bottom: 1rem; }
 .decision-dossier > .recommendation-section { grid-column: 1 / -1; height: auto; }
 .decision-dossier > .decision-summary { grid-column: 1 / -1; height: auto; }
 .decision-dossier > .expert-summary { grid-column: 1 / -1; height: auto; }
-.decision-summary { max-width: 58rem; }
+.decision-summary { max-width: 52rem; }
 .decision-summary > header { margin-bottom: 0; }
 .decision-summary > header > p:last-child { font-size: 1.05rem; line-height: 1.7; }
 .fit-section ul { margin: 0; padding-left: 1.15rem; }
 .fit-section li { margin-block: .45rem; }
-.expert-summary { max-width: 58rem; }
+.expert-summary { max-width: 52rem; }
 .expert-summary > header { margin-bottom: 0; }
 .expert-summary > header > p:last-child { font-size: 1.05rem; line-height: 1.7; }
 .public-information-status ul { margin: 0; padding-left: 1.15rem; }
@@ -231,6 +231,9 @@ dd { margin: 0; }
 .evidence-grid figure > button { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid var(--border); border-radius: .6rem; background: #efefeb; cursor: zoom-in; }
 .evidence-grid img { object-fit: contain; }
 .evidence-grid figcaption { padding-top: .45rem; color: var(--muted); font-size: .86rem; }
+.supporting-images-disclosure { border-top: 1px solid var(--border); }
+.supporting-images-disclosure summary { min-height: 3.5rem; display: flex; align-items: center; cursor: pointer; font-weight: 650; }
+.supporting-images-disclosure[open] summary { margin-bottom: 1rem; }
 .recommendation-columns section { padding-top: 1rem; border-top: 1px solid var(--border); }
 .recommendation-section { max-width: 58rem; }
 .recommendation-section > header > p:last-child { font-size: 1.05rem; line-height: 1.7; }
