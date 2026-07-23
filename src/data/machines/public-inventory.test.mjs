@@ -20,7 +20,7 @@ import {
 import { loadPublicInventoryState } from "./public-inventory-load-state.ts";
 import { nextOpenFilter, selectFacetValues, selectionKeepsFilterOpen } from "../../app/(sales)/may-dang-co/_components/inventory-filter-interaction.ts";
 import { formatMachineCardCondition, formatMachineCardDisplayName, formatMachineCardSpecs, getMachineCardBatteryFact } from "../../app/(sales)/may-dang-co/_components/machine-card-presentation.ts";
-import { buildMachineEvidence } from "../../app/(sales)/may/[slug]/_components/machine-evidence-presentation.ts";
+import { buildMachineEvidence, publicConditionDescription } from "../../app/(sales)/may/[slug]/_components/machine-evidence-presentation.ts";
 import { clampGalleryIndex, galleryIndexAfterSwipe, resistGalleryDrag, resolveGalleryDragIndex, wrapGalleryIndex } from "../../app/(sales)/may/[slug]/_components/gallery-navigation.ts";
 import { classifyGalleryImageShape } from "../../app/(sales)/may/[slug]/_components/gallery-image-shape.ts";
 import { buildPublicSpecificationRows } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
@@ -316,7 +316,7 @@ test("machine evidence keeps both available battery values and omits missing one
 test("appearance grade and description are merged into machine evidence in order",()=>{
   const facts=buildMachineEvidence(decisionInput());
   assert.deepEqual(facts.map(fact=>fact.label),[
-    "Pin","Chu kỳ sạc","Ngoại hình","Phụ kiện đi kèm","Chi tiết ngoại hình",
+    "Pin","Chu kỳ sạc","Ngoại hình","Phụ kiện đi kèm","Mô tả tình trạng công khai",
   ]);
   assert.deepEqual(facts[2],{label:"Ngoại hình",value:"Hạng C"});
   assert.equal(facts[4].wide,true);
@@ -595,7 +595,7 @@ test("desktop sticky separates identity price and Zalo CTA while mobile hides on
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*grid-area: cta[^}]*grid-row: 1[^}]*width: max-content[^}]*max-width: none[^}]*white-space: nowrap/);
   assert.doesNotMatch(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*(?:width: 100%|grid-column: 1 \/ -1|grid-column: 1 \/ span)/);
   assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
-  assert.match(hero,/<ContactActionLink className="primary-action" \/>/);
+  assert.match(hero,/<ContactActionLink[^>]*className="primary-action" \/>/);
   assert.match(sticky,/<ContactActionLink className="primary-action" \/>/);
   assert.match(sticky,/<ContactActionLink \/>/);
   assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
@@ -623,16 +623,16 @@ test("decision dossier places supporting information before Passport and mobile 
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.decision-dossier \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
-test("trusted technical rows render separately with compact storage and missing rows omitted",()=>{
+test("technical reference renders only additional trusted fields and omits Hero duplication",()=>{
   const base=publicDetailBySlug([row("MBMC-SPECS",{ssd_gb:1024})],"mbmc-specs");
   assert.ok(base);
-  const machine={...base,technicalSpecifications:{camera:"1080p",ports:"3 × Thunderbolt",touchId:true,internal_note:"private"}};
+  const machine={...base,technicalSpecifications:{camera:"1080p",ports:"3 × Thunderbolt",touchId:true,releaseYear:2022,internal_note:"private"}};
   const rows=buildPublicSpecificationRows(machine);
-  assert.equal(rows.find(item=>item.label==="Lưu trữ")?.value,"1TB SSD");
   assert.equal(rows.find(item=>item.label==="Camera")?.value,"1080p");
   assert.equal(rows.find(item=>item.label==="Touch ID")?.value,"Có");
   assert.equal(rows.some(item=>item.label==="internal_note"||item.value==="private"),false);
   assert.equal(rows.some(item=>item.label==="Trọng lượng"),false);
+  assert.equal(rows.some(item=>["Model","Chip","RAM","Lưu trữ","Màu","Năm ra mắt"].includes(item.label)),false);
   const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
   assert.ok(view.indexOf("<DecisionDossier")<view.indexOf("<PublicSpecifications"));
 });
@@ -654,6 +654,26 @@ test("Decision Summary is concise and precedes the fit assessment",()=>{
   assert.match(summary,/chưa có đủ nhận định cân bằng/);
   assert.doesNotMatch(summary,/<ul|<ol|RAM|SSD|Chip/);
   assert.ok(dossier.indexOf("<DecisionSummary machine={machine}")<dossier.indexOf("<SuitabilityAssessment"));
+});
+
+test("Hero includes one lightweight decision hook before Decision Summary",()=>{
+  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
+  const hook=view.match(/<p className="decision-hook">([^<]+)<\/p>/g)??[];
+  assert.equal(hook.length,1);
+  assert.ok(view.indexOf('className="decision-hook"')<view.indexOf("<DecisionDossier"));
+  assert.doesNotMatch(hook[0],/<h[1-6]|detail-section|mua ngay|tốt nhất/i);
+});
+
+test("sticky contact appears only between the Hero action and final Decision Panel",()=>{
+  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
+  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
+  assert.match(hero,/id="machine-hero-contact-action"/);
+  assert.match(sticky,/id="lien-he-mbmc"/);
+  assert.match(sticky,/useState\(false\)/);
+  assert.match(sticky,/new IntersectionObserver/);
+  assert.match(sticky,/return !heroContactVisible && !finalPanelVisible/);
+  assert.match(sticky,/setIsVisible\(shouldShowStickyContact\(visibility\)\)/);
+  assert.match(sticky,/if \(!isVisible\) return null/);
 });
 
 test("Suitable and Not Suitable publish only as a balanced pair",()=>{
@@ -679,10 +699,18 @@ test("verified and insufficient-information sections use bounded public wording"
     "Hồ sơ công khai hiện chưa có kết luận về tình trạng sửa chữa.",
   ]);
   const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",import.meta.url),"utf8");
-  assert.match(source,/>Đã xác minh</);
+  assert.match(source,/Đã xác minh trong hồ sơ công khai/);
   assert.match(source,/>Chưa đủ thông tin</);
-  assert.match(source,/Đây không phải kết luận kiểm định toàn diện/);
+  assert.match(source,/không phải kết luận kiểm định toàn diện/);
   assert.doesNotMatch(source,/chưa từng sửa|không có bảo hành|không rõ nguồn gốc/i);
+});
+
+test("unsupported fullbox wording is removed when the public included-items record has no box",()=>{
+  const withoutBox={charger:true,cable:null,box:null,bag:null,accessories:[]};
+  const withBox={...withoutBox,box:true};
+  assert.equal(publicConditionDescription("Máy fullbox",withoutBox),null);
+  assert.equal(publicConditionDescription("Full box, có xước nhẹ",withoutBox),"có xước nhẹ");
+  assert.equal(publicConditionDescription("Máy fullbox",withBox),"Máy fullbox");
 });
 
 test("supporting facts and images are not labelled as complete Evidence",()=>{
@@ -691,6 +719,8 @@ test("supporting facts and images are not labelled as complete Evidence",()=>{
   const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
   assert.match(facts,/Thông tin công khai hỗ trợ/);
   assert.match(images,/Hình ảnh công khai/);
+  assert.match(images,/<details className="supporting-images-disclosure">/);
+  assert.match(images,/<ImageGrid images=\{images\}/);
   assert.doesNotMatch(`${facts}\n${images}\n${hero}`,/Bằng chứng|Kiểm tra bằng hình ảnh|Thông tin đảm bảo|Có dữ liệu kiểm định/);
 });
 
