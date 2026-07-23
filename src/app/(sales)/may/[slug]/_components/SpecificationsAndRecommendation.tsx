@@ -7,7 +7,25 @@ export function PublicSpecifications({ machine }: { machine: PublicMachineDetail
   return <section className="detail-section specification-section" aria-labelledby="specifications-heading"><header><p className="eyebrow">Cấu hình</p><h2 id="specifications-heading">Thông số kỹ thuật</h2></header><dl className="public-specifications">{rows.map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></section>;
 }
 
-export function MbmcRecommendation({ machine }: { machine: PublicMachineDetailV1 }) {
-  if (!machine.expertSummary && !machine.suitableFor.length && !machine.notSuitableFor.length) return null;
-  return <section className="detail-section recommendation-section" aria-labelledby="recommendation-heading"><header><p className="eyebrow">Nhận định kỹ thuật</p><h2 id="recommendation-heading">MBMC đánh giá</h2>{machine.expertSummary ? <p>{machine.expertSummary}</p> : null}</header><div className="recommendation-columns">{machine.suitableFor.length ? <section><h3>Phù hợp với</h3><ul>{machine.suitableFor.map((item) => <li key={item}>{item}</li>)}</ul></section> : null}{machine.notSuitableFor.length ? <section><h3>Không phù hợp nếu</h3><ul>{machine.notSuitableFor.map((item) => <li key={item}>{item}</li>)}</ul></section> : null}</div></section>;
+export function hasBalancedSuitability(machine: PublicMachineDetailV1): boolean {
+  return machine.suitableFor.length > 0 && machine.notSuitableFor.length > 0;
+}
+
+export function SuitabilityAssessment({ machine }: { machine: PublicMachineDetailV1 }) {
+  if (!hasBalancedSuitability(machine)) return null;
+  return <>
+    <section className="detail-section fit-section" aria-labelledby="suitable-heading">
+      <header><p className="eyebrow">Nên tiếp tục cân nhắc nếu</p><h2 id="suitable-heading">Phù hợp với</h2></header>
+      <ul>{machine.suitableFor.map((item) => <li key={item}>{item}</li>)}</ul>
+    </section>
+    <section className="detail-section fit-section" aria-labelledby="not-suitable-heading">
+      <header><p className="eyebrow">Nên dừng lại nếu</p><h2 id="not-suitable-heading">Không phù hợp nếu</h2></header>
+      <ul>{machine.notSuitableFor.map((item) => <li key={item}>{item}</li>)}</ul>
+    </section>
+  </>;
+}
+
+export function ExpertSummary({ machine }: { machine: PublicMachineDetailV1 }) {
+  if (!machine.expertSummary) return null;
+  return <section className="detail-section expert-summary" aria-labelledby="expert-summary-heading"><header><p className="eyebrow">Nhận định của con người</p><h2 id="expert-summary-heading">Đánh giá từ MBMC</h2><p>{machine.expertSummary}</p></header></section>;
 }
