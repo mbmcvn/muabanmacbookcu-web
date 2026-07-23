@@ -16,15 +16,17 @@ export function HomeView({
   machineState: PublicInventoryLoadState<PublicMachineSummaryV1>;
 }) {
   return (
-    <div className={`container ${styles.home}`}>
+    <>
       <HomeHero />
-      <UncertaintyRecognition />
-      <DecisionProblemFraming />
-      <HowMbmcHelps />
-      <HumanGuidanceEntry />
-      <AvailableMachines state={machineState} />
-      <HomeTrustOverview />
-      <ClosingDecisionCta />
-    </div>
+      <div className={`container ${styles.home}`}>
+        <UncertaintyRecognition />
+        <DecisionProblemFraming />
+        <HowMbmcHelps />
+        <HumanGuidanceEntry />
+        <AvailableMachines state={machineState} />
+        <HomeTrustOverview />
+        <ClosingDecisionCta />
+      </div>
+    </>
   );
 }

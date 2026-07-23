@@ -2,10 +2,16 @@ export const homepageContent = {
   hero: {
     eyebrow: "MBMC Decision Studio",
     title: "Mua MacBook cũ không nên là một canh bạc.",
+    titleLines: ["Mua MacBook cũ", "không nên là một", "canh bạc."],
     description:
       "MBMC giúp bạn hiểu rõ nhu cầu của mình, hiểu rõ từng chiếc máy và tự tin với quyết định trước khi mua.",
     guidanceAction: "Nhắn MBMC để chọn máy phù hợp",
     inventoryAction: "Xem máy đang có",
+    trustIndicators: [
+      "Máy cụ thể, hồ sơ riêng",
+      "Thông tin công khai được duyệt",
+      "Người thật cùng làm rõ",
+    ],
   },
   uncertainty: {
     eyebrow: "Bắt đầu từ điều chưa rõ",

@@ -5,7 +5,10 @@ export function UncertaintyRecognition() {
   const content = homepageContent.uncertainty;
 
   return (
-    <section className={styles.section} aria-labelledby="uncertainty-title">
+    <section
+      className={`${styles.section} ${styles.uncertaintySection}`}
+      aria-labelledby="uncertainty-title"
+    >
       <div className={styles.sectionIntroduction}>
         <p className={styles.eyebrow}>{content.eyebrow}</p>
         <h2 id="uncertainty-title">{content.title}</h2>

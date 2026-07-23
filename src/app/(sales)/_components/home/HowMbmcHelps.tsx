@@ -5,7 +5,10 @@ export function HowMbmcHelps() {
   const content = homepageContent.approach;
 
   return (
-    <section className={styles.section} aria-labelledby="approach-title">
+    <section
+      className={`${styles.section} ${styles.approachSection}`}
+      aria-labelledby="approach-title"
+    >
       <div className={styles.sectionIntroduction}>
         <p className={styles.eyebrow}>{content.eyebrow}</p>
         <h2 id="approach-title">{content.title}</h2>
