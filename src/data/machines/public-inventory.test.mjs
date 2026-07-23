@@ -526,13 +526,15 @@ test("mobile detail keeps thumbnails and compact sticky CTA but removes bottom n
   const layout=readFileSync(new URL("../../app/(sales)/layout.tsx",import.meta.url),"utf8");
   const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
   const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
+  const contactAction=readFileSync(new URL("../../components/contact/ContactActionLink.tsx",import.meta.url),"utf8");
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
   assert.match(gallery,/className="detail-thumbnails"/);
   assert.match(gallery,/onClick=\{\(\) => select\(imageIndex\)\}/);
   assert.match(sticky,/className="public-machine-sticky"/);
   assert.match(sticky,/summary\.displayName/);
   assert.match(sticky,/formatCurrencyVnd\(summary\.price\)/);
-  assert.match(sticky,/Nhắn MBMC xác nhận máy/);
+  assert.match(sticky,/<ContactActionLink \/>/);
+  assert.match(contactAction,/Nhắn MBMC xác nhận máy/);
   assert.doesNotMatch(layout,/MobileBottomNavigation|mobile-navigation/);
   assert.doesNotMatch(css,/\.mobile-navigation/);
   assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/);
@@ -567,7 +569,7 @@ test("mobile sticky shows only canonical title and colorless specs while desktop
   assert.doesNotMatch(stickyMarkup,/formatPublicMachineSpecs\([^)]*color/);
   assert.doesNotMatch(stickyMarkup,/<strong>\{summary\.displayName\}<\/strong>/);
   assert.match(stickyMarkup,/<strong>\{displayName\}<\/strong>\{specs \? <span className="public-machine-sticky-specs">\{specs\}<\/span> : null\}/);
-  assert.match(stickyMarkup,/href=\{contactUrl \?\? MBMC_ZALO_URL\} target="_blank" rel="noopener noreferrer" aria-label=\{label\}/);
+  assert.match(stickyMarkup,/<ContactActionLink \/>/);
   assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
   assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{ display: none; \}/);
   assert.match(css,/\.public-machine-sticky-price \{[^}]*font-weight: 700;[^}]*white-space: nowrap;/);
@@ -579,22 +581,24 @@ test("desktop sticky separates identity price and Zalo CTA while mobile hides on
   const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
   const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
   const contact=readFileSync(new URL("../../config/contact.ts",import.meta.url),"utf8");
+  const contactAction=readFileSync(new URL("../../components/contact/ContactActionLink.tsx",import.meta.url),"utf8");
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
   assert.equal(MBMC_ZALO_URL,"https://zalo.me/0326147088");
   assert.match(contact,/export const MBMC_ZALO_URL = "https:\/\/zalo\.me\/0326147088"/);
-  assert.match(sticky,/className="public-machine-sticky-identity"[\s\S]*?className="public-machine-sticky-price"[\s\S]*?<a href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
+  assert.match(sticky,/className="public-machine-sticky-identity"[\s\S]*?className="public-machine-sticky-price"[\s\S]*?<ContactActionLink \/>/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-columns: minmax\(16\.25rem, 1fr\) auto auto[^}]*grid-template-areas: "identity price cta"[^}]*grid-auto-flow: column/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*grid-area: price[^}]*font-size: 1\.25rem;[^}]*line-height: 1;/);
   assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{ display: none; \}/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*grid-area: cta[^}]*grid-row: 1[^}]*width: max-content[^}]*max-width: none[^}]*white-space: nowrap/);
   assert.doesNotMatch(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*(?:width: 100%|grid-column: 1 \/ -1|grid-column: 1 \/ span)/);
   assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
-  for(const source of [hero,sticky]) {
-    const links=[...source.matchAll(/href=\{contactUrl \?\? MBMC_ZALO_URL\}/g)];
-    assert.ok(links.length>0);
-    assert.equal((source.match(/target="_blank" rel="noopener noreferrer"/g)??[]).length,links.length);
-    assert.match(source,/const label = contactLabel \?\? "Nhắn MBMC xác nhận máy"/);
-  }
+  assert.match(hero,/<ContactActionLink className="primary-action" \/>/);
+  assert.match(sticky,/<ContactActionLink className="primary-action" \/>/);
+  assert.match(sticky,/<ContactActionLink \/>/);
+  assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
+  assert.match(contactAction,/target="_blank"/);
+  assert.match(contactAction,/rel="noopener noreferrer"/);
+  assert.match(contactAction,/const label = contactLabel \?\? "Nhắn MBMC xác nhận máy"/);
   assert.doesNotMatch(hero,/Tin nhắn đã có sẵn|buildMachineContactHref/);
   assert.match(hero,/Bạn có thể gửi:/);
 });
