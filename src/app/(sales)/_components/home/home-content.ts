@@ -68,6 +68,29 @@ export const homepageContent = {
     action: "Nhắn MBMC để chọn máy phù hợp",
     note: "Bạn không cần biết sẵn mình nên chọn Air hay Pro, 8GB hay 16GB.",
   },
+  trust: {
+    eyebrow: "Thông tin có ranh giới",
+    title: "Tin cậy bắt đầu từ điều có thể kiểm tra.",
+    description:
+      "MBMC chỉ công khai những thông tin đã đi qua quy trình duyệt dành cho website. Hồ sơ vẫn nói theo phạm vi dữ liệu hiện có, không thay phần chưa biết bằng một lời bảo đảm.",
+    points: [
+      {
+        title: "Một hồ sơ cho một máy cụ thể",
+        description:
+          "Mỗi tin đăng đại diện cho một chiếc máy vật lý có mã nhận diện riêng, không phải ảnh minh hoạ chung cho cả model.",
+      },
+      {
+        title: "Thông tin công khai có kiểm soát",
+        description:
+          "Dữ liệu nội bộ không được đưa thẳng lên giao diện. Chỉ phần thông tin phù hợp với hợp đồng công khai mới được hiển thị.",
+      },
+      {
+        title: "Hình ảnh và mô tả được duyệt",
+        description:
+          "Ảnh công khai và phần mô tả tình trạng phải được chấp thuận trước khi hồ sơ xuất hiện trên website.",
+      },
+    ],
+  },
   closing: {
     eyebrow: "Bước tiếp theo",
     title: "Bạn không cần quyết định ngay.",

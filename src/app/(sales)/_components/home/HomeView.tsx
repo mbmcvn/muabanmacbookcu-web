@@ -6,6 +6,7 @@ import { HomeHero } from "./HomeHero";
 import { HowMbmcHelps } from "./HowMbmcHelps";
 import { HumanGuidanceEntry } from "./HumanGuidanceEntry";
 import { AvailableMachines } from "./AvailableMachines";
+import { HomeTrustOverview } from "./HomeTrustOverview";
 import { UncertaintyRecognition } from "./UncertaintyRecognition";
 import styles from "./Home.module.css";
 
@@ -22,6 +23,7 @@ export function HomeView({
       <HowMbmcHelps />
       <HumanGuidanceEntry />
       <AvailableMachines state={machineState} />
+      <HomeTrustOverview />
       <ClosingDecisionCta />
     </div>
   );
