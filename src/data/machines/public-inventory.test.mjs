@@ -28,6 +28,7 @@ import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../
 import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { selectHomepageMachines } from "../../app/(sales)/_components/home/homepage-machine-selection.ts";
+import { buildPublicLimitations, hasBalancedSuitability } from "../../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts";
 
 function row(code="MBMC-A001",overrides={}){
   const revision=3;
@@ -328,8 +329,7 @@ test("meaningless appearance and unavailable inspection placeholders are omitted
   assert.equal(facts.some(fact=>fact.label==="Kiểm định"),false);
   const decisionSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",import.meta.url),"utf8");
   const passportSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",import.meta.url),"utf8");
-  assert.match(decisionSource,/export function EvidenceAvailabilityAnchors/);
-  assert.doesNotMatch(decisionSource,/export function EvidenceAnchors/);
+  assert.doesNotMatch(decisionSource,/EvidenceAvailabilityAnchors|EvidenceAnchors/);
   assert.doesNotMatch(decisionSource,/\["Kiểm định"|Chưa có dữ liệu kiểm định/);
   assert.doesNotMatch(passportSource,/passport\.inspection\.status === "not_available" \? "Chưa có dữ liệu"/);
 });
@@ -614,10 +614,11 @@ test("detailed observation images open the same lightbox at their gallery index"
   assert.doesNotMatch(source,/Ảnh thực tế \{index \+ 1\}/);
 });
 
-test("desktop decision dossier places Passport before condition and mobile stacks them",()=>{
+test("decision dossier places supporting information before Passport and mobile stacks sections",()=>{
   const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.ok(dossier.indexOf("<PassportDossier")<dossier.indexOf("<MachineEvidenceGrid"));
+  assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PassportDossier"));
+  assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PassportDossier"));
   assert.match(css,/\.decision-dossier \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.decision-dossier \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
@@ -638,10 +639,82 @@ test("trusted technical rows render separately with compact storage and missing 
 
 test("final detail page order retains observation specs support and sticky CTA",()=>{
   const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  const sequence=["detail-breadcrumb","detail-hero","<DecisionDossier","<DetailedImages","<PublicSpecifications","<PoliciesAndSupport"];
+  const sequence=["detail-breadcrumb","detail-hero","<DecisionDossier","<PublicSpecifications","<PoliciesAndSupport"];
   for(let index=1;index<sequence.length;index++)assert.ok(view.indexOf(sequence[index-1])<view.indexOf(sequence[index]),sequence[index]);
+  assert.doesNotMatch(view,/<DetailedImages/);
   const page=readFileSync(new URL("../../app/(sales)/may/[slug]/page.tsx",import.meta.url),"utf8");
   assert.match(page,/<PublicMachineStickyBar machine=\{machine\}/);
+});
+
+test("Decision Summary is concise and precedes the fit assessment",()=>{
+  const summary=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionSummary.tsx",import.meta.url),"utf8");
+  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
+  assert.match(summary,/Có nên tiếp tục cân nhắc chiếc máy này\?/);
+  assert.match(summary,/Hãy đọc cả trường hợp phù hợp/);
+  assert.doesNotMatch(summary,/<ul|<ol|RAM|SSD|Chip/);
+  assert.ok(dossier.indexOf("<DecisionSummary")<dossier.indexOf("<SuitabilityAssessment"));
+});
+
+test("Suitable and Not Suitable publish only as a balanced pair",()=>{
+  const base=publicDetailBySlug([row("MBMC-FIT")],"mbmc-fit");
+  assert.ok(base);
+  assert.equal(hasBalancedSuitability({...base,suitableFor:["Công việc văn phòng"],notSuitableFor:["Dựng phim nặng"]}),true);
+  assert.equal(hasBalancedSuitability({...base,suitableFor:["Công việc văn phòng"],notSuitableFor:[]}),false);
+  assert.equal(hasBalancedSuitability({...base,suitableFor:[],notSuitableFor:["Dựng phim nặng"]}),false);
+  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SpecificationsAndRecommendation.tsx",import.meta.url),"utf8");
+  assert.match(source,/if \(!hasBalancedSuitability\(machine\)\) return null/);
+  assert.match(source,/>Phù hợp với</);
+  assert.match(source,/>Không phù hợp nếu</);
+  assert.match(source,/>Đánh giá từ MBMC</);
+});
+
+test("verified and insufficient-information sections use bounded public wording",()=>{
+  const base=publicDetailBySlug([row("MBMC-LIMITS")],"mbmc-limits");
+  assert.ok(base);
+  assert.deepEqual(buildPublicLimitations(base),[
+    "Hồ sơ công khai hiện chưa có kết quả kiểm định.",
+    "Hồ sơ công khai hiện chưa có thông tin bảo hành đã được xác định.",
+    "Hồ sơ công khai hiện chưa có dữ liệu xác minh nguồn gốc.",
+    "Hồ sơ công khai hiện chưa có kết luận về tình trạng sửa chữa.",
+  ]);
+  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",import.meta.url),"utf8");
+  assert.match(source,/>Đã xác minh</);
+  assert.match(source,/>Chưa đủ thông tin</);
+  assert.match(source,/Đây không phải kết luận kiểm định toàn diện/);
+  assert.doesNotMatch(source,/chưa từng sửa|không có bảo hành|không rõ nguồn gốc/i);
+});
+
+test("supporting facts and images are not labelled as complete Evidence",()=>{
+  const facts=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",import.meta.url),"utf8");
+  const images=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",import.meta.url),"utf8");
+  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
+  assert.match(facts,/Thông tin công khai hỗ trợ/);
+  assert.match(images,/Hình ảnh công khai/);
+  assert.doesNotMatch(`${facts}\n${images}\n${hero}`,/Bằng chứng|Kiểm tra bằng hình ảnh|Thông tin đảm bảo|Có dữ liệu kiểm định/);
+});
+
+test("Passport is a current identity record after supporting information without Timeline",()=>{
+  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
+  const passport=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",import.meta.url),"utf8");
+  assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PassportDossier"));
+  assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PassportDossier"));
+  assert.match(passport,/Hồ sơ nhận diện công khai/);
+  assert.match(passport,/không phải lịch sử đầy đủ/);
+  assert.doesNotMatch(passport,/passport\.timeline|passport\.facts|<ol/);
+});
+
+test("first Decision Dossier release omits unsupported future sections",()=>{
+  const files=["DecisionDossier.tsx","PublicMachineDetailView.tsx","SupportAndSticky.tsx","SpecificationsAndRecommendation.tsx"];
+  const source=files.map(file=>readFileSync(new URL(`../../app/(sales)/may/[slug]/_components/${file}`,import.meta.url),"utf8")).join("\n");
+  assert.doesNotMatch(source,/Benefits|Trade-offs|Timeline|RelatedMachines|relatedMachines|Decision Stories|Recommendation quiz/i);
+});
+
+test("final Decision Panel resolves uncertainty without urgency",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
+  assert.match(source,/Nếu bạn vẫn chưa chắc chắn/);
+  assert.match(source,/điều còn khiến bạn phân vân/);
+  assert.match(source,/<ContactActionLink className="primary-action" \/>/);
+  assert.doesNotMatch(source,/mua ngay|chốt|còn duy nhất|nhanh tay|countdown/i);
 });
 
 test("homepage renders the first three machines in existing repository order",()=>{
