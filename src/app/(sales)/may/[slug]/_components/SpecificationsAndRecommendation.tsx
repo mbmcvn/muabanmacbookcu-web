@@ -1,14 +1,11 @@
 import type { PublicMachineDetailV1 } from "@/models";
 import { buildPublicSpecificationRows } from "./technical-specifications-presentation";
+import { hasBalancedSuitability } from "./decision-dossier-presentation";
 
 export function PublicSpecifications({ machine }: { machine: PublicMachineDetailV1 }) {
   const rows = buildPublicSpecificationRows(machine);
   if (!rows.length) return null;
   return <section className="detail-section specification-section" aria-labelledby="specifications-heading"><header><p className="eyebrow">Cấu hình</p><h2 id="specifications-heading">Thông số kỹ thuật</h2></header><dl className="public-specifications">{rows.map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></section>;
-}
-
-export function hasBalancedSuitability(machine: PublicMachineDetailV1): boolean {
-  return machine.suitableFor.length > 0 && machine.notSuitableFor.length > 0;
 }
 
 export function SuitabilityAssessment({ machine }: { machine: PublicMachineDetailV1 }) {
