@@ -1418,3 +1418,66 @@ Every statement begins from the scope of the public dossier. It does not specula
 - related machines remain empty;
 - current public facts do not contain claim-level evidence provenance;
 - Suitable/Not Suitable and Expert Summary depend on optional reviewed editorial content.
+
+## Phase 3.5 Surgical Polish Record
+
+Implementation date: 2026-07-23
+
+### UX polish decisions
+
+- The Hero retains its existing visual importance and content.
+- One lightweight sentence now follows the Hero and introduces the dossier as
+  a place to compare the machine with the customer's needs and remaining
+  uncertainty.
+- The sentence is not a heading, card, recommendation or marketing claim.
+- Decision Summary and Expert Summary retain the existing visual language with
+  a narrower reading measure.
+- Existing dossier cards use the same spacing tokens with slightly more
+  consistent gaps and internal padding.
+- Additional approved images remain available through the existing lightbox,
+  but their repeated grid is now progressively disclosed with native HTML.
+
+### Contact-state policy
+
+Only one machine-specific primary contact state dominates at a time:
+
+1. While the Hero contact action is visible, the sticky contact utility is
+   absent.
+2. After the Hero action leaves the viewport, the sticky utility appears.
+3. When the final Decision Panel enters the viewport, the sticky utility is
+   absent again.
+
+The policy uses the existing contact destinations and copy. It does not change
+routing, contact-channel selection or the final Decision Panel.
+
+### Wording and public-content refinements
+
+- The verified-information heading is now “Đã xác minh trong hồ sơ công khai.”
+- Its scope statement identifies a public record and explicitly remains
+  separate from a comprehensive inspection conclusion.
+- Condition copy that claims `fullbox` is omitted when the structured public
+  included-items record does not affirm that a box is included.
+- If removing unsupported `fullbox` wording leaves no meaningful condition
+  description, the condition description is not rendered.
+- Condition copy is labelled as a public condition description rather than
+  being assumed to describe appearance only.
+
+### Technical-reference policy
+
+The Technical Reference no longer repeats Hero-derived model, chip, RAM,
+storage, color, screen-size or release-year values. It renders only allowlisted
+additional fields supplied by the existing technical-reference record, such as
+display detail, camera, ports, Touch ID and weight. If no additional reference
+field exists, the section remains absent.
+
+### Remaining known limitations
+
+- No currently published machine supplies a complete balanced Suitable / Not
+  Suitable pair for real-content visual QA.
+- Expert Summary remains dependent on optional reviewed editorial content.
+- Public limitations remain coarse status-level statements.
+- Battery, cycle count and cosmetic grade do not yet have owner-approved
+  explanatory context.
+- Passport remains a current identity record rather than a complete history.
+- Claim-level Evidence, provenance, Timeline, complete Care, Benefits,
+  Trade-offs, Related Machines and Recommendation remain deferred.
