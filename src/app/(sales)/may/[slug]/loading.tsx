@@ -1,3 +1,5 @@
+import { PageState } from "@/components/ui/PageState";
+
 export default function PublicMachineLoading() {
-  return <div className="container public-detail-page" role="status"><p>Đang tải hồ sơ máy…</p></div>;
+  return <PageState as="div" className="container public-detail-page" role="status" description="Đang tải hồ sơ máy…" />;
 }

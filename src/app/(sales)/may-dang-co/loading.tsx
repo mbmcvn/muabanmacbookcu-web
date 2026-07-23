@@ -1,3 +1,5 @@
+import { PageState } from "@/components/ui/PageState";
+
 export default function InventoryLoading() {
-  return <div className="container page-shell" role="status"><p>Đang tải danh sách máy…</p></div>;
+  return <PageState as="div" className="container page-shell" role="status" description="Đang tải danh sách máy…" />;
 }
