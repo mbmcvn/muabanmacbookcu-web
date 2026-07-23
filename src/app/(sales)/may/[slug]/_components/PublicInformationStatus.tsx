@@ -18,10 +18,12 @@ export function VerifiedPublicInformation({
     >
       <header>
         <p className="eyebrow">Phạm vi hồ sơ hiện tại</p>
-        <h2 id="verified-information-heading">Đã xác minh</h2>
+        <h2 id="verified-information-heading">
+          Đã xác minh trong hồ sơ công khai
+        </h2>
         <p>
-          Những thông tin dưới đây xác định đúng hồ sơ công khai của chiếc máy
-          này. Đây không phải kết luận kiểm định toàn diện.
+          Những thông tin dưới đây xác định đúng bản ghi công khai của chiếc
+          máy này, không phải kết luận kiểm định toàn diện.
         </p>
       </header>
       <dl className="detail-facts">

@@ -26,8 +26,17 @@ function formatIncludedItems(items: IncludedItemsInput): string | null {
   return hasPublicInformation ? "Không kèm phụ kiện" : null;
 }
 
-function meaningfulAppearanceDescription(value: string): string | null {
-  const description = value.trim();
+export function publicConditionDescription(
+  value: string,
+  includedItems: IncludedItemsInput,
+): string | null {
+  let description = value.trim();
+  if (includedItems.box !== true) {
+    description = description
+      .replace(/\b(?:máy\s+)?full\s*box\b/giu, "")
+      .replace(/^[\s,.;:–—-]+|[\s,.;:–—-]+$/g, "")
+      .trim();
+  }
   return description && !/^(?:chưa|không) có dữ liệu[.!]?$/i.test(description)
     ? description
     : null;
@@ -41,12 +50,15 @@ export function buildMachineEvidence(input: {
   includedItems: IncludedItemsInput;
 }): MachineEvidence[] {
   const accessories = formatIncludedItems(input.includedItems);
-  const appearance = meaningfulAppearanceDescription(input.conditionSummary);
+  const condition = publicConditionDescription(
+    input.conditionSummary,
+    input.includedItems,
+  );
   return [
     input.batteryHealthPercent === null ? null : { label: "Pin", value: `${input.batteryHealthPercent}%` },
     input.cycleCount === null ? null : { label: "Chu kỳ sạc", value: `${input.cycleCount} lần` },
     input.cosmeticGrade === null ? null : { label: "Ngoại hình", value: `Hạng ${input.cosmeticGrade}` },
     accessories === null ? null : { label: "Phụ kiện đi kèm", value: accessories, wide: true },
-    appearance === null ? null : { label: "Chi tiết ngoại hình", value: appearance, wide: true },
+    condition === null ? null : { label: "Mô tả tình trạng công khai", value: condition, wide: true },
   ].filter((item): item is MachineEvidence => item !== null);
 }
