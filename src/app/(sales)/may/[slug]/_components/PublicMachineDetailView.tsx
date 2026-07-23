@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { PublicMachineDetailV1 } from "@/models";
 import { useContactChannel, withContactChannel } from "@/hooks/useContactChannel";
 import { formatPublicMachineDisplayName } from "@/lib/presentation";
-import { DetailedImages } from "./ConditionAndImages";
 import { DecisionDossier } from "./DecisionDossier";
 import { DecisionPanel } from "./DecisionPanel";
 import { PublicMachineGallery } from "./PublicMachineGallery";
@@ -16,5 +15,5 @@ export function PublicMachineDetailView({ machine }: { machine: PublicMachineDet
   const { channel } = useContactChannel();
   const summary = machine.summary;
   const displayName = formatPublicMachineDisplayName(summary.displayName);
-  return <PublicMachineMediaProvider images={machine.gallery} title={displayName}><div className="container public-detail-page"><nav className="detail-breadcrumb" aria-label="Đường dẫn"><Link href={withContactChannel("/may-dang-co", channel)}>Máy đang có</Link><span aria-hidden="true">/</span><span>{displayName}{summary.color ? ` · ${summary.color}` : ""}</span></nav><div className="detail-hero"><PublicMachineGallery title={displayName} /><DecisionPanel machine={machine} /></div><DecisionDossier machine={machine} /><DetailedImages /><PublicSpecifications machine={machine} /><PoliciesAndSupport machine={machine} /></div></PublicMachineMediaProvider>;
+  return <PublicMachineMediaProvider images={machine.gallery} title={displayName}><div className="container public-detail-page"><nav className="detail-breadcrumb" aria-label="Đường dẫn"><Link href={withContactChannel("/may-dang-co", channel)}>Máy đang có</Link><span aria-hidden="true">/</span><span>{displayName}{summary.color ? ` · ${summary.color}` : ""}</span></nav><div className="detail-hero"><PublicMachineGallery title={displayName} /><DecisionPanel machine={machine} /></div><DecisionDossier machine={machine} /><PublicSpecifications machine={machine} /><PoliciesAndSupport machine={machine} /></div></PublicMachineMediaProvider>;
 }

@@ -7,6 +7,7 @@ import {
   PublicInformationLimitations,
   VerifiedPublicInformation,
 } from "./PublicInformationStatus";
+import { DetailedImages } from "./ConditionAndImages";
 
 export function DecisionDossier({ machine }: { machine: PublicMachineDetailV1 }) {
   return <div className="decision-dossier" aria-label="Hồ sơ và tình trạng thực tế">
@@ -15,7 +16,8 @@ export function DecisionDossier({ machine }: { machine: PublicMachineDetailV1 })
     <ExpertSummary machine={machine} />
     <VerifiedPublicInformation machine={machine} />
     <PublicInformationLimitations machine={machine} />
-    <PassportDossier machine={machine} />
     <MachineEvidenceGrid machine={machine} />
+    <DetailedImages />
+    <PassportDossier machine={machine} />
   </div>;
 }
