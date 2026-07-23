@@ -201,6 +201,50 @@
   font-size: 1.05rem;
 }
 
+.machineSection {
+  display: block;
+}
+
+.machineSection .sectionIntroduction {
+  margin-bottom: 1.75rem;
+}
+
+.machineGrid {
+  padding-top: 0;
+}
+
+.machineState {
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+}
+
+.machineState p {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+}
+
+.machineState p:first-child {
+  color: var(--foreground);
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.machineState p:last-child {
+  margin-bottom: 0;
+}
+
+.inventoryLink {
+  min-height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+  color: var(--accent);
+  font-weight: 680;
+}
+
 @media (min-width: 40rem) {
   .actions > a {
     min-width: 13rem;

@@ -82,7 +82,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .machine-card-body { min-width: 0; flex: 1; display: flex; flex-direction: column; padding: .85rem; }
 .machine-card-status { display: none; min-height: 1.6rem; align-items: center; justify-content: space-between; gap: .7rem; margin-bottom: .65rem; color: var(--accent); font-size: .84rem; font-weight: 680; }
 .context-label { color: var(--muted); font-weight: 580; }
-.machine-card h2 { margin-bottom: .2rem; overflow-wrap: break-word; font-size: 1rem; line-height: 1.25; letter-spacing: -.02em; }
+.machine-card :is(h2, h3) { margin-bottom: .2rem; overflow-wrap: break-word; font-size: 1rem; line-height: 1.25; letter-spacing: -.02em; }
 .machine-configuration, .machine-color { margin-bottom: .15rem; overflow-wrap: break-word; color: var(--muted); font-size: .8rem; line-height: 1.35; }
 .machine-price { margin: .55rem 0 .25rem; font-size: 1.15rem; font-weight: 740; letter-spacing: -.025em; }
 .machine-card-condition { margin: 0; overflow-wrap: break-word; color: var(--muted); font-size: .78rem; line-height: 1.35; }
@@ -244,7 +244,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .machine-image { flex: none; align-self: auto; aspect-ratio: 4 / 3; }
   .machine-card-body { padding: 1.15rem; }
   .machine-card-status { display: flex; }
-  .machine-card h2 { font-size: 1.12rem; line-height: 1.3; }
+  .machine-card :is(h2, h3) { font-size: 1.12rem; line-height: 1.3; }
   .machine-configuration, .machine-color { font-size: .94rem; }
   .machine-price { margin: 1rem 0; font-size: 1.42rem; }
   .machine-card-condition { display: none; }
