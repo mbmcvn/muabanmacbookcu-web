@@ -5,6 +5,8 @@ export const PUBLIC_MACHINE_DETAIL_V1_SCHEMA =
 export const PUBLIC_MACHINE_PASSPORT_V1_SCHEMA =
   "public-machine-passport.v1" as const;
 
+// These versioned DTOs are the public boundary for Machine data. A nullable
+// value is Unknown to the public projection; it must not be treated as false.
 export type ISODateTime = string;
 export type PublicMoney = { amount: number; currency: "VND" };
 export type PublicImage = {
@@ -18,6 +20,7 @@ export type PublicAvailability =
   | "reserved"
   | "sold"
   | "unavailable";
+// Repair statuses distinguish an operational claim from absence of Evidence.
 export type PublicRepairStatus =
   | "repaired"
   | "no_internal_repair_history"
@@ -51,6 +54,7 @@ export type PublicWarranty =
     };
 
 export type PublicInspection =
+  // Not available means Unknown publicly, not that the Machine failed.
   | { status: "not_available"; inspectedAt: null; summary: null }
   | {
       status: "passed" | "failed" | "incomplete";
@@ -65,6 +69,8 @@ export type PublicIncludedItems = {
   bag: boolean | null;
   accessories: string[];
 };
+// Public facts are display-safe Evidence. Human judgement belongs in the
+// Recommendation fields on PublicMachineDetailV1.
 export type PublicFact = { label: string; value: string };
 export type PublicTimelineEvent = {
   type: string;
