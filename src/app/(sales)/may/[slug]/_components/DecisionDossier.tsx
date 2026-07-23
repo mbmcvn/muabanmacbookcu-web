@@ -11,7 +11,7 @@ import { DetailedImages } from "./ConditionAndImages";
 
 export function DecisionDossier({ machine }: { machine: PublicMachineDetailV1 }) {
   return <div className="decision-dossier" aria-label="Hồ sơ và tình trạng thực tế">
-    <DecisionSummary />
+    <DecisionSummary machine={machine} />
     <SuitabilityAssessment machine={machine} />
     <ExpertSummary machine={machine} />
     <VerifiedPublicInformation machine={machine} />

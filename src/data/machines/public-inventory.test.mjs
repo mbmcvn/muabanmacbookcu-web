@@ -651,8 +651,9 @@ test("Decision Summary is concise and precedes the fit assessment",()=>{
   const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
   assert.match(summary,/Có nên tiếp tục cân nhắc chiếc máy này\?/);
   assert.match(summary,/Hãy đọc cả trường hợp phù hợp/);
+  assert.match(summary,/chưa có đủ nhận định cân bằng/);
   assert.doesNotMatch(summary,/<ul|<ol|RAM|SSD|Chip/);
-  assert.ok(dossier.indexOf("<DecisionSummary")<dossier.indexOf("<SuitabilityAssessment"));
+  assert.ok(dossier.indexOf("<DecisionSummary machine={machine}")<dossier.indexOf("<SuitabilityAssessment"));
 });
 
 test("Suitable and Not Suitable publish only as a balanced pair",()=>{
