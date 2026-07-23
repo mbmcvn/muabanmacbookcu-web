@@ -20,7 +20,7 @@ import {
 import { loadPublicInventoryState } from "./public-inventory-load-state.ts";
 import { nextOpenFilter, selectFacetValues, selectionKeepsFilterOpen } from "../../app/(sales)/may-dang-co/_components/inventory-filter-interaction.ts";
 import { formatMachineCardCondition, formatMachineCardDisplayName, formatMachineCardSpecs, getMachineCardBatteryFact } from "../../app/(sales)/may-dang-co/_components/machine-card-presentation.ts";
-import { buildDecisionFacts } from "../../app/(sales)/may/[slug]/_components/decision-facts-presentation.ts";
+import { buildMachineEvidence } from "../../app/(sales)/may/[slug]/_components/machine-evidence-presentation.ts";
 import { clampGalleryIndex, galleryIndexAfterSwipe, resistGalleryDrag, resolveGalleryDragIndex, wrapGalleryIndex } from "../../app/(sales)/may/[slug]/_components/gallery-navigation.ts";
 import { classifyGalleryImageShape } from "../../app/(sales)/may/[slug]/_components/gallery-image-shape.ts";
 import { buildPublicSpecificationRows } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
@@ -302,17 +302,17 @@ const decisionInput=(overrides={})=>({
   ...overrides,
 });
 
-test("decision facts keep both available battery values and omit missing ones",()=>{
-  assert.deepEqual(buildDecisionFacts(decisionInput()).slice(0,2),[
+test("machine evidence keeps both available battery values and omits missing ones",()=>{
+  assert.deepEqual(buildMachineEvidence(decisionInput()).slice(0,2),[
     {label:"Pin",value:"95%"},
     {label:"Chu kỳ sạc",value:"143 lần"},
   ]);
-  const missing=buildDecisionFacts(decisionInput({batteryHealthPercent:null,cycleCount:null}));
+  const missing=buildMachineEvidence(decisionInput({batteryHealthPercent:null,cycleCount:null}));
   assert.equal(missing.some(fact=>fact.label==="Pin"||fact.label==="Chu kỳ sạc"),false);
 });
 
-test("appearance grade and description are merged into decision facts in order",()=>{
-  const facts=buildDecisionFacts(decisionInput());
+test("appearance grade and description are merged into machine evidence in order",()=>{
+  const facts=buildMachineEvidence(decisionInput());
   assert.deepEqual(facts.map(fact=>fact.label),[
     "Pin","Chu kỳ sạc","Ngoại hình","Phụ kiện đi kèm","Chi tiết ngoại hình",
   ]);
@@ -322,10 +322,10 @@ test("appearance grade and description are merged into decision facts in order",
 });
 
 test("meaningless appearance and unavailable inspection placeholders are omitted",()=>{
-  const facts=buildDecisionFacts(decisionInput({conditionSummary:"Chưa có dữ liệu."}));
+  const facts=buildMachineEvidence(decisionInput({conditionSummary:"Chưa có dữ liệu."}));
   assert.equal(facts.some(fact=>fact.label==="Chi tiết ngoại hình"),false);
   assert.equal(facts.some(fact=>fact.label==="Kiểm định"),false);
-  const decisionSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/TrustAndFacts.tsx",import.meta.url),"utf8");
+  const decisionSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",import.meta.url),"utf8");
   const passportSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",import.meta.url),"utf8");
   assert.doesNotMatch(decisionSource,/\["Kiểm định"|Chưa có dữ liệu kiểm định/);
   assert.doesNotMatch(passportSource,/passport\.inspection\.status === "not_available" \? "Chưa có dữ liệu"/);
@@ -338,7 +338,7 @@ test("standalone appearance section is retired after decision-fact merge",()=>{
   assert.doesNotMatch(condition,/Chi tiết ngoại hình|condition-copy|condition-section/);
 });
 
-test("decision facts are one column on mobile and two columns above the tablet breakpoint",()=>{
+test("machine evidence is one column on mobile and two columns above the tablet breakpoint",()=>{
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
   assert.match(css,/\.detail-facts \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(css,/@media \(min-width: 40rem\) \{[\s\S]*?\.detail-facts \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
@@ -614,7 +614,7 @@ test("detailed observation images open the same lightbox at their gallery index"
 test("desktop decision dossier places Passport before condition and mobile stacks them",()=>{
   const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.ok(dossier.indexOf("<PassportDossier")<dossier.indexOf("<DecisionFactGrid"));
+  assert.ok(dossier.indexOf("<PassportDossier")<dossier.indexOf("<MachineEvidenceGrid"));
   assert.match(css,/\.decision-dossier \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.decision-dossier \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });

@@ -6,7 +6,7 @@ interface IncludedItemsInput {
   accessories: string[];
 }
 
-export interface DecisionFact {
+export interface MachineEvidence {
   label: string;
   value: string;
   wide?: boolean;
@@ -33,13 +33,13 @@ function meaningfulAppearanceDescription(value: string): string | null {
     : null;
 }
 
-export function buildDecisionFacts(input: {
+export function buildMachineEvidence(input: {
   batteryHealthPercent: number | null;
   cycleCount: number | null;
   cosmeticGrade: string | null;
   conditionSummary: string;
   includedItems: IncludedItemsInput;
-}): DecisionFact[] {
+}): MachineEvidence[] {
   const accessories = formatIncludedItems(input.includedItems);
   const appearance = meaningfulAppearanceDescription(input.conditionSummary);
   return [
@@ -48,5 +48,5 @@ export function buildDecisionFacts(input: {
     input.cosmeticGrade === null ? null : { label: "Ngoại hình", value: `Hạng ${input.cosmeticGrade}` },
     accessories === null ? null : { label: "Phụ kiện đi kèm", value: accessories, wide: true },
     appearance === null ? null : { label: "Chi tiết ngoại hình", value: appearance, wide: true },
-  ].filter((fact): fact is DecisionFact => fact !== null);
+  ].filter((item): item is MachineEvidence => item !== null);
 }
