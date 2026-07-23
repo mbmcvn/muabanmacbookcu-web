@@ -12,8 +12,8 @@ type ContactActionLinkProps = Omit<
 };
 
 export function ContactActionLink({ label: requestedLabel, ...props }: ContactActionLinkProps) {
-  const { contactUrl, contactLabel } = useContactChannel();
-  const label = requestedLabel ?? contactLabel ?? "Nhắn MBMC xác nhận máy";
+  const { contactUrl } = useContactChannel();
+  const label = requestedLabel ?? "Nhắn MBMC xác nhận máy";
 
   return (
     <a
