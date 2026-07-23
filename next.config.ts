@@ -14,15 +14,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "img.mbmc.vn", pathname: "/machines/**" },
     ],
   },
-   async redirects() {
-    return [
-      {
-        source: "/care/:path*",
-        destination: "https://mbmc-care.vercel.app/care/:path*",
-        permanent: false,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
