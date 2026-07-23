@@ -1,5 +1,9 @@
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { homepageContent } from "./home-content";
+import {
+  GuidancePanel,
+  SectionHeader,
+} from "./HomepagePresentation";
 import styles from "./Home.module.css";
 
 export function HumanGuidanceEntry() {
@@ -10,18 +14,21 @@ export function HumanGuidanceEntry() {
       className={`${styles.section} ${styles.guidanceSection}`}
       aria-labelledby="guidance-title"
     >
-      <div className={styles.sectionIntroduction}>
-        <p className={styles.eyebrow}>{content.eyebrow}</p>
-        <h2 id="guidance-title">{content.title}</h2>
-        <p>{content.description}</p>
-      </div>
-      <div className={styles.guidanceAction}>
-        <ContactActionLink
-          className={styles.primaryAction}
-          label={content.action}
-        />
-        <p>{content.note}</p>
-      </div>
+      <SectionHeader
+        eyebrow={content.eyebrow}
+        title={content.title}
+        titleId="guidance-title"
+        description={content.description}
+      />
+      <GuidancePanel
+        action={
+          <ContactActionLink
+            className={styles.primaryAction}
+            label={content.action}
+          />
+        }
+        note={content.note}
+      />
     </section>
   );
 }

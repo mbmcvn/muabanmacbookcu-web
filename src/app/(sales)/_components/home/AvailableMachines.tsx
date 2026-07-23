@@ -4,6 +4,7 @@ import type { PublicInventoryLoadState } from "@/data/machines/public-inventory-
 import { PageState } from "@/components/ui/PageState";
 import { MachineCard } from "../../may-dang-co/_components/MachineCard";
 import { selectHomepageMachines } from "./homepage-machine-selection";
+import { SectionHeader } from "./HomepagePresentation";
 import styles from "./Home.module.css";
 
 export function AvailableMachines({
@@ -19,14 +20,12 @@ export function AvailableMachines({
       className={`${styles.section} ${styles.machineSection}`}
       aria-labelledby="available-machines-title"
     >
-      <div className={styles.sectionIntroduction}>
-        <p className={styles.eyebrow}>Máy cụ thể, thông tin cụ thể</p>
-        <h2 id="available-machines-title">Một số máy đang có</h2>
-        <p>
-          Ba máy đầu tiên theo thứ tự hiện có trong danh sách công khai của
-          MBMC. Đây không phải danh sách đề xuất cho riêng bạn.
-        </p>
-      </div>
+      <SectionHeader
+        eyebrow="Máy cụ thể, thông tin cụ thể"
+        title="Một số máy đang có"
+        titleId="available-machines-title"
+        description="Ba máy đầu tiên theo thứ tự hiện có trong danh sách công khai của MBMC. Đây không phải danh sách đề xuất cho riêng bạn."
+      />
 
       {state.status === "unavailable" ? (
         <PageState

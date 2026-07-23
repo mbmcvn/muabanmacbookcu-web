@@ -1,4 +1,8 @@
 import { homepageContent } from "./home-content";
+import {
+  DecisionTimeline,
+  SectionHeader,
+} from "./HomepagePresentation";
 import styles from "./Home.module.css";
 
 export function HowMbmcHelps() {
@@ -9,22 +13,13 @@ export function HowMbmcHelps() {
       className={`${styles.section} ${styles.approachSection}`}
       aria-labelledby="approach-title"
     >
-      <div className={styles.sectionIntroduction}>
-        <p className={styles.eyebrow}>{content.eyebrow}</p>
-        <h2 id="approach-title">{content.title}</h2>
-        <p>{content.description}</p>
-      </div>
-      <ol className={styles.stepList}>
-        {content.steps.map((step, index) => (
-          <li key={step.title}>
-            <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-            <div>
-              <h3>{step.title}</h3>
-              <p>{step.description}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <SectionHeader
+        eyebrow={content.eyebrow}
+        title={content.title}
+        titleId="approach-title"
+        description={content.description}
+      />
+      <DecisionTimeline steps={content.steps} />
     </section>
   );
 }

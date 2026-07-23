@@ -1,4 +1,8 @@
 import { homepageContent } from "./home-content";
+import {
+  DecisionTopicGrid,
+  SectionHeader,
+} from "./HomepagePresentation";
 import styles from "./Home.module.css";
 
 export function UncertaintyRecognition() {
@@ -9,16 +13,13 @@ export function UncertaintyRecognition() {
       className={`${styles.section} ${styles.uncertaintySection}`}
       aria-labelledby="uncertainty-title"
     >
-      <div className={styles.sectionIntroduction}>
-        <p className={styles.eyebrow}>{content.eyebrow}</p>
-        <h2 id="uncertainty-title">{content.title}</h2>
-        <p>{content.description}</p>
-      </div>
-      <ul className={styles.concernList}>
-        {content.concerns.map((concern) => (
-          <li key={concern}>{concern}</li>
-        ))}
-      </ul>
+      <SectionHeader
+        eyebrow={content.eyebrow}
+        title={content.title}
+        titleId="uncertainty-title"
+        description={content.description}
+      />
+      <DecisionTopicGrid items={content.concerns} />
     </section>
   );
 }

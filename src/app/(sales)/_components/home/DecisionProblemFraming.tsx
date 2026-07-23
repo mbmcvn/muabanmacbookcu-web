@@ -1,5 +1,9 @@
 import Image from "next/image";
 import { homepageContent } from "./home-content";
+import {
+  EditorialChecklist,
+  SectionHeader,
+} from "./HomepagePresentation";
 import styles from "./Home.module.css";
 
 export function DecisionProblemFraming() {
@@ -11,10 +15,11 @@ export function DecisionProblemFraming() {
       aria-labelledby="problem-title"
     >
       <div className={styles.problemIntroduction}>
-        <div className={styles.sectionIntroduction}>
-          <p className={styles.eyebrow}>{content.eyebrow}</p>
-          <h2 id="problem-title">{content.title}</h2>
-        </div>
+        <SectionHeader
+          eyebrow={content.eyebrow}
+          title={content.title}
+          titleId="problem-title"
+        />
         <div className={styles.problemImage}>
           <Image
             src="/images/home/mid-image.webp"
@@ -24,17 +29,10 @@ export function DecisionProblemFraming() {
           />
         </div>
       </div>
-      <div className={styles.problemCopy}>
-        <ul>
-          {content.statements.map((statement) => (
-            <li key={statement}>
-              <span aria-hidden="true">✓</span>
-              {statement}
-            </li>
-          ))}
-        </ul>
-        <p className={styles.problemConclusion}>{content.conclusion}</p>
-      </div>
+      <EditorialChecklist
+        items={content.statements}
+        conclusion={content.conclusion}
+      />
     </section>
   );
 }

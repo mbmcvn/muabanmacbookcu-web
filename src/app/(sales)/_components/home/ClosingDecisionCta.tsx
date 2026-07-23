@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { homepageContent } from "./home-content";
+import { SectionHeader } from "./HomepagePresentation";
 import styles from "./Home.module.css";
 
 export function ClosingDecisionCta() {
@@ -8,9 +9,12 @@ export function ClosingDecisionCta() {
 
   return (
     <section className={styles.closing} aria-labelledby="closing-title">
-      <p className={styles.eyebrow}>{content.eyebrow}</p>
-      <h2 id="closing-title">{content.title}</h2>
-      <p>{content.description}</p>
+      <SectionHeader
+        eyebrow={content.eyebrow}
+        title={content.title}
+        titleId="closing-title"
+        description={content.description}
+      />
       <div className={styles.actions}>
         <ContactActionLink
           className={styles.primaryAction}

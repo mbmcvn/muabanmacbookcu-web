@@ -1,7 +1,8 @@
 .home {
-  --home-divider: color-mix(in srgb, var(--border) 68%, transparent);
-  --home-radius: 0.75rem;
-  --home-shadow-rest: 0 1px 2px rgb(24 24 23 / 3%), 0 8px 24px rgb(24 24 23 / 3%);
+  --home-divider: color-mix(in srgb, var(--border) 52%, transparent);
+  --home-radius: 0.85rem;
+  --home-shadow-rest: 0 1px 2px rgb(24 24 23 / 3%), 0 10px 28px rgb(24 24 23 / 4%);
+  --home-shadow-emphasis: 0 2px 4px rgb(24 24 23 / 3%), 0 16px 38px rgb(24 24 23 / 5%);
   padding-block: 0 8rem;
 }
 
@@ -41,7 +42,7 @@
 }
 
 .eyebrow::after {
-  width: 1.5rem;
+  width: 2rem;
   height: 1px;
   background: color-mix(in srgb, var(--accent) 38%, transparent);
   content: "";
@@ -133,7 +134,7 @@
 .section {
   display: grid;
   gap: 2rem;
-  padding-block: clamp(3.5rem, 8vw, 6.5rem);
+  padding-block: clamp(4.5rem, 8vw, 7rem);
   border-top: 1px solid var(--home-divider);
 }
 
@@ -144,13 +145,14 @@
 .sectionIntroduction h2 {
   margin-bottom: 0.8rem;
   font-size: clamp(2rem, 5vw, 3.35rem);
+  font-weight: 580;
   line-height: 1.08;
   letter-spacing: -0.045em;
 }
 
 .sectionIntroduction > p:last-child {
   margin-bottom: 0;
-  color: var(--muted);
+  color: #5d5d59;
   font-size: 1.05rem;
   line-height: 1.7;
 }
@@ -164,37 +166,38 @@
 
 .concernList {
   display: grid;
-  gap: 1rem;
+  gap: 1px;
+  overflow: hidden;
+  border-block: 1px solid var(--home-divider);
+  background: var(--home-divider);
 }
 
 .concernList li {
-  min-height: 7rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.25rem;
-  border: 1px solid var(--border);
-  border-radius: var(--home-radius);
-  background: var(--surface);
-  font-weight: 610;
-  box-shadow: var(--home-shadow-rest);
+  min-height: 7.25rem;
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1.15rem;
+  padding: 1.5rem clamp(1.25rem, 2.4vw, 2rem);
+  background: color-mix(in srgb, var(--surface) 97%, var(--accent-soft));
+  font-size: clamp(1rem, 1.3vw, 1.08rem);
+  font-weight: 620;
+  line-height: 1.35;
 }
 
-.concernList li::before {
-  width: 2.25rem;
-  height: 2.25rem;
+.topicMarker {
+  width: 3rem;
+  height: 3rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  content: "?";
-  font-size: 1.05rem;
-  font-weight: 720;
+  background: transparent;
+  color: #144735;
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .problemSection {
@@ -212,6 +215,7 @@
   margin-top: clamp(1.75rem, 4vw, 2.5rem);
   overflow: hidden;
   border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-rest);
 }
 
 .problemImage img {
@@ -226,70 +230,103 @@
 .problemCopy ul {
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--home-divider);
   list-style: none;
 }
 
 .problemCopy li {
   display: grid;
-  grid-template-columns: 1.25rem minmax(0, 1fr);
-  gap: 0.9rem;
-  padding-block: 1.2rem;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-height: 6rem;
+  padding-block: 1.25rem;
   border-bottom: 1px solid var(--home-divider);
-  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
-  font-weight: 650;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 620;
+  line-height: 1.25;
 }
 
-.problemCopy li > span {
+.problemCopy li:first-child {
+  border-top: 1px solid var(--home-divider);
+}
+
+.checkMarker {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 50%;
   color: var(--accent);
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .problemCopy .problemConclusion {
   max-width: 34rem;
-  margin: 2.25rem 0 0;
-  color: var(--muted);
+  margin: 2.75rem 0 0;
+  color: #62625e;
   font-size: 1.05rem;
   font-weight: 400;
   line-height: 1.7;
 }
 
 .stepList {
-  border-top: 1px solid var(--home-divider);
+  position: relative;
 }
 
 .stepList li {
+  position: relative;
   display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-  gap: 1.2rem;
-  padding-block: 1.5rem;
-  border-bottom: 1px solid var(--home-divider);
+  grid-template-columns: 4.25rem minmax(0, 1fr);
+  gap: 1.5rem;
+  min-height: 8.5rem;
+  padding: 0 0 2.25rem;
 }
 
-.stepList li > span {
-  width: 2rem;
-  height: 2rem;
+.stepList li:not(:last-child)::after {
+  position: absolute;
+  top: 3.65rem;
+  bottom: 0.65rem;
+  left: 1.77rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--accent) 22%, var(--home-divider));
+  content: "";
+}
+
+.stepMarker {
+  width: 3.6rem;
+  height: 3.6rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--home-divider);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius: 50%;
-  color: var(--accent);
-  font-size: 0.82rem;
-  font-weight: 700;
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
+  color: #144735;
+  font-size: 0.78rem;
+  font-weight: 760;
+  letter-spacing: 0.05em;
+}
+
+.stepContent {
+  padding-top: 0.45rem;
 }
 
 .stepList h3 {
-  margin-bottom: 0.4rem;
-  font-size: 1.15rem;
+  margin-bottom: 0.65rem;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 590;
+  letter-spacing: -0.025em;
 }
 
 .stepList p {
   max-width: 32rem;
   margin: 0;
-  color: var(--muted);
-  line-height: 1.65;
+  color: #62625e;
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .guidanceSection {
@@ -299,25 +336,28 @@
 
 .guidanceAction {
   max-width: 32rem;
-  min-height: 13rem;
+  min-height: 17rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(1.75rem, 4vw, 2.75rem);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--home-radius);
-  background: var(--surface);
-  box-shadow: var(--home-shadow-rest);
+  padding: clamp(2rem, 4vw, 3rem);
+  border-radius: calc(var(--home-radius) * 1.35);
+  background: #173f32;
+  color: white;
 }
 
 .guidanceAction .primaryAction {
   width: 100%;
-  min-height: 3.75rem;
+  min-height: 4rem;
+  border-color: white;
+  background: white;
+  color: #173f32;
+  font-size: 1.02rem;
 }
 
 .guidanceAction p {
-  margin: 1.15rem 0 0;
-  color: var(--muted);
+  margin: 1.5rem 0 0;
+  color: rgb(255 255 255 / 70%);
   font-size: 0.9rem;
   line-height: 1.6;
 }
@@ -337,7 +377,7 @@
   letter-spacing: -0.045em;
 }
 
-.closing > p:not(.eyebrow) {
+.closing .sectionIntroduction > p:last-child {
   max-width: 39rem;
   margin-bottom: 1.5rem;
   color: var(--muted);
@@ -398,8 +438,19 @@
 }
 
 .trustList li {
-  padding: 1.25rem 0;
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 1.5rem 0;
   border-bottom: 1px solid var(--border);
+}
+
+.trustList li > span {
+  padding-top: 0.12rem;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 740;
+  letter-spacing: 0.06em;
 }
 
 .trustList h3 {
@@ -517,31 +568,41 @@
   }
 
   .concernList {
-    gap: 0.75rem;
+    gap: 1px;
   }
 
   .concernList li {
     min-height: 5rem;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.85rem;
-    padding: 0.85rem 1rem;
+    grid-template-columns: 2.35rem minmax(0, 1fr);
+    gap: 0.9rem;
+    padding: 1rem 0.25rem;
   }
 
-  .concernList li::before {
-    flex: 0 0 auto;
-    width: 2rem;
-    height: 2rem;
+  .topicMarker {
+    width: 2.35rem;
+    height: 2.35rem;
   }
 
   .stepList li {
-    padding-block: 1.25rem;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: 1rem;
+    min-height: 7.5rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .stepMarker {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .stepList li:not(:last-child)::after {
+    top: 3.05rem;
+    left: 1.47rem;
   }
 
   .guidanceAction {
     min-height: 0;
-    padding: 1.25rem;
+    padding: 1.75rem;
   }
 }
 
@@ -565,15 +626,17 @@
   }
 
   .problemSection {
-    grid-template-columns: minmax(0, 0.82fr) minmax(28rem, 1.08fr);
+    grid-template-columns: minmax(0, 0.86fr) minmax(28rem, 1.08fr);
     gap: clamp(4rem, 8vw, 7rem);
   }
 
   .problemCopy {
     align-self: center;
+    transform: translateY(1.25rem);
   }
 
   .approachSection {
     grid-template-columns: minmax(0, 0.88fr) minmax(28rem, 1.12fr);
+    padding-block: clamp(5.5rem, 9vw, 8rem);
   }
 }
