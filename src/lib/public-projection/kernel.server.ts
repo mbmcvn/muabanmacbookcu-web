@@ -2,6 +2,7 @@ import type {
   PublicAvailability,
   PublicCosmeticGrade,
   PublicIncludedItems,
+  PublicReservationKind,
 } from "./contracts.ts";
 
 const PUBLIC_IMAGE_TYPES = new Set([
@@ -73,6 +74,8 @@ export type PublicMachineProjectionInput = {
   batteryHealthPercent?: number | null;
   cycleCount?: number | null;
   cosmeticGrade?: PublicCosmeticGrade | null;
+  reservations?: PublicReservationKind[];
+  reservationStateInvalid?: boolean;
   publication: PublicationInput | null;
   editorial: EditorialInput | null;
   images: PublicImageInput[];
@@ -105,6 +108,8 @@ export type NormalizedPublicMachineFacts = {
   batteryHealthPercent: number | null;
   cycleCount: number | null;
   cosmeticGrade: PublicCosmeticGrade | null;
+  reservations: PublicReservationKind[];
+  reservationStateInvalid: boolean;
   publication: PublicationInput | null;
   editorial: EditorialInput | null;
   images: NormalizedPublicImage[];
@@ -130,6 +135,7 @@ export type PublicProjectionKernel = {
   color: string;
   priceAmount: number;
   availability: PublicAvailability;
+  reservationKind: PublicReservationKind | null;
   images: PublicKernelImage[];
   coverIndex: number;
   batteryHealthPercent: number | null;
@@ -198,6 +204,8 @@ export function normalizePublicMachineFacts(
     batteryHealthPercent: input.batteryHealthPercent ?? null,
     cycleCount: input.cycleCount ?? null,
     cosmeticGrade: input.cosmeticGrade ?? null,
+    reservations: [...(input.reservations ?? [])],
+    reservationStateInvalid: input.reservationStateInvalid === true,
     publication: input.publication ? { ...input.publication } : null,
     editorial: editorial
       ? {

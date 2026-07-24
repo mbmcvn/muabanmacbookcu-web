@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublicMachineBySlug } from "@/data/machines/get-public-machine-by-slug";
 import { PublicMachineDetailView } from "./_components/PublicMachineDetailView";
@@ -9,11 +8,8 @@ interface DetailPageProps { params: Promise<{ slug: string }>; }
 
 export const revalidate = 60;
 
-async function canonicalMachineUrl(slug: string): Promise<string> {
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-  const protocol = requestHeaders.get("x-forwarded-proto")?.split(",")[0] ?? "https";
-  return host ? `${protocol}://${host}/may/${encodeURIComponent(slug)}` : `/may/${encodeURIComponent(slug)}`;
+function canonicalMachineUrl(slug: string): string {
+  return new URL(`/may/${encodeURIComponent(slug)}`, "https://mbmc.vn").toString();
 }
 
 export async function generateMetadata({ params }: DetailPageProps): Promise<Metadata> {
@@ -25,12 +21,12 @@ export async function generateMetadata({ params }: DetailPageProps): Promise<Met
   return {
     title: `${summary.displayName} · ${summary.code}`,
     description,
-    alternates: { canonical: await canonicalMachineUrl(slug) },
+    alternates: { canonical: canonicalMachineUrl(slug) },
     openGraph: {
       title: `${summary.displayName} · ${summary.code}`,
       description,
       type: "website",
-      url: await canonicalMachineUrl(slug),
+      url: canonicalMachineUrl(slug),
       images: [{ url: summary.coverImage.url, alt: summary.coverImage.alt }],
     },
   };

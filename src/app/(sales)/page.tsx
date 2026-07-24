@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   title: "Hiểu rõ trước khi chọn MacBook cũ",
   description:
     "MBMC giúp bạn hiểu nhu cầu, hiểu từng chiếc MacBook cũ và tự tin hơn trước khi quyết định.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Hiểu rõ trước khi chọn MacBook cũ",
+    description:
+      "MBMC giúp bạn hiểu nhu cầu, hiểu từng chiếc MacBook cũ và tự tin hơn trước khi quyết định.",
+    type: "website",
+    url: "/",
+  },
 };
 
 export default async function HomePage() {

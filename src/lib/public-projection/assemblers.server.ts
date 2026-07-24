@@ -65,6 +65,7 @@ export function assemblePublicMachineSummaryV1(
     color: kernel.color,
     price: { amount: kernel.priceAmount, currency: "VND" },
     availability: kernel.availability,
+    reservationKind: kernel.reservationKind,
     coverImage: { ...gallery[kernel.coverIndex] },
     imageCount: gallery.length,
     batteryHealthPercent: kernel.batteryHealthPercent,

@@ -78,7 +78,15 @@ test("candidate exclusion diagnostics contain only safe fields",()=>{
   const diagnostics=[];
   const results=projectPublicCandidates([row("MBMC-BAD",{retail_price_expected:null}),row("MBMC-GOOD")],diagnostic=>diagnostics.push(diagnostic));
   assert.equal(results.some(result=>result.eligible),true);
-  assert.deepEqual(diagnostics,[{stage:"ELIGIBILITY_REJECTED",code:"candidate_excluded",machineCode:"MBMC-BAD",exclusionReason:"invalid_retail_price"}]);
+  assert.deepEqual(diagnostics,[{
+    stage:"ELIGIBILITY_REJECTED",
+    code:"candidate_excluded",
+    machineCode:"MBMC-BAD",
+    exclusionReason:"invalid_retail_price",
+    validationIssue:"invalid_retail_price",
+    validationPath:"machine.retailPriceExpected",
+    message:"Retail price is missing or invalid.",
+  }]);
   const serialized=JSON.stringify(diagnostics);
   for(const forbidden of ["approved_by","reviewed_by","machine_id","private-owner","uuid","staff"]){assert.equal(serialized.includes(forbidden),false);}
 });
@@ -89,6 +97,7 @@ test("repository query selects deployed publication relationships without wildca
   assert.match(source,/machine_publications\.status/);
   assert.doesNotMatch(source,/select\([^)]*\*/);
   assert.match(source,/visibility, sort_order, is_cover/);
+  assert.match(source,/console\.error\("\[public-inventory\]", JSON\.stringify\(diagnostic\)\)/);
 });
 
 test("public inventory card prefers battery health when available",()=>{

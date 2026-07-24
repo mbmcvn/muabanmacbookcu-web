@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { homepageContent } from "./home-content";
 import styles from "./Home.module.css";
 
@@ -30,10 +29,9 @@ export function HomeHero() {
           </h1>
           <p className={styles.heroDescription}>{content.description}</p>
           <div className={styles.actions}>
-            <ContactActionLink
-              className={styles.primaryAction}
-              label={content.guidanceAction}
-            />
+            <Link className={styles.primaryAction} href="/chon-macbook">
+              {content.guidanceAction}
+            </Link>
             <Link className={styles.secondaryAction} href="/may-dang-co">
               {content.inventoryAction}
             </Link>

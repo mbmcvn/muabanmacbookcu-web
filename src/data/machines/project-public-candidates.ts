@@ -6,6 +6,7 @@ import type {
   PublicImageInput,
   PublicMachineProjectionInput,
 } from "../../lib/public-projection/kernel.server.ts";
+import type { ProjectionDenialReason } from "../../lib/public-projection/eligibility.server.ts";
 import type {
   PublicMachineDetailV1,
   PublicMachineSummaryV1,
@@ -19,6 +20,21 @@ function integer(value: unknown): number | null { return typeof value === "numbe
 function stringArray(value: unknown): string[] { return Array.isArray(value) ? value.map(text).filter((item): item is string => item !== null) : []; }
 function includedItems(value: unknown) { const row=isRow(value)?value:{}; return { charger:typeof row.charger==="boolean"?row.charger:null, cable:typeof row.cable==="boolean"?row.cable:null, box:typeof row.box==="boolean"?row.box:null, bag:typeof row.bag==="boolean"?row.bag:null, accessories:stringArray(row.accessories) }; }
 function family(model: string | null): "Air" | "Pro" | "Unknown" { if (/macbook\s+air/i.test(model??"")) return "Air"; if (/macbook\s+pro/i.test(model??"")) return "Pro"; return "Unknown"; }
+function reservations(value: unknown): ("manual"|"deposit")[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!isRow(item) || text(item.lifecycle_status) !== "reserved") return [];
+    const kind = text(item.reservation_kind);
+    return kind === "manual" || kind === "deposit" ? [kind] : [];
+  });
+}
+function reservationStateInvalid(value: unknown): boolean {
+  if (!Array.isArray(value)) return value !== undefined && value !== null;
+  return value.some((item) => {
+    if (!isRow(item) || text(item.lifecycle_status) !== "reserved") return false;
+    return !["manual", "deposit"].includes(text(item.reservation_kind) ?? "");
+  });
+}
 
 function publicImages(value: unknown): PublicImageInput[] {
   if (!Array.isArray(value)) return [];
@@ -36,7 +52,7 @@ export function normalizePublicCandidate(value: unknown): PublicMachineProjectio
   if(!isRow(value)) return null;
   const publication=oneRow(value.machine_publications),editorial=oneRow(value.machine_editorials),model=text(value.model_text);
   return {
-    code:text(value.machine_id),status:value.deleted_at===null?(text(value.status)??"unknown"):"deleted",displayName:model,family:family(model),chip:text(value.chip),ramGb:integer(value.ram_gb),ssdGb:integer(value.ssd_gb),color:text(value.color),retailPriceExpected:integer(value.retail_price_expected),batteryHealthPercent:integer(value.battery_health),cycleCount:integer(value.battery_cycle),cosmeticGrade:text(value.rank),
+    code:text(value.machine_id),status:value.deleted_at===null?(text(value.status)??"unknown"):"deleted",displayName:model,family:family(model),chip:text(value.chip),ramGb:integer(value.ram_gb),ssdGb:integer(value.ssd_gb),color:text(value.color),retailPriceExpected:integer(value.retail_price_expected),batteryHealthPercent:integer(value.battery_health),cycleCount:integer(value.battery_cycle),cosmeticGrade:text(value.rank),reservations:reservations(value.sales),reservationStateInvalid:reservationStateInvalid(value.sales),
     publication:publication?{status:text(publication.status) as "draft"|"approved"|"published"|"archived",slug:text(publication.slug),revision:integer(publication.revision)??0,approvedBy:text(publication.approved_by),approvedAt:text(publication.approved_at),approvedEditorialRevision:integer(publication.approved_editorial_revision),publishedBy:text(publication.published_by),firstPublishedAt:text(publication.first_published_at),publishedAt:text(publication.published_at),publishedEditorialRevision:integer(publication.published_editorial_revision),updatedAt:text(publication.updated_at)}:null,
     editorial:editorial?{revision:integer(editorial.revision)??0,publicConditionSummary:text(editorial.public_condition_summary),expertSummary:text(editorial.expert_summary),suitableFor:stringArray(editorial.suitable_for),notSuitableFor:stringArray(editorial.not_suitable_for),contextualLabel:text(editorial.contextual_label),includedItems:includedItems(editorial.included_items),policyApplicability:stringArray(editorial.policy_applicability),reviewedBy:text(editorial.reviewed_by),reviewedAt:text(editorial.reviewed_at)}:null,
     images:publicImages(value.machine_images),privacyValid:true,
@@ -52,6 +68,27 @@ export type PublicCandidateDiagnostic = {
   code: string;
   machineCode?: string;
   exclusionReason?: string;
+  validationIssue: string;
+  validationPath: string;
+  message: string;
+};
+
+const ELIGIBILITY_DIAGNOSTICS: Record<
+  ProjectionDenialReason,
+  Pick<PublicCandidateDiagnostic, "validationPath" | "message">
+> = {
+  publication_not_published: { validationPath: "publication.status", message: "Publication is not published." },
+  invalid_slug: { validationPath: "publication.slug", message: "Publication slug is missing or invalid." },
+  publication_audit_incomplete: { validationPath: "publication.audit", message: "Publication approval or publishing audit is incomplete." },
+  editorial_revision_mismatch: { validationPath: "publication.editorialRevision", message: "Published editorial revision does not match the current editorial." },
+  machine_status_ineligible: { validationPath: "machine.status", message: "Machine status is not eligible for public inventory." },
+  reservation_state_invalid: { validationPath: "sales.reservation", message: "Machine has an invalid public reservation state." },
+  invalid_retail_price: { validationPath: "machine.retailPriceExpected", message: "Retail price is missing or invalid." },
+  invalid_public_cover: { validationPath: "machine.images.cover", message: "Exactly one valid public cover image is required." },
+  missing_condition_summary: { validationPath: "editorial.publicConditionSummary", message: "Public condition summary is missing." },
+  editorial_review_incomplete: { validationPath: "editorial.review", message: "Editorial review audit is incomplete." },
+  configuration_incomplete: { validationPath: "machine.configuration", message: "Required public machine configuration is incomplete." },
+  privacy_invalid: { validationPath: "candidate.privacy", message: "Candidate failed the public privacy boundary." },
 };
 
 function safeMachineCode(value: unknown): string | undefined {
@@ -80,6 +117,9 @@ export function projectPublicCandidates(
         stage: "CANDIDATE_NORMALIZATION_FAILED",
         code: "candidate_invalid",
         ...(machineCode ? { machineCode } : {}),
+        validationIssue: "candidate_invalid",
+        validationPath: "candidate",
+        message: "Candidate could not be normalized for public projection.",
       });
       continue;
     }
@@ -88,6 +128,9 @@ export function projectPublicCandidates(
         stage: "CANDIDATE_NORMALIZATION_FAILED",
         code: "candidate_invalid",
         ...(machineCode ? { machineCode } : {}),
+        validationIssue: "candidate_invalid",
+        validationPath: "candidate",
+        message: "Candidate could not be normalized for public projection.",
       });
       continue;
     }
@@ -97,6 +140,7 @@ export function projectPublicCandidates(
       projected.push(result);
       if (!result.eligible) {
         for (const exclusionReason of result.reasons) {
+          const detail = ELIGIBILITY_DIAGNOSTICS[exclusionReason];
           onDiagnostic({
             stage:
               exclusionReason === "privacy_invalid"
@@ -105,6 +149,9 @@ export function projectPublicCandidates(
             code: "candidate_excluded",
             ...(machineCode ? { machineCode } : {}),
             exclusionReason,
+            validationIssue: exclusionReason,
+            validationPath: detail.validationPath,
+            message: detail.message,
           });
         }
       }
@@ -113,6 +160,9 @@ export function projectPublicCandidates(
         stage: "DTO_ASSEMBLY_FAILED",
         code: "projection_failed",
         ...(machineCode ? { machineCode } : {}),
+        validationIssue: "projection_failed",
+        validationPath: "candidate",
+        message: "Candidate could not be assembled into the public DTO.",
       });
     }
   }

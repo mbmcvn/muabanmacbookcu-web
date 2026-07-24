@@ -20,6 +20,7 @@ export type PublicAvailability =
   | "reserved"
   | "sold"
   | "unavailable";
+export type PublicReservationKind = "manual" | "deposit";
 // Repair statuses distinguish an operational claim from absence of Evidence.
 export type PublicRepairStatus =
   | "repaired"
@@ -92,6 +93,7 @@ export interface PublicMachineSummaryV1 {
   color: string | null;
   price: PublicMoney;
   availability: PublicAvailability;
+  reservationKind: PublicReservationKind | null;
   coverImage: PublicImage;
   imageCount: number;
   batteryHealthPercent: number | null;
@@ -140,7 +142,7 @@ export interface PublicMachineDetailV1 {
 export const PUBLIC_MACHINE_SUMMARY_V1_KEYS = [
   "schemaVersion", "code", "slug", "displayName", "family", "year",
   "screenSizeInches", "chip", "ramGb", "ssdGb", "color", "price",
-  "availability", "coverImage", "imageCount", "batteryHealthPercent",
+  "availability", "reservationKind", "coverImage", "imageCount", "batteryHealthPercent",
   "cycleCount", "cosmeticGrade", "conditionSummary", "warranty",
   "inspection", "contextualLabel", "publishedAt", "updatedAt",
 ] as const satisfies readonly (keyof PublicMachineSummaryV1)[];

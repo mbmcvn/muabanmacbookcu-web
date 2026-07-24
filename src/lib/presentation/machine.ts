@@ -3,6 +3,7 @@ import type {
   MachineConditionGrade,
   Money,
 } from "@/models";
+import type { PublicReservationKind } from "@/lib/public-projection/contracts";
 
 export function formatCurrencyVnd(money: Money): string {
   return new Intl.NumberFormat("vi-VN", {
@@ -12,10 +13,16 @@ export function formatCurrencyVnd(money: Money): string {
   }).format(money.amount);
 }
 
-export function formatMachineAvailability(value: MachineAvailability): string {
+export function formatMachineAvailability(
+  value: MachineAvailability,
+  reservationKind: PublicReservationKind | null = null,
+): string {
+  if (value === "reserved") {
+    return reservationKind === "deposit" ? "Đã có khách cọc" : "Đang giữ";
+  }
   const labels: Record<MachineAvailability, string> = {
     available: "Đang có sẵn",
-    reserved: "Đang được giữ máy",
+    reserved: "Đang giữ",
     sold: "Đã bán",
     unavailable: "Tạm thời không có sẵn",
   };

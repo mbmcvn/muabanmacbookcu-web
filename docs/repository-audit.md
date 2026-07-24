@@ -51,7 +51,7 @@ The root error and not-found states sit outside `(sales)`. As a result, the glob
 | `/may/[slug]` | Public machine dossier/detail | Dynamic server-rendered route with `revalidate = 60`; metadata and page each call a React-cached loader; dossier becomes a large client subtree | Same Supabase repository/projection, resolved by filtering eligible projected rows for exact slug |
 | framework 404 | Unknown public URL | Static root not-found UI | None |
 
-There are no public routes for recommendation, decision stories, policies hosted in this app, selling, or care. Header links for policies, selling, and brand navigate to external `muabanmacbookcu.com` URLs. `#chon-macbook` is linked from the desktop header but no matching element exists on the current pages.
+There are no public routes for recommendation, decision stories, policies hosted in this app, selling, or care. The header brand navigates to the local homepage, while policies and selling remain external legacy dependencies on `muabanmacbookcu.com`. `#chon-macbook` is linked from the desktop header but no matching element exists on the current pages.
 
 Build output classifies `/` and the framework 404 as static, `/may-dang-co` as static ISR, and both slug shapes as dynamic/on-demand.
 

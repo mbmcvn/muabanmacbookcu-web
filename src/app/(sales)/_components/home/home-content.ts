@@ -5,8 +5,8 @@ export const homepageContent = {
     titleLines: ["Mua MacBook cũ", "không nên là một", "canh bạc."],
     description:
       "MBMC giúp bạn hiểu rõ nhu cầu của mình, hiểu rõ từng chiếc máy và tự tin với quyết định trước khi mua.",
-    guidanceAction: "Nhắn MBMC để chọn máy phù hợp",
-    inventoryAction: "Xem máy đang có",
+    guidanceAction: "Bắt đầu tìm MacBook",
+    inventoryAction: "Xem máy có sẵn",
     trustIndicators: [
       "Máy cụ thể, hồ sơ riêng",
       "Thông tin công khai được duyệt",

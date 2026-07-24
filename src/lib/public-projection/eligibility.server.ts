@@ -13,6 +13,7 @@ export type ProjectionDenialReason =
   | "publication_audit_incomplete"
   | "editorial_revision_mismatch"
   | "machine_status_ineligible"
+  | "reservation_state_invalid"
   | "invalid_retail_price"
   | "invalid_public_cover"
   | "missing_condition_summary"
@@ -68,6 +69,9 @@ export function validatePublicMachineEligibility(
   if (facts.machineStatus !== "new_in_stock") {
     reasons.push("machine_status_ineligible");
   }
+  if (facts.reservationStateInvalid || facts.reservations.length > 1) {
+    reasons.push("reservation_state_invalid");
+  }
   if (
     !Number.isSafeInteger(facts.retailPriceExpected) ||
     (facts.retailPriceExpected ?? 0) <= 0
@@ -110,7 +114,8 @@ export function validatePublicMachineEligibility(
       ssdGb: facts.ssdGb!,
       color: facts.color!.trim(),
       priceAmount: facts.retailPriceExpected!,
-      availability: "available",
+      availability: facts.reservations.length === 1 ? "reserved" : "available",
+      reservationKind: facts.reservations[0] ?? null,
       images: facts.images.map((image) => ({
         url: image.url,
         alt: image.alt,

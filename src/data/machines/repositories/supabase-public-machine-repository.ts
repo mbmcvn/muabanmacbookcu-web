@@ -19,6 +19,7 @@ const PUBLIC_CANDIDATE_FIELDS = `
   battery_health,
   battery_cycle,
   rank,
+  sales (lifecycle_status, reservation_kind),
   machine_publications!inner (status, slug, revision, approved_by, approved_at, approved_editorial_revision, published_by, first_published_at, published_at, published_editorial_revision, updated_at),
   machine_editorials (revision, public_condition_summary, expert_summary, suitable_for, not_suitable_for, contextual_label, included_items, policy_applicability, reviewed_by, reviewed_at),
   machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover)
@@ -38,15 +39,16 @@ async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
     .eq("machine_publications.status", "published")
     .order("machine_id", { ascending: true });
   if (error) {
-    console.error("[public-inventory]", {
+    console.error("[public-inventory]", JSON.stringify({
       stage: "PUBLIC_INVENTORY_QUERY_FAILED",
       code: error.code ?? "unknown",
       operation,
-    });
+      message: "Public inventory query failed.",
+    }));
     throw new PublicInventoryDatabaseError(operation, error.code ?? "unknown");
   }
   return projectPublicCandidates(data ?? [], (diagnostic) =>
-    console.error("[public-inventory]", diagnostic),
+    console.error("[public-inventory]", JSON.stringify(diagnostic)),
   );
 }
 

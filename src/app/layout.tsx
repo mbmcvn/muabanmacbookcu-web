@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mbmc.vn"),
   title: { default: "MBMC · MacBook cũ minh bạch", template: "%s · MBMC" },
   description: "Thông tin rõ ràng về từng chiếc MacBook cũ trước khi bạn liên hệ MBMC.",
 };

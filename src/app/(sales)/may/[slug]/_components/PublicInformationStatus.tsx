@@ -29,7 +29,7 @@ export function VerifiedPublicInformation({
       <dl className="detail-facts">
         <div><dt>Mã máy</dt><dd>{summary.code}</dd></div>
         <div><dt>Model công khai</dt><dd>{formatPublicMachineDisplayName(summary.displayName)}</dd></div>
-        <div><dt>Trạng thái công khai</dt><dd>{formatMachineAvailability(summary.availability)}</dd></div>
+        <div><dt>Trạng thái công khai</dt><dd>{formatMachineAvailability(summary.availability, summary.reservationKind)}</dd></div>
         <div><dt>Hình ảnh công khai</dt><dd>{summary.imageCount} ảnh trong hồ sơ</dd></div>
       </dl>
     </section>
