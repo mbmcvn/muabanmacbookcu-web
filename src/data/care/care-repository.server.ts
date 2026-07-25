@@ -11,17 +11,22 @@ import {
   PUBLIC_CARE_EVENT_TYPES,
   type PublicCarePassport,
 } from "./care-contract";
+import type { CareAccessContext } from "./care-session";
+import {
+  findEffectiveCareOwnership,
+  findLatestEffectiveCareSale,
+} from "./care-ownership";
 
 const PUBLIC_MACHINE_FIELDS =
-  "id, machine_id, model_text, chip, ram_gb, ssd_gb, color, public_condition_note";
-const SALE_CONTEXT_FIELDS = "id, created_at";
-const ACTIVATION_FIELDS = "id, activated_at";
+  "id, machine_id, status, model_text, chip, ram_gb, ssd_gb, color, public_condition_note";
 const PUBLIC_EVENT_FIELDS = "id, event_type, created_at";
 
 export async function getPublicCarePassport(
   rawMachineCode: string,
+  access: CareAccessContext,
 ): Promise<PublicCarePassport | null> {
   const machineCode = normalizeMachineCode(rawMachineCode);
+  if (access.machineCode !== machineCode) return null;
   const client = createServerSupabaseClient();
   const { data: machine, error: machineError } = await client
     .from("machines")
@@ -35,29 +40,24 @@ export async function getPublicCarePassport(
   }
   if (!machine) return null;
 
-  const { data: sale, error: saleError } = await client
-    .from("sales")
-    .select(SALE_CONTEXT_FIELDS)
-    .eq("machine_id", machine.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (saleError) {
-    logCareError("CARE_SALE_QUERY_FAILED", saleError.code);
+  const { resolution, error: ownershipError } =
+    await findEffectiveCareOwnership(client, {
+      id: machine.id,
+      machineCode: machine.machine_id,
+      status: machine.status,
+    });
+  if (ownershipError) {
+    logCareError("CARE_OWNERSHIP_QUERY_FAILED", ownershipError.code);
     throw new Error("Care Passport is temporarily unavailable.");
   }
-
-  const { data: owner, error: ownerError } = sale
-    ? await client
-        .from("machine_owners")
-        .select(ACTIVATION_FIELDS)
-        .eq("sale_id", sale.id)
-        .maybeSingle()
-    : { data: null, error: null };
-  if (ownerError) {
-    logCareError("CARE_ACTIVATION_QUERY_FAILED", ownerError.code);
-    throw new Error("Care Passport is temporarily unavailable.");
-  }
+  const ownership = resolution.ownership;
+  if (
+    !ownership ||
+    ownership.sale.id !== access.saleId ||
+    ownership.owner.id !== access.ownershipId
+  ) return null;
+  const sale = ownership.sale;
+  const owner = ownership.owner;
 
   const { data: eventRows, error: eventsError } = sale
     ? await client
@@ -92,8 +92,8 @@ export async function getPublicCarePassport(
     }),
     color: machine.color,
     condition: machine.public_condition_note,
-    ownershipState: owner ? "activated" : sale ? "awaiting_activation" : "not_sold",
-    activatedAt: owner?.activated_at ?? null,
+    ownershipState: "activated",
+    activatedAt: owner.activated_at,
     events,
   });
 }
@@ -104,7 +104,10 @@ export async function activateCarePassport(input: {
   phone: string;
 }) {
   const client = createServerSupabaseClient();
-  return activateCarePassportWithStore(input, createCareActivationStore(client));
+  return activateCarePassportWithStore(
+    input,
+    createCareActivationStore(client),
+  );
 }
 
 function createCareActivationStore(
@@ -117,17 +120,22 @@ function createCareActivationStore(
         .select("id, machine_id")
         .eq("machine_id", machineCode)
         .maybeSingle();
-      return error ? "failed" : data ? { id: data.id, machineCode: data.machine_id } : null;
+      return error
+        ? "failed"
+        : data
+          ? { id: data.id, machineCode: data.machine_id }
+          : null;
     },
     async findLatestSale(machineId) {
-      const { data, error } = await client
-        .from("sales")
-        .select("id, buyer_phone")
-        .eq("machine_id", machineId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return error ? "failed" : data ? { id: data.id, buyerPhone: data.buyer_phone } : null;
+      const { sale: data, error } = await findLatestEffectiveCareSale(
+        client,
+        machineId,
+      );
+      return error
+        ? "failed"
+        : data
+          ? { id: data.id, buyerPhone: data.buyer_phone }
+          : null;
     },
     async hasOwner(saleId) {
       const { data, error } = await client
@@ -151,7 +159,7 @@ function createCareActivationStore(
       const { error } = await client.from("machine_events").insert({
         machine_id: machineCode,
         event_type: "activated",
-        title: "Kích hoạt bảo hành điện tử",
+        title: "KÃƒÂ­ch hoÃ¡ÂºÂ¡t bÃ¡ÂºÂ£o hÃƒÂ nh Ã„â€˜iÃ¡Â»â€¡n tÃ¡Â»Â­",
         note: null,
         visibility: "public",
         hidden: false,
@@ -161,25 +169,47 @@ function createCareActivationStore(
     },
   };
 }
-export async function submitCareSupport(input: {
-  machineCode: string;
-  title: string;
-  description: string;
-}): Promise<"submitted" | "invalid_input" | "not_activated" | "failed"> {
+export async function submitCareSupport(
+  input: {
+    machineCode: string;
+    title: string;
+    description: string;
+  },
+  access: CareAccessContext,
+): Promise<"submitted" | "invalid_input" | "not_activated" | "failed"> {
   const machineCode = normalizeMachineCode(input.machineCode);
   const title = input.title.trim();
   const description = input.description.trim();
-  if (!title || !description || title.length > 100 || description.length > 2000) {
+  if (
+    !title ||
+    !description ||
+    title.length > 100 ||
+    description.length > 2000
+  ) {
     return "invalid_input";
   }
 
   const client = createServerSupabaseClient();
-  const { data: machine } = await client.from("machines").select("id").eq("machine_id", machineCode).maybeSingle();
+  const { data: machine } = await client
+    .from("machines")
+    .select("id, machine_id, status")
+    .eq("machine_id", machineCode)
+    .maybeSingle();
   if (!machine) return "not_activated";
-  const { data: sale } = await client.from("sales").select("id").eq("machine_id", machine.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (!sale) return "not_activated";
-  const { data: owner } = await client.from("machine_owners").select("phone").eq("sale_id", sale.id).maybeSingle();
-  if (!owner) return "not_activated";
+  const { resolution, error: ownershipError } =
+    await findEffectiveCareOwnership(client, {
+      id: machine.id,
+      machineCode: machine.machine_id,
+      status: machine.status,
+    });
+  const ownership = resolution.ownership;
+  if (
+    ownershipError ||
+    !ownership ||
+    ownership.sale.id !== access.saleId ||
+    ownership.owner.id !== access.ownershipId
+  ) return "not_activated";
+  const owner = ownership.owner;
 
   const { error: ticketError } = await client.from("support_tickets").insert({
     machine_id: machineCode,
@@ -195,7 +225,7 @@ export async function submitCareSupport(input: {
   const { error: eventError } = await client.from("machine_events").insert({
     machine_id: machineCode,
     event_type: "support_ticket",
-    title: "Đã tiếp nhận yêu cầu hỗ trợ",
+    title: "Ã„ÂÃƒÂ£ tiÃ¡ÂºÂ¿p nhÃ¡ÂºÂ­n yÃƒÂªu cÃ¡ÂºÂ§u hÃ¡Â»â€” trÃ¡Â»Â£",
     note: null,
     visibility: "public",
     hidden: false,

@@ -1,8 +1,8 @@
 import {
   normalizeMachineCode,
-  normalizePhone,
   prepareActivationName,
 } from "./care-contract.ts";
+import { normalizeVietnamesePhone } from "./care-access.ts";
 
 export type ActivationResult =
   | "activated"
@@ -18,7 +18,9 @@ type SaleVerification = Readonly<{ id: string; buyerPhone: string | null }>;
 
 export type CareActivationStore = {
   findMachine(machineCode: string): Promise<MachineIdentity | null | "failed">;
-  findLatestSale(machineId: string): Promise<SaleVerification | null | "failed">;
+  findLatestSale(
+    machineId: string,
+  ): Promise<SaleVerification | null | "failed">;
   hasOwner(saleId: string): Promise<boolean | "failed">;
   insertOwner(input: {
     saleId: string;
@@ -30,7 +32,8 @@ export type CareActivationStore = {
 };
 
 export function activationRedirectStatus(result: ActivationResult) {
-  if (result === "activated" || result === "already_activated") return "success";
+  if (result === "activated" || result === "already_activated")
+    return "success";
   if (result === "details_mismatch") return "mismatch";
   if (result === "invalid_input") return "invalid";
   return "failed";
@@ -41,8 +44,8 @@ export async function activateCarePassportWithStore(
 ): Promise<ActivationResult> {
   const machineCode = normalizeMachineCode(input.machineCode);
   const customerName = prepareActivationName(input.customerName);
-  const phone = normalizePhone(input.phone);
-  if (!customerName || !/^0\d{9}$/.test(phone)) return "invalid_input";
+  const phone = normalizeVietnamesePhone(input.phone);
+  if (!customerName || !phone) return "invalid_input";
 
   const machine = await store.findMachine(machineCode);
   if (machine === "failed") return "failed";
@@ -56,7 +59,7 @@ export async function activateCarePassportWithStore(
   if (hasOwner === "failed") return "failed";
   if (hasOwner) return "already_activated";
 
-  if (phone !== normalizePhone(sale.buyerPhone ?? "")) {
+  if (phone !== normalizeVietnamesePhone(sale.buyerPhone ?? "")) {
     return "details_mismatch";
   }
 

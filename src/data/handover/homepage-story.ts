@@ -1,5 +1,5 @@
 export const HOMEPAGE_STORY_SCHEMA_VERSION =
-  "homepage-handover-story.v1" as const;
+  "homepage-handover-story.v2" as const;
 export const HOMEPAGE_STORY_LIMIT = 4;
 
 export type HomepageStoryDTO = {
@@ -9,6 +9,7 @@ export type HomepageStoryDTO = {
   title: string;
   excerpt: string;
   imageUrl: string;
+  peopleHref: string | null;
   occurredAt: string | null;
   publishedAt: string;
 };
@@ -20,6 +21,7 @@ type ProjectionRow = {
   title?: unknown;
   excerpt?: unknown;
   image_url?: unknown;
+  people_href?: unknown;
   occurred_at?: unknown;
   published_at?: unknown;
 };
@@ -42,6 +44,12 @@ function safeSlug(value: unknown) {
   if (typeof value !== "string") return null;
   const slug = value.trim();
   return slug && slug.length <= 160 ? slug : null;
+}
+
+function safePeopleHref(value: unknown) {
+  if (value === null) return null;
+  if (typeof value !== "string") return undefined;
+  return /^\/people\/story-[0-9a-f]{32}$/.test(value) ? value : undefined;
 }
 
 function isoDate(value: unknown, nullable = false) {
@@ -67,6 +75,7 @@ export function parseHomepageStory(value: unknown): HomepageStoryDTO | null {
   const excerpt = safeText(row.excerpt, 240);
   const occurredAt = isoDate(row.occurred_at, true);
   const publishedAt = isoDate(row.published_at);
+  const peopleHref = safePeopleHref(row.people_href);
   let imageUrl: string | null = null;
 
   if (typeof row.image_url === "string") {
@@ -90,7 +99,8 @@ export function parseHomepageStory(value: unknown): HomepageStoryDTO | null {
     !excerpt ||
     !imageUrl ||
     occurredAt === undefined ||
-    !publishedAt
+    !publishedAt ||
+    peopleHref === undefined
   ) {
     return null;
   }
@@ -102,6 +112,7 @@ export function parseHomepageStory(value: unknown): HomepageStoryDTO | null {
     title,
     excerpt,
     imageUrl,
+    peopleHref,
     occurredAt,
     publishedAt,
   };

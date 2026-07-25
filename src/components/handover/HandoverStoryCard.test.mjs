@@ -8,12 +8,16 @@ const section = readFileSync(
   "utf8",
 );
 
-test("card renders only public presentation fields and no broken destination", () => {
+test("card conditionally renders a semantic link and CTA from the supplied href", () => {
   assert.match(card, /story\.imageUrl/);
   assert.match(card, /story\.customerLabel/);
   assert.match(card, /story\.title/);
   assert.match(card, /story\.excerpt/);
-  assert.doesNotMatch(card, /href|\/people|canonical|saleId|machineId/);
+  assert.match(card, /import Link from "next\/link"/);
+  assert.match(card, /story\.href \?/);
+  assert.match(card, /<Link className=\{styles\.link\} href=\{story\.href\}>/);
+  assert.match(card, /Đọc câu chuyện →/);
+  assert.doesNotMatch(card, /role="link"|cursor-pointer|\/people|canonical|saleId|machineId/);
 });
 
 test("section omits empty data and maps one through four stories without placeholders", () => {

@@ -8,27 +8,33 @@ import {
 } from "./homepage-story.ts";
 
 const row = (number = 1) => ({
-  schema_version: "homepage-handover-story.v1",
+  schema_version: "homepage-handover-story.v2",
   slug: `story-${String(number).padStart(32, "0")}`,
   customer_label: `Khách hàng ${number}`,
   title: `Homepage title ${number}`,
   excerpt: `Homepage excerpt ${number}`,
   image_url: `https://media.mbmc.vn/handover-public/${number}.webp`,
+  people_href: `/people/story-${String(number).padStart(32, "0")}`,
   occurred_at: `2026-07-${String(20 + number).padStart(2, "0")}T00:00:00.000Z`,
   published_at: "2026-07-20T00:00:00.000Z",
 });
 
 test("valid public projection maps to the exact safe DTO", () => {
   assert.deepEqual(parseHomepageStory(row()), {
-    schemaVersion: "homepage-handover-story.v1",
+    schemaVersion: "homepage-handover-story.v2",
     slug: "story-00000000000000000000000000000001",
     customerLabel: "Khách hàng 1",
     title: "Homepage title 1",
     excerpt: "Homepage excerpt 1",
     imageUrl: "https://media.mbmc.vn/handover-public/1.webp",
+    peopleHref: "/people/story-00000000000000000000000000000001",
     occurredAt: "2026-07-21T00:00:00.000Z",
     publishedAt: "2026-07-20T00:00:00.000Z",
   });
+});
+
+test("nullable People destination is accepted", () => {
+  assert.equal(parseHomepageStory({ ...row(), people_href: null })?.peopleHref, null);
 });
 
 test("PostgreSQL microsecond timestamps are accepted and normalized", () => {
@@ -49,6 +55,14 @@ test("unsafe and malformed rows are rejected without serializing private fields"
   assert.equal(parseHomepageStory({ ...row(), image_url: "http://media.mbmc.vn/handover-public/a.webp" }), null);
   assert.equal(parseHomepageStory({ ...row(), customer_label: "0901 234 567" }), null);
   assert.equal(parseHomepageStory({ ...row(), image_url: "https://evil.test/a.webp" }), null);
+  for (const people_href of [
+    "https://mbmc.vn/people/story-00000000000000000000000000000001",
+    "/people/not-a-story",
+    "/may/story-00000000000000000000000000000001",
+    "",
+  ]) {
+    assert.equal(parseHomepageStory({ ...row(), people_href }), null);
+  }
   const parsed = parseHomepageStory({ ...row(), sale_id: "private", story: "private" });
   assert.equal("saleId" in parsed, false);
   assert.equal("story" in parsed, false);

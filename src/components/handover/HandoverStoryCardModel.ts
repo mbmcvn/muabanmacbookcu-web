@@ -17,7 +17,7 @@ export function mapHomepageStoryToCard(
     title: story.title,
     excerpt: story.excerpt,
     imageUrl: story.imageUrl,
-    href: null,
+    href: story.peopleHref,
   };
 }
 
