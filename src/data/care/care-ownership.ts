@@ -1,4 +1,5 @@
-﻿import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import { normalizeVietnamesePhone } from "./care-access.ts";
 
 export type CareOwnershipReason =
   | "CARE_NO_EFFECTIVE_OWNERSHIP"
@@ -10,6 +11,19 @@ export type EffectiveCareOwnership = Readonly<{ owner: CareOwner; sale: CareSale
 export type CareOwnershipResolution = Readonly<
   | { ownership: EffectiveCareOwnership; reasonCode: null }
   | { ownership: null; reasonCode: CareOwnershipReason }
+>;
+export type CareLifecycleResolution = Readonly<
+  | { state: "activation_required"; sale: CareSale; ownership: null; reasonCode: null }
+  | { state: "activated"; sale: CareSale; ownership: EffectiveCareOwnership; reasonCode: null }
+  | {
+      state: "unsafe";
+      sale: null;
+      ownership: null;
+      reasonCode:
+        | "CARE_NO_ELIGIBLE_SALE"
+        | "CARE_ACTIVATION_AMBIGUOUS"
+        | "CARE_ALREADY_ACTIVATED";
+    }
 >;
 
 function effectiveSaleTime(sale: CareSale) {
@@ -23,11 +37,45 @@ function isLegacyFulfilledSale(sale: CareSale) {
     (sale.handover_status === "handed_over" || sale.handover_status === "delivered");
 }
 
+export function resolveCareLifecycle(input: { machineId: string; machineCode: string; machineStatus: string | null; owners: readonly CareOwner[]; sales: readonly CareSale[] }): CareLifecycleResolution {
+  const sales = input.sales.filter((sale) => sale.machine_id === input.machineId);
+  const completed = sales.filter((sale) => sale.lifecycle_status === "completed");
+  if (!completed.length) {
+    return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_NO_ELIGIBLE_SALE" };
+  }
+  const latestTime = completed.reduce((latest, sale) =>
+    latest > effectiveSaleTime(sale) ? latest : effectiveSaleTime(sale), "");
+  const authoritative = completed.filter((sale) => effectiveSaleTime(sale) === latestTime);
+  if (authoritative.length !== 1) {
+    return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
+  }
+  const sale = authoritative[0];
+  const cycleOwners = input.owners.filter((owner) =>
+    owner.machine_id === input.machineCode && owner.sale_id === sale.id);
+  if (cycleOwners.length > 1) {
+    return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
+  }
+  if (cycleOwners.length === 1) {
+    if (!cycleOwners[0].activated_at) {
+      return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_ALREADY_ACTIVATED" };
+    }
+    return {
+      state: "activated",
+      sale,
+      ownership: { owner: cycleOwners[0], sale, compatibility: "modern" },
+      reasonCode: null,
+    };
+  }
+  if (input.machineStatus !== "sold" || !normalizeVietnamesePhone(sale.buyer_phone ?? "")) {
+    return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_NO_ELIGIBLE_SALE" };
+  }
+  return { state: "activation_required", sale, ownership: null, reasonCode: null };
+}
+
 export function resolveEffectiveCareOwnership(input: { machineId: string; machineCode: string; machineStatus: string | null; owners: readonly CareOwner[]; sales: readonly CareSale[] }): CareOwnershipResolution {
   const owners = input.owners.filter((owner) => owner.machine_id === input.machineCode && Boolean(owner.activated_at));
   const sales = input.sales.filter((sale) => sale.machine_id === input.machineId);
   if (!owners.length) return { ownership: null, reasonCode: "CARE_NO_EFFECTIVE_OWNERSHIP" };
-
   const completed = newestSales(sales.filter((sale) => sale.lifecycle_status === "completed"));
   if (completed.length) {
     const currentSale = completed[0];
@@ -40,7 +88,6 @@ export function resolveEffectiveCareOwnership(input: { machineId: string; machin
     }
     return { ownership: null, reasonCode: "CARE_NO_EFFECTIVE_OWNERSHIP" };
   }
-
   if (input.machineStatus !== "sold") return { ownership: null, reasonCode: "CARE_LEGACY_OWNERSHIP_UNSUPPORTED" };
   if (owners.length !== 1) return { ownership: null, reasonCode: "CARE_AMBIGUOUS_OWNERSHIP" };
   const owner = owners[0];
@@ -56,17 +103,24 @@ export function resolveEffectiveCareOwnership(input: { machineId: string; machin
     : { ownership: null, reasonCode: "CARE_LEGACY_OWNERSHIP_UNSUPPORTED" };
 }
 
-export async function findEffectiveCareOwnership(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string; status: string | null }>): Promise<{ resolution: CareOwnershipResolution; error: PostgrestError | null }> {
+const CARE_SELECT = "id, machine_id, buyer_phone, lifecycle_status, payment_status, handover_status, created_at, completed_at, sold_at";
+
+async function loadCareRows(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string }>) {
   const [ownersResult, salesResult] = await Promise.all([
-    client.from("machine_owners").select("id, machine_id, sale_id, phone, activated_at, created_at").eq("machine_id", machine.machineCode).order("created_at", { ascending: false }),
-    client.from("sales").select("id, machine_id, buyer_phone, lifecycle_status, payment_status, handover_status, created_at, completed_at, sold_at").eq("machine_id", machine.id),
+    client.from("machine_owners").select("id, machine_id, sale_id, phone, activated_at, created_at").eq("machine_id", machine.machineCode),
+    client.from("sales").select(CARE_SELECT).eq("machine_id", machine.id),
   ]);
-  const error = ownersResult.error ?? salesResult.error;
+  return { ownersResult, salesResult, error: ownersResult.error ?? salesResult.error };
+}
+
+export async function findEffectiveCareOwnership(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string; status: string | null }>): Promise<{ resolution: CareOwnershipResolution; error: PostgrestError | null }> {
+  const { ownersResult, salesResult, error } = await loadCareRows(client, machine);
   if (error) return { resolution: { ownership: null, reasonCode: "CARE_NO_EFFECTIVE_OWNERSHIP" }, error };
   return { resolution: resolveEffectiveCareOwnership({ machineId: machine.id, machineCode: machine.machineCode, machineStatus: machine.status, owners: (ownersResult.data ?? []) as CareOwner[], sales: (salesResult.data ?? []) as CareSale[] }), error: null };
 }
 
-export async function findLatestEffectiveCareSale(client: SupabaseClient, machineId: string): Promise<{ sale: CareSale | null; error: PostgrestError | null }> {
-  const { data, error } = await client.from("sales").select("id, machine_id, buyer_phone, lifecycle_status, payment_status, handover_status, created_at, completed_at, sold_at").eq("machine_id", machineId).eq("lifecycle_status", "completed").order("completed_at", { ascending: false, nullsFirst: false }).order("sold_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(1).maybeSingle();
-  return { sale: data as CareSale | null, error };
+export async function findCareLifecycle(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string; status: string | null }>): Promise<{ resolution: CareLifecycleResolution; error: PostgrestError | null }> {
+  const { ownersResult, salesResult, error } = await loadCareRows(client, machine);
+  if (error) return { resolution: { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" }, error };
+  return { resolution: resolveCareLifecycle({ machineId: machine.id, machineCode: machine.machineCode, machineStatus: machine.status, owners: (ownersResult.data ?? []) as CareOwner[], sales: (salesResult.data ?? []) as CareSale[] }), error: null };
 }

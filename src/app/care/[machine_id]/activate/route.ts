@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import { readCurrentCareAccess } from "@/data/care/care-access.server";
 import { activateCarePassport } from "@/data/care/care-repository.server";
 import { activationRedirectStatus } from "@/data/care/care-activation";
 import { normalizeMachineCode } from "@/data/care/care-contract";
+import {
+  CARE_SESSION_COOKIE,
+  careSessionCookieOptions,
+  createCareSession,
+} from "@/data/care/care-session";
 
 export async function POST(
   request: Request,
@@ -10,16 +14,6 @@ export async function POST(
 ) {
   const { machine_id } = await context.params;
   const machineCode = normalizeMachineCode(machine_id);
-  const access = await readCurrentCareAccess(machineCode);
-  if (!access) {
-    return NextResponse.redirect(
-      new URL(
-        `/care/${encodeURIComponent(machineCode)}?verification=failed`,
-        request.url,
-      ),
-      303,
-    );
-  }
   const form = await request.formData();
   const result = await activateCarePassport({
     machineCode,
@@ -27,11 +21,19 @@ export async function POST(
     phone: String(form.get("phone") ?? ""),
   });
   const activation = activationRedirectStatus(result);
-  return NextResponse.redirect(
+  const response = NextResponse.redirect(
     new URL(
       `/care/${encodeURIComponent(machineCode)}?activation=${activation}`,
       request.url,
     ),
     303,
   );
+  if (result.access) {
+    response.cookies.set(
+      CARE_SESSION_COOKIE,
+      createCareSession(result.access),
+      careSessionCookieOptions,
+    );
+  }
+  return response;
 }

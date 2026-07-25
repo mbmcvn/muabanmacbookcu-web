@@ -3,9 +3,13 @@ import { notFound } from "next/navigation";
 import { CareStoryBlock } from "@/components/handover/CareStoryBlock";
 import { readCurrentCareAccess } from "@/data/care/care-access.server";
 import { normalizeMachineCode } from "@/data/care/care-contract";
-import { getPublicCarePassport } from "@/data/care/care-repository.server";
+import {
+  getPublicCarePassport,
+  resolvePublicCareState,
+} from "@/data/care/care-repository.server";
 import { getCareStory } from "@/data/handover/get-care-story.server";
 import { VerificationForm } from "./VerificationForm";
+import { ActivationForm } from "./ActivationForm";
 import styles from "./care.module.css";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +32,17 @@ export const metadata: Metadata = {
 export default async function CarePage({ params, searchParams }: PageProps) {
   const [{ machine_id }, status] = await Promise.all([params, searchParams]);
   const machineCode = normalizeMachineCode(machine_id);
+  const lifecycle = await resolvePublicCareState(machineCode);
+  if (lifecycle.state === "not_found") notFound();
+  if (lifecycle.state === "activation_required") {
+    return (
+      <ActivationForm
+        machineCode={lifecycle.machineCode}
+        status={status.activation}
+      />
+    );
+  }
+  if (lifecycle.state === "unsafe") notFound();
   const access = await readCurrentCareAccess(machineCode);
   if (!access) {
     return (

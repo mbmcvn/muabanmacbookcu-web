@@ -1,6 +1,6 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveEffectiveCareOwnership } from "./care-ownership.ts";
+import { resolveCareLifecycle, resolveEffectiveCareOwnership } from "./care-ownership.ts";
 
 const machine = { machineId: "machine-a", machineCode: "MBMC-NSXS", machineStatus: "sold" };
 const sale = (id, overrides = {}) => ({ id, machine_id: "machine-a", buyer_phone: null, lifecycle_status: "completed", payment_status: "paid", handover_status: "handed_over", created_at: `2026-07-${id === "sale-2" ? "20" : "01"}T00:00:00Z`, completed_at: `2026-07-${id === "sale-2" ? "21" : "02"}T00:00:00Z`, sold_at: null, ...overrides });
@@ -59,4 +59,41 @@ test("unactivated owner rows are not effective", () => {
 test("MBMC-NSXS modern fixture remains authoritative", () => {
   const result = resolve([owner("d6a1e044-5bd4-4076-a23e-f328be939944", "710523ef-755f-4a23-a97d-c5dac264650f")], [sale("710523ef-755f-4a23-a97d-c5dac264650f")]);
   assert.equal(result.ownership?.owner.id, "d6a1e044-5bd4-4076-a23e-f328be939944");
+});
+
+test("eligible sold machine without an owner requires activation", () => {
+  const result = resolveCareLifecycle({ ...machine, owners: [], sales: [
+    sale("sale-1", { buyer_phone: "0326147088" }),
+  ] });
+  assert.equal(result.state, "activation_required");
+  assert.equal(result.sale.id, "sale-1");
+});
+
+test("activated current cycle resolves to returning-owner state", () => {
+  const result = resolveCareLifecycle({ ...machine, owners: [
+    owner("owner-1", "sale-1"),
+  ], sales: [sale("sale-1", { buyer_phone: "0326147088" })] });
+  assert.equal(result.state, "activated");
+  assert.equal(result.ownership.owner.phone, "0326147088");
+});
+
+test("ambiguous authoritative completed Sales fail closed", () => {
+  const first = sale("sale-1", { buyer_phone: "0326147088" });
+  const second = sale("sale-2", {
+    buyer_phone: "0912345678",
+    completed_at: first.completed_at,
+  });
+  const result = resolveCareLifecycle({ ...machine, owners: [], sales: [first, second] });
+  assert.equal(result.reasonCode, "CARE_ACTIVATION_AMBIGUOUS");
+});
+
+test("completed resale creates a separate activation cycle", () => {
+  const result = resolveCareLifecycle({ ...machine, owners: [
+    owner("owner-old", "sale-1"),
+  ], sales: [
+    sale("sale-1", { buyer_phone: "0326147088" }),
+    sale("sale-2", { buyer_phone: "0912345678" }),
+  ] });
+  assert.equal(result.state, "activation_required");
+  assert.equal(result.sale.id, "sale-2");
 });

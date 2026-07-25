@@ -13,8 +13,8 @@ import {
 } from "./care-contract";
 import type { CareAccessContext } from "./care-session";
 import {
+  findCareLifecycle,
   findEffectiveCareOwnership,
-  findLatestEffectiveCareSale,
 } from "./care-ownership";
 
 const PUBLIC_MACHINE_FIELDS =
@@ -110,50 +110,108 @@ export async function activateCarePassport(input: {
   );
 }
 
+export type PublicCareState =
+  | Readonly<{ state: "not_found"; machineCode: string }>
+  | Readonly<{ state: "activation_required"; machineCode: string }>
+  | Readonly<{ state: "activated"; machineCode: string }>
+  | Readonly<{ state: "unsafe"; machineCode: string; reasonCode: string }>;
+
+export async function resolvePublicCareState(
+  rawMachineCode: string,
+): Promise<PublicCareState> {
+  const machineCode = normalizeMachineCode(rawMachineCode);
+  const client = createServerSupabaseClient();
+  const { data: machine, error } = await client
+    .from("machines")
+    .select("id, machine_id, status")
+    .eq("machine_id", machineCode)
+    .maybeSingle();
+  if (error) {
+    return { state: "unsafe", machineCode, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
+  }
+  if (!machine) return { state: "not_found", machineCode };
+  const lifecycle = await findCareLifecycle(client, {
+    id: machine.id,
+    machineCode: machine.machine_id,
+    status: machine.status,
+  });
+  if (lifecycle.error || lifecycle.resolution.state === "unsafe") {
+    return {
+      state: "unsafe",
+      machineCode: machine.machine_id,
+      reasonCode: lifecycle.resolution.reasonCode ?? "CARE_ACTIVATION_AMBIGUOUS",
+    };
+  }
+  return { state: lifecycle.resolution.state, machineCode: machine.machine_id };
+}
+
 function createCareActivationStore(
   client: ReturnType<typeof createServerSupabaseClient>,
 ): CareActivationStore {
   return {
-    async findMachine(machineCode) {
+    async resolve(machineCode) {
       const { data, error } = await client
         .from("machines")
-        .select("id, machine_id")
+        .select("id, machine_id, status")
         .eq("machine_id", machineCode)
         .maybeSingle();
-      return error
-        ? "failed"
-        : data
-          ? { id: data.id, machineCode: data.machine_id }
-          : null;
+      if (error) return { state: "unsafe", reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
+      if (!data) return { state: "unsafe", reasonCode: "CARE_MACHINE_NOT_FOUND" };
+      const { resolution, error: lifecycleError } = await findCareLifecycle(client, {
+        id: data.id,
+        machineCode: data.machine_id,
+        status: data.status,
+      });
+      if (lifecycleError || resolution.state === "unsafe") {
+        return {
+          state: "unsafe",
+          reasonCode: resolution.reasonCode ?? "CARE_ACTIVATION_AMBIGUOUS",
+        };
+      }
+      if (resolution.state === "activated") {
+        return {
+          state: "activated",
+          access: {
+            machineCode: data.machine_id,
+            saleId: resolution.sale.id,
+            ownershipId: resolution.ownership.owner.id,
+          },
+        };
+      }
+      return {
+        state: "activation_required",
+        machine: { id: data.id, machineCode: data.machine_id },
+        sale: { id: resolution.sale.id, buyerPhone: resolution.sale.buyer_phone },
+      };
     },
-    async findLatestSale(machineId) {
-      const { sale: data, error } = await findLatestEffectiveCareSale(
-        client,
-        machineId,
-      );
-      return error
-        ? "failed"
-        : data
-          ? { id: data.id, buyerPhone: data.buyer_phone }
-          : null;
-    },
-    async hasOwner(saleId) {
+    async findOwnerAccess(saleId) {
       const { data, error } = await client
         .from("machine_owners")
-        .select("id")
+        .select("id, machine_id, sale_id, activated_at")
         .eq("sale_id", saleId)
         .maybeSingle();
-      return error ? "failed" : Boolean(data);
+      return error || !data || !data.sale_id || !data.activated_at
+        ? null
+        : {
+            machineCode: data.machine_id,
+            saleId: data.sale_id,
+            ownershipId: data.id,
+          };
     },
     async insertOwner(owner) {
-      const { error } = await client.from("machine_owners").insert({
-        sale_id: owner.saleId,
-        machine_id: owner.machineCode,
-        customer_name: owner.customerName,
-        phone: owner.phone,
-      });
+      const { data, error } = await client
+        .from("machine_owners")
+        .insert({
+          sale_id: owner.saleId,
+          machine_id: owner.machineCode,
+          customer_name: owner.customerName,
+          phone: owner.phone,
+          activated_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
       if (error) logCareError("CARE_ACTIVATION_INSERT_FAILED", error.code);
-      return !error;
+      return error ? null : data.id;
     },
     async insertActivationEvent(machineCode) {
       const { error } = await client.from("machine_events").insert({

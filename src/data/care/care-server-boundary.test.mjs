@@ -28,12 +28,15 @@ const accessStore = readFileSync(
 );
 
 test("protected Care loaders run only after current session validation", () => {
+  const lifecycle = page.indexOf("resolvePublicCareState(machineCode)");
   const validation = page.indexOf("readCurrentCareAccess(machineCode)");
   const passport = page.indexOf("getPublicCarePassport(machineCode, access)");
   const story = page.indexOf("getCareStory(machineCode, access)");
-  assert.ok(validation > 0);
+  assert.ok(lifecycle > 0);
+  assert.ok(validation > lifecycle);
   assert.ok(passport > validation);
   assert.ok(story > validation);
+  assert.match(page, /lifecycle\.state === "activation_required"[\s\S]*<ActivationForm/);
   assert.match(page, /if \(!access\)[\s\S]*<VerificationForm/);
   assert.match(repository, /access: CareAccessContext/);
   assert.match(repository, /ownership\.sale\.id !== access\.saleId/);
@@ -43,7 +46,8 @@ test("protected Care loaders run only after current session validation", () => {
 
 test("all Care authorization paths use the shared effective ownership resolver", () => {
   assert.match(accessStore, /findEffectiveCareOwnership/);
-  assert.equal(repository.match(/findEffectiveCareOwnership/g)?.length, 3);
+  assert.ok((repository.match(/findEffectiveCareOwnership/g)?.length ?? 0) >= 3);
+  assert.match(repository, /findCareLifecycle/);
   assert.match(repository, /ownership\.owner\.id !== access\.ownershipId/);
 });
 

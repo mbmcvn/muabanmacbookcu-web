@@ -6,18 +6,19 @@ function activationFixture(buyerPhone = "0912345678") {
   const sale = Object.freeze({ id: "sale-1", buyerPhone });
   const writes = { owners: [], events: [] };
   const store = {
-    async findMachine() {
-      return { id: "machine-uuid", machineCode: "MBMC-TEST" };
-    },
-    async findLatestSale() {
-      return sale;
-    },
-    async hasOwner() {
-      return false;
+    async resolve() {
+      return {
+        state: "activation_required",
+        machine: { id: "machine-uuid", machineCode: "MBMC-TEST" },
+        sale,
+      };
     },
     async insertOwner(owner) {
       writes.owners.push(owner);
-      return true;
+      return "owner-1";
+    },
+    async findOwnerAccess() {
+      return null;
     },
     async insertActivationEvent(machineCode) {
       writes.events.push(machineCode);
@@ -27,26 +28,28 @@ function activationFixture(buyerPhone = "0912345678") {
   return { sale, store, writes };
 }
 
-test("correct phone succeeds with a different free-form activation name", async () => {
+test("correct Sale phone and valid name create exact-cycle ownership and access", async () => {
   const fixture = activationFixture();
   const result = await activateCarePassportWithStore({
     machineCode: "mbmc-test",
     customerName: "  Trần Thị Bảo Anh  ",
     phone: "0912345678",
   }, fixture.store);
-
-  assert.equal(result, "activated");
+  assert.equal(result.reasonCode, "CARE_ACTIVATION_SUCCESS");
+  assert.deepEqual(result.access, {
+    machineCode: "MBMC-TEST",
+    saleId: "sale-1",
+    ownershipId: "owner-1",
+  });
   assert.deepEqual(fixture.writes.owners, [{
     saleId: "sale-1",
     machineCode: "MBMC-TEST",
     customerName: "Trần Thị Bảo Anh",
     phone: "0912345678",
   }]);
-  assert.deepEqual(fixture.sale, { id: "sale-1", buyerPhone: "0912345678" });
-  assert.deepEqual(fixture.writes.events, ["MBMC-TEST"]);
 });
 
-test("correct phone succeeds in both +84 and 0-prefixed formats", async () => {
+test("Vietnamese +84 and 0-prefixed phones compare identically", async () => {
   for (const [recorded, submitted] of [
     ["0912345678", "+84 912 345 678"],
     ["+84 912 345 678", "0912345678"],
@@ -57,52 +60,59 @@ test("correct phone succeeds in both +84 and 0-prefixed formats", async () => {
       customerName: "Tên kích hoạt",
       phone: submitted,
     }, fixture.store);
-    assert.equal(result, "activated");
-    assert.equal(fixture.writes.owners[0].phone, "0912345678");
+    assert.equal(result.reasonCode, "CARE_ACTIVATION_SUCCESS");
   }
 });
 
-test("incorrect phone fails generically and performs no writes", async () => {
+test("wrong Sale phone performs no writes", async () => {
   const fixture = activationFixture();
   const result = await activateCarePassportWithStore({
     machineCode: "MBMC-TEST",
-    customerName: "Tên khác hoàn toàn",
+    customerName: "Tên hợp lệ",
     phone: "0900000000",
   }, fixture.store);
-
-  assert.equal(result, "details_mismatch");
+  assert.equal(result.reasonCode, "CARE_ACTIVATION_PHONE_MISMATCH");
   assert.deepEqual(fixture.writes, { owners: [], events: [] });
 });
 
-test("empty, too-short, and unreasonable activation names fail validation", async () => {
-  for (const customerName of ["", " ", "A", "A".repeat(101)]) {
-    const fixture = activationFixture();
-    const result = await activateCarePassportWithStore({
-      machineCode: "MBMC-TEST",
-      customerName,
-      phone: "0912345678",
-    }, fixture.store);
-    assert.equal(result, "invalid_input");
-    assert.deepEqual(fixture.writes, { owners: [], events: [] });
-  }
-});
-
-test("activation name is stored only in the ownership record, never the sale", async () => {
+test("invalid names and phones have distinct internal reasons", async () => {
   const fixture = activationFixture();
-  const originalSale = { ...fixture.sale };
-  await activateCarePassportWithStore({
-    machineCode: "MBMC-TEST",
-    customerName: "  NGUYỄN Ánh Dương  ",
-    phone: "0912345678",
-  }, fixture.store);
-
-  assert.deepEqual(fixture.sale, originalSale);
-  assert.equal(fixture.writes.owners[0].customerName, "NGUYỄN Ánh Dương");
-  assert.equal("customerName" in fixture.sale, false);
+  assert.equal((await activateCarePassportWithStore({
+    machineCode: "MBMC-TEST", customerName: " ", phone: "0912345678",
+  }, fixture.store)).reasonCode, "CARE_ACTIVATION_NAME_INVALID");
+  assert.equal((await activateCarePassportWithStore({
+    machineCode: "MBMC-TEST", customerName: "Tên hợp lệ", phone: "123",
+  }, fixture.store)).reasonCode, "CARE_ACTIVATION_PHONE_INVALID");
 });
 
-test("route status keeps phone mismatches generic", () => {
-  assert.equal(activationRedirectStatus("details_mismatch"), "mismatch");
-  assert.equal(activationRedirectStatus("failed"), "failed");
-  assert.equal(activationRedirectStatus("not_found"), "failed");
+test("duplicate activation is idempotent and returns the current access", async () => {
+  const fixture = activationFixture();
+  fixture.store.insertOwner = async () => null;
+  fixture.store.findOwnerAccess = async () => ({
+    machineCode: "MBMC-TEST", saleId: "sale-1", ownershipId: "owner-existing",
+  });
+  const result = await activateCarePassportWithStore({
+    machineCode: "MBMC-TEST", customerName: "Tên hợp lệ", phone: "0912345678",
+  }, fixture.store);
+  assert.equal(result.reasonCode, "CARE_ACTIVATION_SUCCESS");
+  assert.equal(result.access.ownershipId, "owner-existing");
+  assert.deepEqual(fixture.writes.events, []);
+});
+
+test("already activated resolution cannot bypass returning-owner verification", async () => {
+  const fixture = activationFixture();
+  fixture.store.resolve = async () => ({
+    state: "activated",
+    access: { machineCode: "MBMC-TEST", saleId: "sale-1", ownershipId: "owner-1" },
+  });
+  const result = await activateCarePassportWithStore({
+    machineCode: "MBMC-TEST", customerName: "Tên hợp lệ", phone: "0912345678",
+  }, fixture.store);
+  assert.equal(result.reasonCode, "CARE_ALREADY_ACTIVATED");
+  assert.equal(result.access, null);
+});
+
+test("public redirect status remains generic", () => {
+  assert.equal(activationRedirectStatus({ reasonCode: "CARE_ACTIVATION_PHONE_MISMATCH", access: null }), "mismatch");
+  assert.equal(activationRedirectStatus({ reasonCode: "CARE_ACTIVATION_CREATE_FAILED", access: null }), "failed");
 });
