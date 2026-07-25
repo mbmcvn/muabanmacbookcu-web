@@ -1,3 +1,5 @@
+> **DOCUMENT STATUS: SUPERSEDED HISTORICAL AUDIT (2026-07-22).** It predates the implemented homepage, recommendation flow, and native public Care. Use [../ARCHITECTURE.md](../ARCHITECTURE.md) and the sibling `mbmc-care/CURRENT_STATE.md` for current architecture.
+
 # Repository Architecture Audit
 
 Audit date: 2026-07-22  

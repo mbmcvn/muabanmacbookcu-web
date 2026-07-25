@@ -1,3 +1,5 @@
+> **DOCUMENT STATUS: HISTORICAL IMPLEMENTATION PLAN.** The homepage is now implemented; redirect-era current-state statements are superseded. See [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
 # Phase 2A — Homepage Implementation Plan
 
 ## Executive Summary

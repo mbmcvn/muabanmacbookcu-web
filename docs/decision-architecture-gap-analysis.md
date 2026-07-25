@@ -1,3 +1,5 @@
+> **DOCUMENT STATUS: HISTORICAL GAP ANALYSIS.** Findings may have been implemented or superseded. See [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
 # MBMC Decision Architecture Gap Analysis
 
 Analysis date: 2026-07-22  
@@ -642,4 +644,3 @@ If only five initiatives can be funded initially, the recommended sequence is:
 5. **Care and authentic Decision Stories:** complete trust across example and post-decision support.
 
 Navigation, footer, analytics, performance, and design-system work should accompany the phases they enable, not become independent redesign programs. The repository does not need a rewrite. Its public projection, routes, inventory behavior, and dossier components provide a viable base as long as future work preserves the boundary between evidence, judgement, uncertainty, and persuasion.
-

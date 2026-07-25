@@ -1,3 +1,5 @@
+> **DOCUMENT STATUS: HISTORICAL IMPLEMENTATION PLAN.** Use [decision-dossier-v1-contract.md](./decision-dossier-v1-contract.md) for product rules and [../ARCHITECTURE.md](../ARCHITECTURE.md) for current technical state.
+
 # Phase 3A — Decision Dossier Architecture
 
 ## Executive Summary

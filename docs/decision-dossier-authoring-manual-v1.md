@@ -1,3 +1,5 @@
+> **DOCUMENT STATUS: PRODUCT AUTHORING GUIDANCE.** This is not a technical current-state source. See [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
 ---
 title: Decision Dossier Authoring Manual v1
 status: proposed

@@ -1,3 +1,5 @@
+> **DOCUMENT STATUS: HISTORICAL PHASE RECORD.** Retained for decision history; not current-state authority. See [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
 # Phase 1 Foundation
 
 Date: 2026-07-23  

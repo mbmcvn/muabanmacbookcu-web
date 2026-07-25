@@ -1,20 +1,30 @@
-# MBMC Decision Architecture
+# MBMC Public Website
 
-Bộ tài liệu nền dùng trước khi triển khai lại `muabanmacbookcu-web`.
+This repository implements MBMC's public website: homepage, inventory, public Machine detail, recommendation flow, and public Care presentation.
 
-## Thứ tự đọc
-1. [Why We Exist](brand/mbmc-macbook-why-we-exist.md)
-2. [Decision Psychology](product/mbmc-decision-psychology.md)
-3. [Design Principles](product/mbmc-design-principles.md)
-4. [Information Architecture](product/mbmc-information-architecture.md)
-5. [Conversation Principles](product/mbmc-conversation-principles.md)
-6. [Trust System](product/mbmc-trust-system.md)
-7. [Homepage UX Specification](product/mbmc-homepage-ux-spec.md)
+## Read first
 
-## Chuỗi logic
-Brand Philosophy → Decision Psychology → Design Principles → Information Architecture → Conversation + Trust System → Homepage UX Specification → Codex Prompt
+1. [ARCHITECTURE.md](./ARCHITECTURE.md) — verified website technical architecture.
+2. [Decision Dossier v1 contract](./docs/decision-dossier-v1-contract.md) — current product contract for Machine detail.
+3. [Public Content Governance plan](./docs/phase-4a-public-content-governance-plan.md) — planning/history, not current-state authority.
+4. Sibling canonical documents:
+   - [MBMC architecture](../mbmc-care/ARCHITECTURE.md)
+   - [Domain map](../mbmc-care/DOMAIN_MAP.md)
+   - [Current state](../mbmc-care/CURRENT_STATE.md)
+   - [Public contract](../mbmc-care/PUBLIC_CONTRACT.md)
+   - [Privacy standard](../mbmc-care/PRIVACY.md)
 
-## Nguyên tắc sử dụng
-- Mọi quyết định phải truy ngược được về mục tiêu tạo clarity.
-- Nếu một tính năng tăng nhiễu, áp lực hoặc sự phụ thuộc vào sale, cần loại bỏ hoặc thiết kế lại.
-- Conversion là hệ quả; clarity và decision confidence là mục tiêu gần.
+Historic audits, migration plans, and phase plans preserve useful context but are not current-state authority unless explicitly marked current.
+
+## Local commands
+
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+npm run test:public
+npm run test:quiz
+```
+
+Required Supabase environment configuration is described by the active server client in `src/lib/supabase/server.ts`. Never expose the service-role key to browser code.

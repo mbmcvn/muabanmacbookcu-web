@@ -6,6 +6,8 @@ date: 2026-07-23
 canonical_product_contract: docs/decision-dossier-v1-contract.md
 ---
 
+> **DOCUMENT STATUS: PLANNING / GOVERNANCE HISTORY.** Retained for governance rationale; not the website current-state source. See [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
 # Phase 4A: MBMC Public Content Governance
 
 ## Executive Summary

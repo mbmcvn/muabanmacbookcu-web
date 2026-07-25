@@ -1,3 +1,5 @@
+> **DOCUMENT STATUS: IMPLEMENTATION PLAN / HISTORICAL.** Native public Care is now implemented. Use [../ARCHITECTURE.md](../ARCHITECTURE.md) for current route and repository boundaries.
+
 # Care Passport native migration audit and plan
 
 Date: 2026-07-23
