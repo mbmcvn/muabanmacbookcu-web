@@ -49,11 +49,11 @@ export function ActivationForm({
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
-                placeholder="09xx xxx xxx"
+                placeholder="0xxx xxx xxx"
                 required
               />
               <span className={styles.fieldHint}>
-                Dùng đúng số đã đăng ký khi mua máy.
+                Dùng đúng số điện thoại đã đăng ký khi mua máy.
               </span>
             </label>
             <button type="submit" disabled={pending}>
