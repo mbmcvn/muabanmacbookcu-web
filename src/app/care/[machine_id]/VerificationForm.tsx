@@ -43,9 +43,12 @@ export function VerificationForm({
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
-                placeholder="Ví dụ: 0326 147 088"
+                placeholder="09xx xxx xxx"
                 required
               />
+              <span className={styles.fieldHint}>
+                Dùng đúng số đã đăng ký khi mua máy.
+              </span>
             </label>
             <button type="submit" disabled={pending}>
               {pending ? "Đang mở…" : "Mở hồ sơ Care"}

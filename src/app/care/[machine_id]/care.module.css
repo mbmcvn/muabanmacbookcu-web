@@ -20,6 +20,7 @@
 .error { border-color: #e2b9b2; background: #fff0ed; color: #8b2d20; }
 .form { display: grid; gap: 1rem; margin-top: 1.25rem; }
 .form label { display: grid; gap: .4rem; color: #565650; font-size: .88rem; font-weight: 650; }
+.fieldHint { color: #73736c; font-size: .8rem; font-weight: 400; }
 .form input, .form select, .form textarea { width: 100%; padding: .85rem 1rem; border: 1px solid #c9c9c2; border-radius: .45rem; background: #fff; color: #1f201d; font: inherit; }
 .form textarea { resize: vertical; }
 .form button, .link { min-height: 3rem; display: inline-flex; align-items: center; justify-content: center; padding: .7rem 1rem; border: 1px solid #1f201d; border-radius: .45rem; background: #1f201d; color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }

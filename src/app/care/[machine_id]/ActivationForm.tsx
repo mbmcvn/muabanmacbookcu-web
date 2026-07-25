@@ -44,7 +44,17 @@ export function ActivationForm({
             </label>
             <label>
               Số điện thoại
-              <input name="phone" type="tel" inputMode="tel" autoComplete="tel" required />
+              <input
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="09xx xxx xxx"
+                required
+              />
+              <span className={styles.fieldHint}>
+                Dùng đúng số đã đăng ký khi mua máy.
+              </span>
             </label>
             <button type="submit" disabled={pending}>
               {pending ? "Đang kích hoạt…" : "Kích hoạt MBMC Care"}
