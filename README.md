@@ -28,3 +28,16 @@ npm run test:quiz
 ```
 
 Required Supabase environment configuration is described by the active server client in `src/lib/supabase/server.ts`. Never expose the service-role key to browser code.
+
+
+## Homepage Handover stories
+
+The Homepage consumes the versioned `homepage-handover-story.v1` projection
+through a server-only, service-role client. Eligibility and deterministic
+ordering are owned by `mbmc-care`; this public website does not query or
+serialize raw Handover or Surface Edit rows. It preserves projection order,
+displays at most four stories, and revalidates every 60 seconds. An unavailable
+or invalid story response omits the section without taking down the page.
+
+Cards are intentionally non-clickable until a valid story destination exists.
+`/people`, `/people/[slug]`, story detail, and Care delivery remain planned.

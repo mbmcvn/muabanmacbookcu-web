@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getAvailableMachines } from "@/data/machines/get-available-machines";
 import { loadPublicInventoryState } from "@/data/machines/public-inventory-load-state";
+import { getHomepageStories } from "@/data/handover/get-homepage-stories.server";
 import { HomeView } from "./_components/home/HomeView";
 
 export const revalidate = 60;
@@ -20,7 +21,12 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const machineState = await loadPublicInventoryState(getAvailableMachines);
+  const [machineState, homepageStories] = await Promise.all([
+    loadPublicInventoryState(getAvailableMachines),
+    getHomepageStories(),
+  ]);
 
-  return <HomeView machineState={machineState} />;
+  return (
+    <HomeView machineState={machineState} homepageStories={homepageStories} />
+  );
 }

@@ -1,0 +1,11 @@
+.page { padding-bottom: 8rem; }
+.navigation { padding-block: 1.4rem; }
+.navigation a { color: var(--accent); font-weight: 650; text-decoration: none; }
+.hero { position: relative; width: min(88rem, 100%); aspect-ratio: 16 / 8.5; margin-inline: auto; overflow: hidden; background: var(--border); }
+.hero img { object-fit: cover; object-position: center 42%; }
+.article { width: min(44rem, calc(100% - 2rem)); margin: clamp(2.75rem, 7vw, 5rem) auto 0; }
+.customer { margin: 0 0 1rem; color: var(--accent); font-size: .78rem; font-weight: 720; letter-spacing: .1em; text-transform: uppercase; }
+.article h1 { margin: 0 0 1.1rem; font-size: clamp(2.5rem, 6vw, 4.7rem); font-weight: 520; line-height: 1.04; letter-spacing: -.05em; }
+.article time { color: var(--muted); font-size: .92rem; }
+.story { margin-top: clamp(2.5rem, 6vw, 4rem); color: #353532; font-size: clamp(1.1rem, 2vw, 1.25rem); line-height: 1.9; white-space: pre-line; }
+@media (max-width: 40rem) { .hero { aspect-ratio: 4 / 3; } }

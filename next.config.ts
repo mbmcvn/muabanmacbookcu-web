@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       ...supabaseImagePattern,
       { protocol: "https", hostname: "img.mbmc.vn", pathname: "/machines/**" },
+      { protocol: "https", hostname: "media.mbmc.vn", pathname: "/handover-public/**" },
     ],
   },
 };

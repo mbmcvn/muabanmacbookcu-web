@@ -640,3 +640,25 @@
     padding-block: clamp(5.5rem, 9vw, 8rem);
   }
 }
+
+
+.storySection {
+  display: block;
+}
+
+.storySection .sectionIntroduction {
+  margin-bottom: 2rem;
+}
+
+.storyGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+@media (min-width: 56rem) {
+  .storyGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
