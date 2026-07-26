@@ -13,6 +13,12 @@ export type CareOwnershipResolution = Readonly<
   | { ownership: null; reasonCode: CareOwnershipReason }
 >;
 export type CareLifecycleResolution = Readonly<
+  | {
+      state: "care_unavailable";
+      sale: null;
+      ownership: null;
+      reasonCode: "CARE_NO_ELIGIBLE_SALE";
+    }
   | { state: "activation_required"; sale: CareSale; ownership: null; reasonCode: null }
   | { state: "activated"; sale: CareSale; ownership: EffectiveCareOwnership; reasonCode: null }
   | {
@@ -20,7 +26,6 @@ export type CareLifecycleResolution = Readonly<
       sale: null;
       ownership: null;
       reasonCode:
-        | "CARE_NO_ELIGIBLE_SALE"
         | "CARE_ACTIVATION_AMBIGUOUS"
         | "CARE_ALREADY_ACTIVATED";
     }
@@ -38,10 +43,22 @@ function isLegacyFulfilledSale(sale: CareSale) {
 }
 
 export function resolveCareLifecycle(input: { machineId: string; machineCode: string; machineStatus: string | null; owners: readonly CareOwner[]; sales: readonly CareSale[] }): CareLifecycleResolution {
+  const effective = resolveEffectiveCareOwnership(input);
+  if (effective.ownership) {
+    return {
+      state: "activated",
+      sale: effective.ownership.sale,
+      ownership: effective.ownership,
+      reasonCode: null,
+    };
+  }
+  if (effective.reasonCode === "CARE_AMBIGUOUS_OWNERSHIP") {
+    return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
+  }
   const sales = input.sales.filter((sale) => sale.machine_id === input.machineId);
   const completed = sales.filter((sale) => sale.lifecycle_status === "completed");
   if (!completed.length) {
-    return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_NO_ELIGIBLE_SALE" };
+    return { state: "care_unavailable", sale: null, ownership: null, reasonCode: "CARE_NO_ELIGIBLE_SALE" };
   }
   const latestTime = completed.reduce((latest, sale) =>
     latest > effectiveSaleTime(sale) ? latest : effectiveSaleTime(sale), "");
@@ -67,7 +84,7 @@ export function resolveCareLifecycle(input: { machineId: string; machineCode: st
     };
   }
   if (input.machineStatus !== "sold" || !normalizeVietnamesePhone(sale.buyer_phone ?? "")) {
-    return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_NO_ELIGIBLE_SALE" };
+    return { state: "care_unavailable", sale: null, ownership: null, reasonCode: "CARE_NO_ELIGIBLE_SALE" };
   }
   return { state: "activation_required", sale, ownership: null, reasonCode: null };
 }

@@ -14,6 +14,21 @@ test("first-time activation is resolved before returning-owner unlock", () => {
   assert.match(page, /lifecycle\.state === "activation_required"[\s\S]*<ActivationForm/);
 });
 
+test("known unavailable Care is rendered without using the 404 boundary", () => {
+  assert.match(
+    page,
+    /lifecycle\.state === "care_unavailable"[\s\S]*<CareUnavailable/,
+  );
+  assert.match(page, /Hồ sơ Care chưa khả dụng/);
+  assert.match(page, /Báo vấn đề với máy/);
+  assert.doesNotMatch(
+    page,
+    /lifecycle\.state === "care_unavailable"[^;]*notFound/,
+  );
+  assert.match(page, /lifecycle\.state === "not_found"\) notFound\(\)/);
+  assert.match(page, /lifecycle\.state === "unsafe"\) notFound\(\)/);
+});
+
 test("activation form contains name, phone, machine ID, and dedicated CTA", () => {
   assert.match(activation, /Kích hoạt hồ sơ Care/);
   assert.match(activation, /name="customer_name"/);

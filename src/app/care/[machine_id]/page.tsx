@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CareStoryBlock } from "@/components/handover/CareStoryBlock";
 import { readCurrentCareAccess } from "@/data/care/care-access.server";
@@ -35,6 +36,9 @@ export default async function CarePage({ params, searchParams }: PageProps) {
   const machineCode = normalizeMachineCode(machine_id);
   const lifecycle = await resolvePublicCareState(machineCode);
   if (lifecycle.state === "not_found") notFound();
+  if (lifecycle.state === "care_unavailable") {
+    return <CareUnavailable machineCode={lifecycle.machineCode} />;
+  }
   if (lifecycle.state === "activation_required") {
     return (
       <ActivationForm
@@ -244,6 +248,34 @@ function StatusMessages({
       </p>
     );
   return null;
+}
+
+function CareUnavailable({ machineCode }: { machineCode: string }) {
+  return (
+    <main className={styles.page}>
+      <div className={styles.shell}>
+        <section className={styles.card}>
+          <p className={styles.eyebrow}>MBMC Care</p>
+          <h1>Hồ sơ Care chưa khả dụng</h1>
+          <p>
+            Máy này đã được MBMC ghi nhận, nhưng hiện chưa có hồ sơ Care có thể
+            mở. Bạn vẫn có thể gửi yêu cầu hỗ trợ cho máy.
+          </p>
+          <div className={styles.actionGrid}>
+            <Link
+              className={`${styles.link} ${styles.supportLink}`}
+              href={`/care/${encodeURIComponent(machineCode)}/support`}
+            >
+              Báo vấn đề với máy
+            </Link>
+            <Link className={styles.link} href="/">
+              Về trang chủ MBMC
+            </Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
 }
 
 function formatDate(value: string | null) {

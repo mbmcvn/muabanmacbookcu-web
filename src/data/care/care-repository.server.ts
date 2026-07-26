@@ -112,6 +112,7 @@ export async function activateCarePassport(input: {
 
 export type PublicCareState =
   | Readonly<{ state: "not_found"; machineCode: string }>
+  | Readonly<{ state: "care_unavailable"; machineCode: string }>
   | Readonly<{ state: "activation_required"; machineCode: string }>
   | Readonly<{ state: "activated"; machineCode: string }>
   | Readonly<{ state: "unsafe"; machineCode: string; reasonCode: string }>;
@@ -166,6 +167,12 @@ function createCareActivationStore(
         return {
           state: "unsafe",
           reasonCode: resolution.reasonCode ?? "CARE_ACTIVATION_AMBIGUOUS",
+        };
+      }
+      if (resolution.state === "care_unavailable") {
+        return {
+          state: "unsafe",
+          reasonCode: "CARE_NO_ELIGIBLE_SALE",
         };
       }
       if (resolution.state === "activated") {

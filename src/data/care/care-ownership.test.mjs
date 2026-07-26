@@ -77,6 +77,48 @@ test("activated current cycle resolves to returning-owner state", () => {
   assert.equal(result.ownership.owner.phone, "0326147088");
 });
 
+test("activated legacy linked ownership resolves to returning-owner state", () => {
+  const legacySale = sale("sale-1", {
+    lifecycle_status: "draft",
+    payment_status: "pending",
+    handover_status: "handed_over",
+    completed_at: null,
+    sold_at: "2026-06-12",
+  });
+  const result = resolveCareLifecycle({
+    ...machine,
+    machineCode: "MBMC-MVRC",
+    owners: [
+      owner("owner-legacy", "sale-1", { machine_id: "MBMC-MVRC" }),
+    ],
+    sales: [legacySale],
+  });
+  assert.equal(result.state, "activated");
+  assert.equal(result.ownership.compatibility, "legacy_linked");
+  assert.equal(result.sale.id, "sale-1");
+});
+
+test("known machine without a Sale has unavailable Care", () => {
+  const result = resolveCareLifecycle({ ...machine, owners: [], sales: [] });
+  assert.equal(result.state, "care_unavailable");
+  assert.equal(result.reasonCode, "CARE_NO_ELIGIBLE_SALE");
+});
+
+test("known machine with only an unfulfilled Sale has unavailable Care", () => {
+  const result = resolveCareLifecycle({
+    ...machine,
+    owners: [],
+    sales: [
+      sale("sale-1", {
+        lifecycle_status: "draft",
+        handover_status: "pending",
+        completed_at: null,
+      }),
+    ],
+  });
+  assert.equal(result.state, "care_unavailable");
+});
+
 test("ambiguous authoritative completed Sales fail closed", () => {
   const first = sale("sale-1", { buyer_phone: "0326147088" });
   const second = sale("sale-2", {
@@ -84,6 +126,16 @@ test("ambiguous authoritative completed Sales fail closed", () => {
     completed_at: first.completed_at,
   });
   const result = resolveCareLifecycle({ ...machine, owners: [], sales: [first, second] });
+  assert.equal(result.reasonCode, "CARE_ACTIVATION_AMBIGUOUS");
+});
+
+test("duplicate activated ownership remains fail-closed", () => {
+  const result = resolveCareLifecycle({
+    ...machine,
+    owners: [owner("owner-1", "sale-1"), owner("owner-2", "sale-1")],
+    sales: [sale("sale-1")],
+  });
+  assert.equal(result.state, "unsafe");
   assert.equal(result.reasonCode, "CARE_ACTIVATION_AMBIGUOUS");
 });
 
