@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styles from "./care.module.css";
+import { CareActions } from "./CareActions";
 
 export function ActivationForm({
   machineCode,
@@ -61,6 +62,7 @@ export function ActivationForm({
             </button>
           </form>
         </section>
+        <CareActions machineCode={machineCode} />
       </div>
     </main>
   );

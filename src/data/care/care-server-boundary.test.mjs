@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
@@ -18,8 +18,8 @@ const verificationRoute = readFileSync(
   new URL("../../app/care/[machine_id]/verify/route.ts", import.meta.url),
   "utf8",
 );
-const supportRoute = readFileSync(
-  new URL("../../app/care/[machine_id]/support/route.ts", import.meta.url),
+const careActions = readFileSync(
+  new URL("../../app/care/[machine_id]/CareActions.tsx", import.meta.url),
   "utf8",
 );
 const accessStore = readFileSync(
@@ -36,7 +36,10 @@ test("protected Care loaders run only after current session validation", () => {
   assert.ok(validation > lifecycle);
   assert.ok(passport > validation);
   assert.ok(story > validation);
-  assert.match(page, /lifecycle\.state === "activation_required"[\s\S]*<ActivationForm/);
+  assert.match(
+    page,
+    /lifecycle\.state === "activation_required"[\s\S]*<ActivationForm/,
+  );
   assert.match(page, /if \(!access\)[\s\S]*<VerificationForm/);
   assert.match(repository, /access: CareAccessContext/);
   assert.match(repository, /ownership\.sale\.id !== access\.saleId/);
@@ -46,7 +49,9 @@ test("protected Care loaders run only after current session validation", () => {
 
 test("all Care authorization paths use the shared effective ownership resolver", () => {
   assert.match(accessStore, /findEffectiveCareOwnership/);
-  assert.ok((repository.match(/findEffectiveCareOwnership/g)?.length ?? 0) >= 3);
+  assert.ok(
+    (repository.match(/findEffectiveCareOwnership/g)?.length ?? 0) >= 3,
+  );
   assert.match(repository, /findCareLifecycle/);
   assert.match(repository, /ownership\.owner\.id !== access\.ownershipId/);
 });
@@ -58,7 +63,8 @@ test("verification and protected mutations expose no raw phone or specific failu
     verificationRoute,
     /process\.env\.NODE_ENV === "development"[\s\S]*console\.info/,
   );
-  assert.match(supportRoute, /readCurrentCareAccess\(machineCode\)/);
+  assert.match(careActions, /Báo vấn đề với máy/);
+  assert.doesNotMatch(careActions, /readCurrentCareAccess|ownership|session/);
   assert.doesNotMatch(
     verificationRoute,
     /not_found|wrong_phone|previous_owner/,
@@ -71,5 +77,3 @@ test("Homepage and People loaders are not part of the Care gate", () => {
     /getHomepageStories|getPeopleStories|getPeopleStoryBySlug/,
   );
 });
-
-

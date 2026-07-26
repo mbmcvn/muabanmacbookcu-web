@@ -11,6 +11,7 @@ import { getCareStory } from "@/data/handover/get-care-story.server";
 import { VerificationForm } from "./VerificationForm";
 import { ActivationForm } from "./ActivationForm";
 import styles from "./care.module.css";
+import { CareActions } from "./CareActions";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,8 @@ export default async function CarePage({ params, searchParams }: PageProps) {
           </p>
         </section>
 
+        <CareActions machineCode={passport.machineCode} />
+
         <StatusMessages
           activation={status.activation}
           support={status.support}
@@ -165,48 +168,6 @@ export default async function CarePage({ params, searchParams }: PageProps) {
                   value={formatDate(passport.activatedAt)}
                 />
               </dl>
-            </section>
-            <section className={styles.card}>
-              <p className={styles.eyebrow}>Hỗ trợ sau bán hàng</p>
-              <h2>Cần hỗ trợ?</h2>
-              <p>
-                Gửi mô tả ngắn để MBMC ghi nhận trước khi trao đổi trực tiếp.
-              </p>
-              <form
-                action={`/care/${passport.machineCode}/support`}
-                method="post"
-                className={styles.form}
-              >
-                <label>
-                  Nhóm vấn đề
-                  <select name="title" required defaultValue="">
-                    <option value="" disabled>
-                      Chọn nhóm vấn đề
-                    </option>
-                    {[
-                      "Pin / Sạc",
-                      "Màn hình",
-                      "Bàn phím / Trackpad",
-                      "Loa / Mic / Camera",
-                      "Hiệu năng / Nóng / Lag",
-                      "Phần mềm / Tài khoản",
-                      "Khác",
-                    ].map((item) => (
-                      <option key={item}>{item}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Mô tả
-                  <textarea
-                    name="description"
-                    rows={4}
-                    maxLength={2000}
-                    required
-                  />
-                </label>
-                <button type="submit">Tạo phiếu hỗ trợ</button>
-              </form>
             </section>
           </>
         )}

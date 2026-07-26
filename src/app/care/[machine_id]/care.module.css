@@ -29,3 +29,7 @@
 .timeline time { color: #73736d; font-size: .8rem; }
 .link { width: fit-content; margin-top: 1rem; }
 @media (max-width: 30rem) { .facts > div { grid-template-columns: 1fr; gap: .25rem; } .facts dd { text-align: left; } }
+.actionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-top: 1rem; }
+.actionGrid .link { width: 100%; margin-top: 0; }
+.supportLink { border-color: #184f3b; background: #184f3b; }
+@media (max-width: 30rem) { .actionGrid { grid-template-columns: 1fr; } }

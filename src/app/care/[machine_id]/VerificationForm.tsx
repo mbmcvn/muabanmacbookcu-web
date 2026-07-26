@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styles from "./care.module.css";
+import { CareActions } from "./CareActions";
 
 export function VerificationForm({
   machineCode,
@@ -55,6 +56,7 @@ export function VerificationForm({
             </button>
           </form>
         </section>
+        <CareActions machineCode={machineCode} />
       </div>
     </main>
   );
