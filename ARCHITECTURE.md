@@ -95,7 +95,79 @@ Public Care is implemented separately from the public Machine DTO family:
 - `src/data/care/care-activation.ts`
 - `src/app/care/[machine_id]`
 
-The read model selects Machine identity, applicable/latest Sale context, Care Activation, and allowlisted Machine Events. It synthesizes Event titles and does not return raw Support/Event text or customer identity.
+The public lifecycle is:
+
+```text
+Machine
+→ unknown Machine
+  → Not Found
+→ known Machine
+  → authoritative completed Sale
+    → no current ownership for that Sale cycle
+      → first-time Care Activation
+      → verify customer name and Sale phone
+      → create the authoritative machine_owners record
+      → issue a Care session
+      → Care Profile
+    → existing current ownership for that Sale cycle
+      → returning-owner unlock
+      → verify the current ownership phone
+      → issue a Care session
+      → Care Profile
+```
+
+Ambiguous or inconsistent Machine, Sale, or ownership data fails closed. The
+website must not select an arbitrary Sale to make an unsafe state appear
+actionable.
+
+### Ownership lifecycle
+
+A completed Sale establishes an eligible ownership cycle; it does not
+automatically establish an active Care owner. Care ownership begins only after
+successful public activation creates the authoritative `machine_owners` record
+for that exact Sale cycle.
+
+Ownership is versioned by Sale cycle. A completed resale establishes a new
+cycle. The previous ownership and any session bound to it no longer authorize
+the current Care Profile.
+
+### Authorization boundaries
+
+First-time activation and returning-owner unlock are intentionally different
+authorization boundaries:
+
+| Boundary | Verification basis |
+|---|---|
+| First-time Care Activation | Customer name and the authoritative completed Sale phone |
+| Returning-owner unlock | The current `machine_owners.phone` for the authoritative Sale cycle |
+
+Absence of a current ownership is an activation state, not an ownership-phone
+mismatch. Once ownership exists, the activation boundary must not act as an
+alternate way to unlock the Care Profile.
+
+### Public UX states
+
+Public Care exposes these states:
+
+- Machine not found;
+- eligible sold Machine awaiting first-time activation;
+- returning-owner verification when current ownership exists but no valid
+  session is present;
+- active Care Profile when the session matches the current Sale cycle and
+  ownership;
+- closed failure behavior for ambiguous or inconsistent data.
+
+### Support boundary
+
+The Care Profile is owner-protected. Support Ticket intake is a separate public
+workflow and is not an authorization path into the Care Profile. Creating a
+Support Ticket does not require unlocking the Care Profile and does not create,
+replace, or validate a Care ownership session.
+
+The Care read model selects only the Machine identity, authoritative Sale-cycle
+context, current Care ownership, and allowlisted Machine Events needed for the
+active public state. It synthesizes Event titles and does not return raw
+Support/Event text or customer identity.
 
 Care is force-dynamic. A duplicate/older Care implementation remains in `mbmc-care/app/care`; consolidation is deferred.
 

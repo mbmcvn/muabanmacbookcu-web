@@ -40,4 +40,6 @@ displays at most four stories, and revalidates every 60 seconds. An unavailable
 or invalid story response omits the section without taking down the page.
 
 Cards are intentionally non-clickable until a valid story destination exists.
-`/people`, `/people/[slug]`, story detail, and Care delivery remain planned.
+Public Care is implemented as the owner-protected lifecycle defined in
+[ARCHITECTURE.md](./ARCHITECTURE.md). Handover story destinations remain
+independent of Care authorization.
