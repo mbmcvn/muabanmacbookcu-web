@@ -259,40 +259,42 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 
 /* Machine Detail progressive-disclosure architecture */
 .detail-decision { padding: clamp(1.25rem, 2.5vw, 2rem); border: 1px solid var(--border-strong); border-radius: .9rem; background: var(--surface); box-shadow: 0 1rem 3rem rgba(25,25,20,.05); }
-.detail-reading-entry { display: grid; gap: 1rem; margin-top: clamp(2rem, 5vw, 4rem); padding-block: 1.5rem; border-block: 1px solid var(--border); }
+.detail-reading-entry { display: grid; gap: 1rem; margin-top: clamp(2rem, 4vw, 3rem); padding-block: 1.25rem; border-block: 1px solid var(--border); }
 .detail-reading-entry .decision-hook { margin: 0; color: var(--foreground); font-size: clamp(1.05rem, 2vw, 1.25rem); line-height: 1.6; }
 .dossier-navigation { display: flex; gap: .55rem; overflow-x: auto; padding-bottom: .2rem; scrollbar-width: thin; }
 .dossier-navigation a { flex: 0 0 auto; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: .82rem; font-weight: 650; text-decoration: none; }
 .dossier-navigation a:hover, .dossier-navigation a:focus-visible { border-color: var(--foreground); color: var(--foreground); }
 .decision-dossier { display: block; margin-top: 0; }
-.dossier-stage { scroll-margin-top: 2rem; padding-block: clamp(3.5rem, 8vw, 6.5rem); border-bottom: 1px solid var(--border); }
+.dossier-stage { scroll-margin-top: 2rem; padding-block: clamp(2.5rem, 5vw, 4rem); border-bottom: 1px solid var(--border); }
 .dossier-stage > .detail-section, .dossier-pair > .detail-section { min-width: 0; margin: 0; }
-.dossier-stage-decision > .decision-summary { max-width: 54rem; padding: 0; border: 0; background: transparent; }
+.dossier-stage-decision > .decision-summary { max-width: 60rem; padding: 0; border: 0; background: transparent; }
 .decision-summary h2 { max-width: 17ch; font-size: clamp(2rem, 4vw, 3.35rem); }
 .decision-summary > header > p:last-child { max-width: 42rem; color: var(--foreground); font-size: clamp(1.05rem, 1.8vw, 1.22rem); }
-.dossier-pair { display: grid; gap: 1rem; margin-top: clamp(2rem, 5vw, 3.5rem); }
+.dossier-pair { display: grid; gap: 1rem; margin-top: clamp(1.75rem, 3vw, 2.5rem); }
+.dossier-pair:empty { display: none; }
+.dossier-status-pair > :only-child { grid-column: 1 / -1; }
 .dossier-fit-pair > .fit-section, .dossier-status-pair > .public-information-status { height: 100%; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--border-strong); border-radius: .8rem; background: var(--surface); }
 .dossier-fit-pair > .fit-section { border-top: 3px solid var(--foreground); }
 .dossier-fit-pair > .fit-section + .fit-section { border-top-color: var(--accent); }
 .dossier-fit-pair .fit-section h2, .dossier-status-pair h2 { font-size: clamp(1.4rem, 2.5vw, 1.85rem); }
 .dossier-fit-pair .fit-section li, .dossier-status-pair li { padding-left: .15rem; line-height: 1.55; }
-.dossier-stage-public-record { display: grid; gap: clamp(2.5rem, 5vw, 4rem); }
-.dossier-stage-public-record > .expert-summary { max-width: 54rem; padding: clamp(1.5rem, 3vw, 2.25rem); border: 0; border-left: 3px solid var(--accent); background: #f5f1e9; }
+.dossier-stage-decision { display: grid; gap: 0; }
+.dossier-stage-decision > .expert-summary { max-width: 60rem; margin-top: clamp(1.75rem, 3vw, 2.5rem); padding: clamp(1.5rem, 3vw, 2.25rem); border: 0; border-left: 3px solid var(--accent); background: #f5f1e9; }
 .expert-summary h2 { font-size: clamp(1.75rem, 3vw, 2.45rem); }
 .dossier-status-pair { margin-top: 0; }
 .dossier-status-pair > .public-information-status:first-child { background: #f3f5f0; }
 .dossier-status-pair > .public-information-status:last-child { background: #f6f3ee; }
-.dossier-stage-supporting { display: grid; gap: clamp(2.75rem, 6vw, 5rem); }
+.dossier-stage-supporting { display: grid; gap: clamp(1.75rem, 3vw, 2.5rem); }
 .dossier-stage-supporting > .detail-section { padding: 0; border: 0; background: transparent; }
-.dossier-stage-supporting .decision-information > header, .dossier-stage-supporting .supporting-images > header { max-width: 48rem; }
+.dossier-stage-supporting .decision-information > header, .dossier-stage-supporting .supporting-images > header { max-width: 56rem; }
 .dossier-stage-supporting .detail-facts > div { padding: clamp(1rem, 2vw, 1.35rem); border: 1px solid transparent; border-radius: .7rem; }
-.dossier-stage-passport { border-bottom: 0; }
+.dossier-stage-passport { padding-top: clamp(2rem, 4vw, 3.5rem); padding-bottom: clamp(2.5rem, 4vw, 3.5rem); border-bottom: 0; }
 .dossier-stage-passport .passport-dossier { margin: 0; padding: clamp(1.5rem, 4vw, 3rem); border-radius: .9rem; background: #f4f4ef; }
-.specification-section { max-width: 58rem; margin-top: 0; padding-block: clamp(3.5rem, 7vw, 5.5rem); }
+.specification-section { max-width: 64rem; margin-top: 0; padding-block: clamp(2.5rem, 4vw, 3.5rem); }
 .specification-section > header { margin-bottom: 1rem; }
 .specification-section details { max-width: none; }
 .specification-section details[open] summary { margin-bottom: 1rem; }
-.support-section { margin-top: 0; padding: clamp(2rem, 5vw, 3.5rem); border: 0; border-radius: 1rem; background: var(--foreground); color: white; }
+.support-section { margin-top: 0; padding: clamp(1.75rem, 3vw, 2.75rem); border: 0; border-radius: 1rem; background: var(--foreground); color: white; }
 .support-section .eyebrow, .support-section p, .support-section li { color: rgba(255,255,255,.78); }
 .support-section .support-contact { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.08); }
 .support-section .support-contact p, .support-section .support-contact span { color: rgba(255,255,255,.72); }
@@ -315,6 +317,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-specifications { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2rem; }
   .inventory-trust { grid-template-columns: minmax(0, 1fr) minmax(18rem, .8fr); align-items: start; }
   .evidence-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dossier-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dossier-columns, .recommendation-columns, .support-section { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -331,7 +334,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .machine-catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.15rem; }
   .site-footer { padding-bottom: 2rem; }
   .machine-sticky-action { bottom: 0; }
-  .public-detail-page { padding-bottom: 9rem; }
+  .public-detail-page { width: min(78rem, calc(100% - 3rem)); padding-bottom: 7rem; }
   .detail-hero { grid-template-columns: minmax(0, 1.55fr) minmax(20rem, .75fr); gap: clamp(2rem, 4vw, 4rem); }
   .decision-dossier { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
   .detail-decision { position: sticky; top: 1.5rem; }
