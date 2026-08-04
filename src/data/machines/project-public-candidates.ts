@@ -9,6 +9,7 @@ import type {
 import type { ProjectionDenialReason } from "../../lib/public-projection/eligibility.server.ts";
 import type {
   PublicMachineDetailV1,
+  PublicImageVariants,
   PublicMachineSummaryV1,
 } from "../../lib/public-projection/contracts.ts";
 
@@ -36,13 +37,59 @@ function reservationStateInvalid(value: unknown): boolean {
   });
 }
 
+const DERIVATIVE_KEYS = ["thumb", "card", "display", "full"] as const;
+
+function positiveInteger(value: unknown): number | null {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+    ? value
+    : null;
+}
+
+function publicDerivativeUrl(value: unknown): string | null {
+  const candidate = text(value);
+  if (!candidate) return null;
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "https:" && url.hostname === "img.mbmc.vn"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Sanitizes the untrusted JSON manifest into the fixed public derivative set. */
+export function parsePublicImageDerivatives(value: unknown): PublicImageVariants {
+  if (!isRow(value)) return {};
+  const variants: PublicImageVariants = {};
+  for (const key of DERIVATIVE_KEYS) {
+    const item = value[key];
+    if (!isRow(item)) continue;
+    const url = publicDerivativeUrl(item.url);
+    const width = positiveInteger(item.width);
+    const height = positiveInteger(item.height);
+    if (!url || !width || !height) continue;
+    const byteSizeValue = item.byte_size ?? item.byteSize;
+    const byteSize = byteSizeValue == null ? null : positiveInteger(byteSizeValue);
+    if (byteSizeValue != null && byteSize === null) continue;
+    const mimeTypeValue = item.mime_type ?? item.mimeType;
+    const mimeType = mimeTypeValue == null ? null : mimeTypeValue === "image/webp" ? "image/webp" : null;
+    if (mimeTypeValue != null && mimeType === null) continue;
+    variants[key] = { url, width, height, byteSize, mimeType };
+  }
+  return variants;
+}
+
 function publicImages(value: unknown): PublicImageInput[] {
   if (!Array.isArray(value)) return [];
   const byUrl=new Map<string,PublicImageInput>();
   for(const item of value){
     if(!isRow(item)) continue;
     const id=text(item.id),url=text(item.public_url); if(!id||!url) continue;
-    const next:PublicImageInput={id,visibility:text(item.visibility)??"",imageType:text(item.image_type)??"",imageStage:text(item.image_stage)??"",publicUrl:url,sortOrder:integer(item.sort_order)??0,isCover:item.is_cover===true};
+    const variants = text(item.processing_status) === "ready"
+      ? parsePublicImageDerivatives(item.derivatives)
+      : {};
+    const next:PublicImageInput={id,visibility:text(item.visibility)??"",imageType:text(item.image_type)??"",imageStage:text(item.image_stage)??"",publicUrl:url,sortOrder:integer(item.sort_order)??0,isCover:item.is_cover===true,...(Object.keys(variants).length ? { variants } : {})};
     const existing=byUrl.get(url); if(!existing||(next.isCover&&!existing.isCover)) byUrl.set(url,next);
   }
   return [...byUrl.values()].toSorted((a,b)=>(a.sortOrder??0)-(b.sortOrder??0)||a.id.localeCompare(b.id));

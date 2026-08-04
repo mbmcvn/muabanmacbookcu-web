@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MachineImage as Image } from "@/components/machine/MachineImage";
+import { MachineImage } from "@/components/machine/MachineImage";
 import type { PublicImage } from "@/models";
 import { resistGalleryDrag, resolveGalleryDragIndex } from "./gallery-navigation";
 import { classifyGalleryImageShape, type GalleryImageShape } from "./gallery-image-shape";
@@ -117,7 +117,7 @@ export function SlidingImageTrack({
             if (suppressClickRef.current) { suppressClickRef.current = false; return; }
             onOpen(imageIndex, event.currentTarget);
           }}
-        ><Image src={image.url} alt={image.alt} fill priority={variant === "gallery" && imageIndex === 0} sizes={sizes} draggable={false} onLoadingComplete={(element) => onImageShape?.(imageIndex, classifyGalleryImageShape(element.naturalWidth, element.naturalHeight))} /></button> : <Image src={image.url} alt={image.alt} fill priority={false} sizes={sizes} draggable={false} />}
+        ><MachineImage image={image} variant="display" fill priority={variant === "gallery" && imageIndex === 0} sizes={sizes} draggable={false} onLoadingComplete={(element) => onImageShape?.(imageIndex, classifyGalleryImageShape(element.naturalWidth, element.naturalHeight))} /></button> : <MachineImage image={image} variant="full" fill priority={false} sizes={sizes} draggable={false} />}
       </div>)}
     </div>
   </div>;

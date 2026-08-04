@@ -2,19 +2,61 @@
 
 import Image, { type ImageProps } from "next/image";
 import { useState } from "react";
-import { isMbmcPublicImage, isSafeImageSource } from "@/lib/images/mbmc-public-image";
+import type { PublicImage } from "@/models";
+import {
+  isMbmcPublicImage,
+  resolvePublicMachineImage,
+  type PublicMachineImageVariant,
+} from "@/lib/images/mbmc-public-image";
 
-type MachineImageProps = Omit<ImageProps, "src" | "unoptimized" | "onError"> & {
-  src?: string | null;
+type MachineImageProps = Omit<
+  ImageProps,
+  "src" | "unoptimized" | "onError" | "alt" | "width" | "height"
+> & {
+  image: PublicImage;
+  variant: PublicMachineImageVariant;
+  alt?: string;
+  width?: ImageProps["width"];
+  height?: ImageProps["height"];
 };
 
 /** Canonical rendering boundary for public commercial machine images. */
-export function MachineImage({ src, alt, ...props }: MachineImageProps) {
+export function MachineImage({
+  image,
+  variant,
+  alt = image.alt,
+  width,
+  height,
+  ...props
+}: MachineImageProps) {
+  const resolved = resolvePublicMachineImage(image, variant);
+  const src = resolved?.url ?? null;
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  if ((typeof src === "string" && failedSrc === src) || !isSafeImageSource(src)) {
-    return <span className="machine-image-fallback" role="img" aria-label={alt || "Hình ảnh máy chưa sẵn sàng"}><span aria-hidden="true">MBMC</span></span>;
+  if (!src || failedSrc === src) {
+    return (
+      <span
+        className="machine-image-fallback"
+        role="img"
+        aria-label={alt || "Hình ảnh máy chưa sẵn sàng"}
+      >
+        <span aria-hidden="true">MBMC</span>
+      </span>
+    );
   }
 
-  return <Image {...props} src={src} alt={alt} unoptimized={isMbmcPublicImage(src)} onError={() => setFailedSrc(src)} />;
+  const intrinsicDimensions = !props.fill && resolved?.width && resolved.height
+    ? { width: width ?? resolved.width, height: height ?? resolved.height }
+    : { ...(width ? { width } : {}), ...(height ? { height } : {}) };
+
+  return (
+    <Image
+      {...props}
+      {...intrinsicDimensions}
+      src={src}
+      alt={alt}
+      unoptimized={isMbmcPublicImage(src)}
+      onError={() => setFailedSrc(src)}
+    />
+  );
 }

@@ -2,6 +2,7 @@ import type {
   PublicAvailability,
   PublicCosmeticGrade,
   PublicIncludedItems,
+  PublicImageVariants,
   PublicReservationKind,
 } from "./contracts.ts";
 
@@ -55,6 +56,7 @@ export type PublicImageInput = {
   height?: number | null;
   sortOrder?: number;
   isCover?: boolean;
+  variants?: PublicImageVariants;
   [privateProperty: string]: unknown;
 };
 
@@ -91,6 +93,7 @@ export type NormalizedPublicImage = {
   height: number | null;
   sortOrder: number;
   isCover: boolean;
+  variants?: PublicImageVariants;
 };
 
 export type NormalizedPublicMachineFacts = {
@@ -121,6 +124,7 @@ export type PublicKernelImage = {
   alt: string | null;
   width: number | null;
   height: number | null;
+  variants?: PublicImageVariants;
 };
 export type PublicProjectionKernel = {
   code: string;
@@ -176,6 +180,9 @@ export function filterPublicMachineImages(
       height: typeof image.height === "number" ? image.height : null,
       sortOrder: image.sortOrder ?? 0,
       isCover: image.isCover === true,
+      ...(image.variants && Object.keys(image.variants).length > 0
+        ? { variants: { ...image.variants } }
+        : {}),
     }))
     .sort(
       (left, right) =>

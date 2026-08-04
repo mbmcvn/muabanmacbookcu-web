@@ -5,7 +5,7 @@ import { hasBalancedSuitability } from "./decision-dossier-presentation";
 export function PublicSpecifications({ machine }: { machine: PublicMachineDetailV1 }) {
   const rows = buildPublicSpecificationRows(machine);
   if (!rows.length) return null;
-  return <section className="detail-section specification-section" aria-labelledby="specifications-heading"><header><p className="eyebrow">Cấu hình</p><h2 id="specifications-heading">Thông số kỹ thuật</h2></header><dl className="public-specifications">{rows.map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></section>;
+  return <section className="detail-section specification-section" aria-labelledby="specifications-heading"><header><p className="eyebrow">Thông tin tham chiếu</p><h2 id="specifications-heading">Thông số kỹ thuật bổ sung</h2><p>Mở phần này khi bạn cần đối chiếu thêm; các thông tin quyết định chính đã được trình bày phía trên.</p></header><details><summary>Xem {rows.length} thông số bổ sung</summary><dl className="public-specifications">{rows.map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></details></section>;
 }
 
 export function SuitabilityAssessment({ machine }: { machine: PublicMachineDetailV1 }) {

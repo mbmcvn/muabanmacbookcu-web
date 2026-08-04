@@ -24,6 +24,7 @@ function assembleImage(
     alt: image.alt ?? `${displayName} - image ${position}`,
     width: image.width,
     height: image.height,
+    ...(image.variants ? { variants: { ...image.variants } } : {}),
   };
 }
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { MachineImage as Image } from "@/components/machine/MachineImage";
+import { MachineImage } from "@/components/machine/MachineImage";
 import type { PublicImage } from "@/models";
 import { usePublicMachineMedia } from "./PublicMachineMediaProvider";
 
 function ImageGrid({ images, startIndex, onOpen }: { images: PublicImage[]; startIndex: number; onOpen: (index: number, opener: HTMLElement) => void }) {
   if (!images.length) return null;
-  return <div className="evidence-grid">{images.map((image, index) => <figure key={image.url}><button type="button" onClick={(event) => onOpen(startIndex + index, event.currentTarget)} aria-label={`Mở ${image.alt} toàn màn hình`}><Image src={image.url} alt={image.alt} fill sizes="(max-width: 639px) calc(100vw - 32px), 33vw" /></button><figcaption>{image.alt}</figcaption></figure>)}</div>;
+  return <div className="evidence-grid">{images.map((image, index) => <figure key={image.url}><button type="button" onClick={(event) => onOpen(startIndex + index, event.currentTarget)} aria-label={`Mở ${image.alt} toàn màn hình`}><MachineImage image={image} variant="card" fill sizes="(max-width: 639px) calc(100vw - 32px), 33vw" /></button><figcaption>{image.alt}</figcaption></figure>)}</div>;
 }
 
 export function DetailedImages() {

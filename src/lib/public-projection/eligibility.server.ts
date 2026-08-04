@@ -121,6 +121,7 @@ export function validatePublicMachineEligibility(
         alt: image.alt,
         width: image.width,
         height: image.height,
+        ...(image.variants ? { variants: { ...image.variants } } : {}),
       })),
       coverIndex: facts.images.indexOf(covers[0]),
       batteryHealthPercent: facts.batteryHealthPercent,

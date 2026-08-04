@@ -2,6 +2,8 @@ export type {
   PublicAvailability,
   PublicFact,
   PublicImage,
+  PublicImageVariant,
+  PublicImageVariants,
   PublicIncludedItems,
   PublicInspection,
   PublicMachineDetailV1,

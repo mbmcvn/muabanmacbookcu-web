@@ -9,11 +9,22 @@ export const PUBLIC_MACHINE_PASSPORT_V1_SCHEMA =
 // value is Unknown to the public projection; it must not be treated as false.
 export type ISODateTime = string;
 export type PublicMoney = { amount: number; currency: "VND" };
+export type PublicImageVariant = {
+  url: string;
+  width: number;
+  height: number;
+  byteSize: number | null;
+  mimeType: "image/webp" | null;
+};
+export type PublicImageVariants = Partial<
+  Record<"thumb" | "card" | "display" | "full", PublicImageVariant>
+>;
 export type PublicImage = {
   url: string;
   alt: string;
   width: number | null;
   height: number | null;
+  variants?: PublicImageVariants;
 };
 export type PublicAvailability =
   | "available"

@@ -22,7 +22,7 @@ const PUBLIC_CANDIDATE_FIELDS = `
   sales (lifecycle_status, reservation_kind),
   machine_publications!inner (status, slug, revision, approved_by, approved_at, approved_editorial_revision, published_by, first_published_at, published_at, published_editorial_revision, updated_at),
   machine_editorials (revision, public_condition_summary, expert_summary, suitable_for, not_suitable_for, contextual_label, included_items, policy_applicability, reviewed_by, reviewed_at),
-  machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover)
+  machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover, processing_status, derivatives)
 `;
 
 export class PublicInventoryDatabaseError extends Error {

@@ -2,7 +2,26 @@ import "../../data/support/test-register.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { isMbmcPublicImage, isSafeImageSource } from "./mbmc-public-image.ts";
+import {
+  isMbmcPublicImage,
+  isSafeImageSource,
+  resolvePublicMachineImage,
+} from "./mbmc-public-image.ts";
+
+const variant = (name) => ({
+  url: `https://img.mbmc.vn/machines/id/${name}.webp`,
+  width: name === "thumb" ? 320 : name === "card" ? 640 : name === "display" ? 1280 : 2048,
+  height: name === "thumb" ? 320 : name === "card" ? 640 : name === "display" ? 1280 : 2048,
+  byteSize: 100,
+  mimeType: "image/webp",
+});
+const publicImage = (variants = {}) => ({
+  url: "https://img.mbmc.vn/machines/legacy.jpg",
+  alt: "Machine",
+  width: null,
+  height: null,
+  variants,
+});
 
 test("recognizes only the normalized MBMC public image hostname", () => {
   assert.equal(isMbmcPublicImage("https://img.mbmc.vn/machines/a.webp"), true);
@@ -30,12 +49,46 @@ test("shared MachineImage bypasses optimization only for the MBMC host and provi
   assert.match(component, /machine-image-fallback/);
 });
 
-test("machine hero and thumbnails use the shared boundary with preserved loading policy", () => {
+test("resolver selects every requested variant and its dimensions", () => {
+  const image = publicImage({ thumb: variant("thumb"), card: variant("card"), display: variant("display"), full: variant("full") });
+  for (const name of ["thumb", "card", "display", "full"]) {
+    assert.deepEqual(resolvePublicMachineImage(image, name), {
+      url: variant(name).url,
+      width: variant(name).width,
+      height: variant(name).height,
+    });
+  }
+});
+
+test("resolver follows every ordered fallback chain", () => {
+  const cases = [
+    ["thumb", { card: variant("card"), display: variant("display") }, "card"],
+    ["card", { display: variant("display"), thumb: variant("thumb") }, "display"],
+    ["display", { full: variant("full"), card: variant("card") }, "full"],
+    ["full", { display: variant("display"), card: variant("card") }, "display"],
+  ];
+  for (const [requested, variants, selected] of cases) {
+    assert.equal(resolvePublicMachineImage(publicImage(variants), requested)?.url, variant(selected).url);
+  }
+});
+
+test("legacy and unsafe compatibility URLs resolve safely", () => {
+  for (const requested of ["thumb", "card", "display", "full"]) {
+    assert.equal(resolvePublicMachineImage(publicImage(), requested)?.url, publicImage().url);
+  }
+  assert.equal(resolvePublicMachineImage({ ...publicImage(), url: "https://img.mbmc.vn.evil.test/a.jpg" }, "card"), null);
+  assert.equal(resolvePublicMachineImage({ ...publicImage(), url: "http://img.mbmc.vn/a.jpg" }, "card"), null);
+});
+
+test("machine surfaces request their semantic variants with preserved loading policy", () => {
+  const card = readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx", import.meta.url), "utf8");
   const gallery = readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx", import.meta.url), "utf8");
   const track = readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx", import.meta.url), "utf8");
-  assert.match(gallery, /MachineImage as Image/);
+  assert.match(card, /image=\{machine\.coverImage\} variant="card"/);
+  assert.match(gallery, /image=\{image\} variant="thumb"/);
   assert.match(gallery, /sizes="88px"/);
-  assert.match(track, /MachineImage as Image/);
+  assert.match(track, /image=\{image\} variant="display"/);
+  assert.match(track, /image=\{image\} variant="full"/);
   assert.match(track, /priority=\{variant === "gallery" && imageIndex === 0\}/);
   assert.match(track, /priority=\{false\}/);
 });

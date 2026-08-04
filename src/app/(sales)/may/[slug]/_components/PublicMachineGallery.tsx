@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MachineImage as Image } from "@/components/machine/MachineImage";
+import { MachineImage } from "@/components/machine/MachineImage";
 import { usePublicMachineMedia } from "./PublicMachineMediaProvider";
 import { SlidingImageTrack } from "./SlidingImageTrack";
 import type { GalleryImageShape } from "./gallery-image-shape";
@@ -26,6 +26,6 @@ export function PublicMachineGallery({ title }: { title: string }) {
       <button className="gallery-fullscreen" type="button" onClick={(event) => openLightbox(index, event.currentTarget)} aria-label="Xem ảnh toàn màn hình">⛶</button>
       <output aria-live="polite">{index + 1} / {images.length} ảnh</output>
     </div>
-    {images.length > 1 ? <div className="detail-thumbnails" aria-label="Chọn ảnh hiển thị">{images.map((image, imageIndex) => <button key={image.url} type="button" aria-label={`Xem ảnh ${imageIndex + 1} của ${title}`} aria-pressed={imageIndex === index} onClick={() => select(imageIndex)}><Image src={image.url} alt="" fill sizes="88px" /><span>{image.alt}</span></button>)}</div> : null}
+    {images.length > 1 ? <div className="detail-thumbnails" aria-label="Chọn ảnh hiển thị">{images.map((image, imageIndex) => <button key={image.url} type="button" aria-label={`Xem ảnh ${imageIndex + 1} của ${title}`} aria-pressed={imageIndex === index} onClick={() => select(imageIndex)}><MachineImage image={image} variant="thumb" alt="" fill sizes="88px" /><span>{image.alt}</span></button>)}</div> : null}
   </section>;
 }

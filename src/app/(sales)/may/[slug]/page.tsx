@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicMachineBySlug } from "@/data/machines/get-public-machine-by-slug";
+import { resolvePublicMachineImage } from "@/lib/images/mbmc-public-image";
 import { PublicMachineDetailView } from "./_components/PublicMachineDetailView";
 import { PublicMachineStickyBar } from "./_components/SupportAndSticky";
 
@@ -18,6 +19,7 @@ export async function generateMetadata({ params }: DetailPageProps): Promise<Met
   if (!machine) notFound();
   const summary = machine.summary;
   const description = machine.expertSummary ?? summary.conditionSummary;
+  const socialImage = resolvePublicMachineImage(summary.coverImage, "display");
   return {
     title: `${summary.displayName} · ${summary.code}`,
     description,
@@ -27,7 +29,7 @@ export async function generateMetadata({ params }: DetailPageProps): Promise<Met
       description,
       type: "website",
       url: canonicalMachineUrl(slug),
-      images: [{ url: summary.coverImage.url, alt: summary.coverImage.alt }],
+      ...(socialImage ? { images: [{ url: socialImage.url, alt: summary.coverImage.alt }] } : {}),
     },
   };
 }
