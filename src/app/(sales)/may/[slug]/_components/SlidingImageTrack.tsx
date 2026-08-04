@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef } from "react";
+import { MachineImage as Image } from "@/components/machine/MachineImage";
 import type { PublicImage } from "@/models";
 import { resistGalleryDrag, resolveGalleryDragIndex } from "./gallery-navigation";
 import { classifyGalleryImageShape, type GalleryImageShape } from "./gallery-image-shape";

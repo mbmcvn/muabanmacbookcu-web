@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { MachineImage as Image } from "@/components/machine/MachineImage";
 import { useContactChannel, withContactChannel } from "@/hooks/useContactChannel";
 import type { PublicMachineSummaryV1 } from "@/models";
 import { formatCurrencyVnd, formatMachineAvailability, formatPublicMachineDisplayName, formatPublicMachineSpecs } from "@/lib/presentation";

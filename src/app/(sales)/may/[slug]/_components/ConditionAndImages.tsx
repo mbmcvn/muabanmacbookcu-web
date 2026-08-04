@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { MachineImage as Image } from "@/components/machine/MachineImage";
 import type { PublicImage } from "@/models";
 import { usePublicMachineMedia } from "./PublicMachineMediaProvider";
 

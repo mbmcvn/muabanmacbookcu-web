@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import { MachineImage as Image } from "@/components/machine/MachineImage";
 import { usePublicMachineMedia } from "./PublicMachineMediaProvider";
 import { SlidingImageTrack } from "./SlidingImageTrack";
 import type { GalleryImageShape } from "./gallery-image-shape";
