@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PublicHandoverImage } from "@/components/handover/PublicHandoverImage";
 import { getPeopleStoryBySlug } from "@/data/handover/get-people-stories.server";
 import styles from "./story.module.css";
 
@@ -25,7 +25,7 @@ export default async function PeopleStoryPage({ params }: PageProps<"/people/[sl
   return (
     <main className={styles.page}>
       <div className={`container ${styles.navigation}`}><Link href="/people">← Trở lại People</Link></div>
-      <div className={styles.hero}><Image src={story.imageUrl} alt={`Khoảnh khắc bàn giao của ${story.customerLabel}`} fill priority sizes="100vw" /></div>
+      <div className={styles.hero}><PublicHandoverImage src={story.imageUrl} alt={`Khoảnh khắc bàn giao của ${story.customerLabel}`} fill priority sizes="100vw" /></div>
       <article className={styles.article}>
         <p className={styles.customer}>{story.customerLabel}</p>
         <h1>{story.title}</h1>

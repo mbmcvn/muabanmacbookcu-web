@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { HandoverStoryCardModel } from "./HandoverStoryCardModel";
+import { PublicHandoverImage } from "./PublicHandoverImage";
 import styles from "./HandoverStoryCard.module.css";
 
 export function HandoverStoryCard({
@@ -11,7 +11,7 @@ export function HandoverStoryCard({
   const content = (
     <article className={styles.card}>
       <div className={styles.image}>
-        <Image
+        <PublicHandoverImage
           src={story.imageUrl}
           alt={`Khoảnh khắc bàn giao của ${story.customerLabel}`}
           fill

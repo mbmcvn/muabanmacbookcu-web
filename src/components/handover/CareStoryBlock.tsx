@@ -1,6 +1,6 @@
-import Image from "next/image";
 import type { CareStoryDTO } from "@/data/handover/care-story";
 import { CareStoryBody } from "./CareStoryBody";
+import { PublicHandoverImage } from "./PublicHandoverImage";
 import styles from "./CareStoryBlock.module.css";
 
 export function CareStoryBlock({ story }: { story: CareStoryDTO | null }) {
@@ -9,7 +9,7 @@ export function CareStoryBlock({ story }: { story: CareStoryDTO | null }) {
   return (
     <section className={styles.block} aria-labelledby="care-story-title">
       <div className={styles.image}>
-        <Image
+        <PublicHandoverImage
           src={story.imageUrl}
           alt=""
           fill
