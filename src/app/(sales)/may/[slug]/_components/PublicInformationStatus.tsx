@@ -4,6 +4,7 @@ import {
   formatPublicMachineDisplayName,
 } from "@/lib/presentation";
 import { buildPublicLimitations } from "./decision-dossier-presentation";
+import { MachineDetailIcon } from "./MachineDetailIcon";
 
 export function VerifiedPublicInformation({
   machine,
@@ -45,13 +46,14 @@ export function PublicInformationLimitations({
   if (!limitations.length) return null;
   return (
     <details
-      className="public-information-disclosure"
+      className="public-information-disclosure supporting-information-row"
       id="thong-tin-can-xac-nhan-them"
     >
       <summary className="public-information-disclosure__summary">
         <span className="public-information-disclosure__copy">
-          <span className="public-information-disclosure__label">Thông tin cần xác nhận thêm</span>
-          <strong className="public-information-disclosure__count">Chưa có {limitations.length} nhóm thông tin xác nhận trong hồ sơ công khai</strong>
+          <MachineDetailIcon name="help" className="supporting-information-row__icon" />
+          <span className="public-information-disclosure__text"><span className="public-information-disclosure__label">Thông tin cần xác nhận thêm</span>
+          <strong className="public-information-disclosure__count">Chưa có {limitations.length} nhóm thông tin xác nhận trong hồ sơ công khai</strong></span>
         </span>
         <span className="public-information-disclosure__icon" aria-hidden="true">
           <span className="public-information-disclosure__icon-closed">+</span>

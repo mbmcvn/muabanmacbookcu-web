@@ -3,6 +3,7 @@
 import { MachineImage } from "@/components/machine/MachineImage";
 import type { PublicImage } from "@/models";
 import { usePublicMachineMedia } from "./PublicMachineMediaProvider";
+import { MachineDetailIcon } from "./MachineDetailIcon";
 
 function ImageGrid({ images, startIndex, onOpen }: { images: PublicImage[]; startIndex: number; onOpen: (index: number, opener: HTMLElement) => void }) {
   if (!images.length) return null;
@@ -13,5 +14,5 @@ export function DetailedImages() {
   const { images: gallery, openLightbox } = usePublicMachineMedia();
   const images = gallery.slice(1);
   if (!images.length) return null;
-  return <section className="detail-section supporting-images" aria-labelledby="images-heading"><details className="supporting-images-disclosure"><summary><span><span className="eyebrow">Hình ảnh công khai</span><strong id="images-heading">Quan sát thêm về chiếc máy</strong></span><span className="supporting-images-disclosure__action">Xem {images.length} ảnh công khai khác <span aria-hidden="true">⌄</span></span></summary><div className="supporting-images-disclosure__content"><ImageGrid images={images} startIndex={1} onOpen={openLightbox} /></div></details></section>;
+  return <section className="detail-section supporting-images" aria-labelledby="images-heading"><details className="supporting-images-disclosure supporting-information-row"><summary><MachineDetailIcon name="images" className="supporting-information-row__icon" /><span className="supporting-images-disclosure__copy"><span className="eyebrow">Hình ảnh công khai</span><strong id="images-heading">Quan sát thêm về chiếc máy</strong></span><span className="supporting-images-disclosure__action">Xem {images.length} ảnh công khai khác <span aria-hidden="true">⌄</span></span></summary><div className="supporting-images-disclosure__content"><ImageGrid images={images} startIndex={1} onOpen={openLightbox} /></div></details></section>;
 }

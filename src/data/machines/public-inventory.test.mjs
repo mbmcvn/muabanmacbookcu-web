@@ -711,7 +711,7 @@ test("verified information stays visible and limitations use a closed native dis
   const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",import.meta.url),"utf8");
   assert.match(source,/Đã xác minh trong hồ sơ công khai/);
   assert.match(source,/<section[\s\S]*aria-labelledby="verified-information-heading"/);
-  assert.match(source,/<details[\s\S]*className="public-information-disclosure"[\s\S]*id="thong-tin-can-xac-nhan-them"/);
+  assert.match(source,/<details[\s\S]*className="public-information-disclosure supporting-information-row"[\s\S]*id="thong-tin-can-xac-nhan-them"/);
   assert.match(source,/<summary className="public-information-disclosure__summary">/);
   assert.doesNotMatch(source,/<details[^>]*\sopen(?:=|\s|>)/);
   assert.match(source,/Thông tin cần xác nhận thêm/);
@@ -750,7 +750,10 @@ test("supporting facts and images are not labelled as complete Evidence",()=>{
   assert.match(facts,/Thông tin công khai hỗ trợ/);
   assert.match(images,/Hình ảnh công khai/);
   assert.match(facts,/className="detail-facts condition-metrics"/);
-  assert.match(images,/<details className="supporting-images-disclosure">/);
+  assert.match(facts,/evidenceIcons/);
+  assert.match(facts,/className="condition-metric__icon"/);
+  assert.match(images,/<details className="supporting-images-disclosure supporting-information-row">/);
+  assert.match(images,/name="images" className="supporting-information-row__icon"/);
   assert.match(images,/className="supporting-images-disclosure__action"/);
   assert.match(images,/className="supporting-images-disclosure__content"/);
   assert.match(images,/<ImageGrid images=\{images\}/);
@@ -765,7 +768,23 @@ test("Passport is a current identity record after supporting information without
   assert.match(passport,/Hồ sơ nhận diện công khai/);
   assert.match(passport,/không phải lịch sử đầy đủ/);
   assert.match(passport,/<dt>Mã máy<\/dt><dd>\{passport\.code\}<\/dd>/);
+  for(const icon of ["passport","model","status","published"])assert.match(passport,new RegExp(`name="${icon}" className="passport-fact__icon"`));
   assert.doesNotMatch(passport,/passport\.timeline|passport\.facts|<ol/);
+});
+
+test("dossier chips use consistent semantic icons without changing anchors",()=>{
+  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
+  assert.match(view,/href="#ho-so-cong-khai"><MachineDetailIcon name="trust" \/>Đã biết và chưa biết/);
+  assert.match(view,/href="#thong-tin-ho-tro"><MachineDetailIcon name="condition" \/>Tình trạng thực tế/);
+  assert.match(view,/href="#passport-cong-khai"><MachineDetailIcon name="passport" \/>Passport/);
+});
+
+test("Machine Detail mobile typography keeps supporting rows subordinate and passport compact",()=>{
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(css,/\/\* Public Machine Detail mobile typography and rhythm \*\/[\s\S]*?@media \(max-width: 63\.99rem\)/);
+  assert.match(css,/@media \(max-width: 63\.99rem\) \{[\s\S]*?\.public-detail-page \.supporting-images-disclosure > summary strong \{[^}]*font-size: 1rem;[^}]*line-height: 1\.25;/);
+  assert.match(css,/@media \(max-width: 63\.99rem\) \{[\s\S]*?\.public-detail-page \.passport-summary > div \{[^}]*padding: 1rem 0;[^}]*border-bottom: 1px solid/);
+  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-detail-page \.dossier-navigation a \{[^}]*font-size: \.75rem;/);
 });
 
 test("first Decision Dossier release omits unsupported future sections",()=>{

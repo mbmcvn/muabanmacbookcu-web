@@ -11,6 +11,7 @@ import { PublicMachineMediaProvider } from "./PublicMachineMediaProvider";
 import { PublicSpecifications } from "./SpecificationsAndRecommendation";
 import { PoliciesAndSupport } from "./SupportAndSticky";
 import { hasBalancedSuitability } from "./decision-dossier-presentation";
+import { MachineDetailIcon } from "./MachineDetailIcon";
 
 export function PublicMachineDetailView({ machine }: { machine: PublicMachineDetailV1 }) {
   const { channel } = useContactChannel();
@@ -22,7 +23,7 @@ export function PublicMachineDetailView({ machine }: { machine: PublicMachineDet
       <div className="detail-hero"><PublicMachineGallery title={displayName} /><DecisionPanel machine={machine} /></div>
       <div className="detail-reading-entry">
         <p className="decision-hook">Phần tiếp theo giúp bạn đối chiếu chiếc máy này với nhu cầu và những điều còn chưa chắc chắn.</p>
-        <nav className="dossier-navigation" aria-label="Nội dung hồ sơ quyết định">{hasBalancedSuitability(machine) ? <a href="#danh-gia-phu-hop">Độ phù hợp</a> : null}<a href="#ho-so-cong-khai">Đã biết và chưa biết</a><a href="#thong-tin-ho-tro">Tình trạng thực tế</a><a href="#passport-cong-khai">Passport</a></nav>
+        <nav className="dossier-navigation" aria-label="Nội dung hồ sơ quyết định">{hasBalancedSuitability(machine) ? <a href="#danh-gia-phu-hop">Độ phù hợp</a> : null}<a href="#ho-so-cong-khai"><MachineDetailIcon name="trust" />Đã biết và chưa biết</a><a href="#thong-tin-ho-tro"><MachineDetailIcon name="condition" />Tình trạng thực tế</a><a href="#passport-cong-khai"><MachineDetailIcon name="passport" />Passport</a></nav>
       </div>
       <DecisionDossier machine={machine} />
       <PublicSpecifications machine={machine} />

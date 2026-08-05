@@ -438,6 +438,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .public-detail-page .decision-hook { margin: 0; font-size: .94rem; }
 .public-detail-page .dossier-navigation { justify-content: flex-end; }
 .public-detail-page .dossier-navigation a { min-height: 2.35rem; display: inline-flex; align-items: center; border-color: #d4d4cd; background: rgba(255,255,255,.55); color: #40443f; }
+.public-detail-page .dossier-navigation a svg { flex: 0 0 auto; width: 1.15rem; height: 1.15rem; color: var(--accent); }
 .public-detail-page .dossier-navigation a:hover, .public-detail-page .dossier-navigation a:focus-visible { border-color: var(--accent); color: var(--accent); }
 .public-detail-page .dossier-stage { padding-block: clamp(2.25rem, 4vw, 3.25rem); }
 .public-detail-page .dossier-stage-decision > .decision-summary { max-width: 54rem; }
@@ -451,8 +452,12 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .public-detail-page .verified-information-facts { gap: 0; border-top: 1px solid #d4ddd5; }
 .public-detail-page .verified-information-facts > div { display: block; grid-template-columns: none; padding: .9rem 1rem .15rem 0; border-radius: 0; background: transparent; }
 .public-detail-page .verified-information-facts dt { margin-bottom: .25rem; }
-.public-detail-page .public-information-disclosure { margin: .65rem 0 0; padding: .8rem .15rem; }
+.public-detail-page .supporting-information-row { border: 1px solid #dedbd2; border-radius: .6rem; background: #f6f4ee; }
+.public-detail-page .public-information-disclosure { margin: .65rem 0 0; padding: .7rem 1rem; }
 .public-detail-page .public-information-disclosure__summary { min-height: 2.75rem; }
+.public-detail-page .public-information-disclosure__copy { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .8rem; }
+.public-detail-page .public-information-disclosure__text { min-width: 0; display: grid; gap: .15rem; }
+.supporting-information-row__icon { flex: 0 0 auto; width: 1.7rem; height: 1.7rem; color: var(--accent); }
 .public-detail-page .public-information-disclosure__label { color: #60655f; }
 .public-detail-page .public-information-disclosure__icon { border-color: #cfd2cc; background: #f4f3ee; }
 .public-detail-page .dossier-fit-pair { gap: .8rem; margin-top: 1.5rem; }
@@ -461,14 +466,16 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .public-detail-page .dossier-stage-supporting { gap: 1rem; }
 .public-detail-page .dossier-stage-supporting .decision-information > header { margin-bottom: 1.25rem; }
 .public-detail-page .condition-metrics { gap: .7rem; }
-.public-detail-page .condition-metrics > div { min-height: 7.25rem; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem; border: 1px solid #dedbd2; border-radius: .65rem; background: #f4f2eb; }
-.public-detail-page .condition-metrics dt { margin-bottom: .75rem; }
+.public-detail-page .condition-metrics > div { min-height: 6.5rem; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 1rem; padding: 1rem; border: 1px solid #dedbd2; border-radius: .65rem; background: #f4f2eb; }
+.condition-metric__icon { width: 2.2rem; height: 2.2rem; color: var(--accent); }
+.condition-metric__copy { min-width: 0; }
+.public-detail-page .condition-metrics dt { margin-bottom: .25rem; }
 .public-detail-page .condition-metrics dd { color: #263b33; font-size: 1.08rem; font-weight: 700; }
 .public-detail-page .supporting-images { margin: 0; }
-.public-detail-page .supporting-images-disclosure { border-block: 1px solid var(--border); }
-.public-detail-page .supporting-images-disclosure > summary { min-height: 4.5rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; list-style: none; }
+.public-detail-page .supporting-images-disclosure { padding-inline: 1rem; }
+.public-detail-page .supporting-images-disclosure > summary { min-height: 4.5rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .8rem; list-style: none; }
 .public-detail-page .supporting-images-disclosure > summary::-webkit-details-marker { display: none; }
-.public-detail-page .supporting-images-disclosure > summary > span:first-child { min-width: 0; display: grid; gap: .1rem; }
+.public-detail-page .supporting-images-disclosure__copy { min-width: 0; display: grid; gap: .1rem; }
 .public-detail-page .supporting-images-disclosure > summary .eyebrow { margin: 0; }
 .public-detail-page .supporting-images-disclosure > summary strong { font-size: 1.08rem; }
 .supporting-images-disclosure__action { color: var(--muted); font-size: .9rem; font-weight: 600; text-align: right; }
@@ -479,7 +486,9 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .public-detail-page .passport-heading { display: block; margin-bottom: 1.25rem; }
 .public-detail-page .passport-heading > div > p:last-child { max-width: 42rem; }
 .public-detail-page .passport-summary { border-block: 1px solid #d9d7ce; }
-.public-detail-page .passport-summary > div { min-width: 0; display: block; grid-template-columns: none; padding: 1rem; }
+.public-detail-page .passport-summary > div { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .85rem; padding: 1rem; }
+.passport-fact__icon { width: 1.9rem; height: 1.9rem; color: #52645c; }
+.public-detail-page .passport-summary > div:nth-child(3) .passport-fact__icon { color: var(--accent); }
 .public-detail-page .passport-summary dt { font-size: .74rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
 .public-detail-page .passport-summary dd { overflow-wrap: anywhere; color: #263b33; }
 .public-detail-page .specification-section { padding-block: 2.25rem; }
@@ -531,6 +540,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-detail-page .dossier-navigation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; overflow: visible; }
   .public-detail-page .dossier-navigation:has(a:nth-child(4)) { display: flex; overflow-x: auto; }
   .public-detail-page .dossier-navigation a { min-width: 0; justify-content: center; padding: .42rem .45rem; font-size: .72rem; line-height: 1.25; text-align: center; white-space: normal; }
+  .public-detail-page .dossier-navigation a svg { width: 1rem; height: 1rem; }
   .public-detail-page .dossier-navigation:has(a:nth-child(4)) a { flex: 0 0 auto; }
   .public-detail-page .dossier-stage { padding-block: 2rem; }
   .public-detail-page .decision-summary h2 { font-size: 2rem; }
@@ -542,15 +552,105 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-detail-page .verified-information-facts > div:nth-child(even) { padding-left: .75rem; border-left: 1px solid #d4ddd5; }
   .public-detail-page .public-information-disclosure__summary { align-items: start; }
   .public-detail-page .condition-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
-  .public-detail-page .condition-metrics > div { min-height: 6.5rem; padding: .85rem; }
+  .public-detail-page .condition-metrics > div { min-height: 6.25rem; gap: .65rem; padding: .8rem; }
+  .condition-metric__icon { width: 1.7rem; height: 1.7rem; }
   .public-detail-page .condition-metrics > .detail-fact-wide { grid-column: 1 / -1; min-height: 0; }
-  .public-detail-page .supporting-images-disclosure > summary { grid-template-columns: minmax(0, 1fr) 7.5rem; gap: .75rem; }
+  .public-detail-page .supporting-images-disclosure > summary { grid-template-columns: auto minmax(0, 1fr) 6.75rem; gap: .6rem; }
   .supporting-images-disclosure__action { font-size: .78rem; line-height: 1.35; }
   .public-detail-page .passport-summary { grid-template-columns: minmax(0, 1fr); }
-  .public-detail-page .passport-summary > div { padding: .8rem 0; border-left: 0 !important; border-bottom: 1px solid #d9d7ce; }
+  .public-detail-page .passport-summary > div { grid-template-columns: auto minmax(0, 1fr); padding: .8rem 0; border-left: 0 !important; border-bottom: 1px solid #d9d7ce; }
   .public-detail-page .passport-summary > div:last-child { border-bottom: 0; }
   .public-detail-page .support-section { margin-top: .5rem; padding: 1.35rem; }
   .public-detail-page .support-section h2 { font-size: 2rem; }
   .public-detail-page .support-contact { padding: 1rem 0 0; border: 0; border-top: 1px solid rgba(255,255,255,.16); border-radius: 0; background: transparent; }
   .public-machine-sticky-price { font-size: .78rem; }
+}
+
+/* Public Machine Detail mobile typography and rhythm */
+@media (max-width: 63.99rem) {
+  .public-detail-page { padding-bottom: 10rem; }
+  .public-detail-page .detail-decision h1 { margin-bottom: .65rem; font-size: clamp(2.25rem, 5vw, 2.5rem); font-weight: 620; line-height: 1.06; letter-spacing: -.035em; }
+  .public-detail-page .detail-configuration { font-size: 1rem; line-height: 1.5; }
+  .public-detail-page .detail-price { font-size: 2.25rem; line-height: 1.1; }
+  .public-detail-page .detail-section .eyebrow { margin-bottom: .4rem; color: #53645c; font-size: .75rem; font-weight: 680; letter-spacing: .075em; line-height: 1.35; }
+  .public-detail-page .dossier-stage { padding-block: 2.75rem; }
+  .public-detail-page .decision-summary h2,
+  .public-detail-page .decision-information h2,
+  .public-detail-page .passport-dossier h2 { margin-bottom: .7rem; font-size: clamp(1.75rem, 4vw, 2rem); font-weight: 560; line-height: 1.16; letter-spacing: -.03em; }
+  .public-detail-page .decision-summary > header > p:last-child,
+  .public-detail-page .public-information-status > header > p:last-child,
+  .public-detail-page .passport-heading > div > p:last-child { font-size: 1rem; line-height: 1.58; }
+  .public-detail-page .decision-summary > header > p:last-child { margin-bottom: 0; }
+  .public-detail-page .dossier-status-pair { margin-top: 1.5rem; }
+  .public-detail-page .dossier-status-pair > .public-information-status { padding: 1.15rem; }
+  .public-detail-page .public-information-status > header { margin-bottom: 1.25rem; }
+  .public-detail-page .public-information-status h2 { margin-bottom: .65rem; font-size: 1.2rem; font-weight: 650; line-height: 1.25; letter-spacing: -.018em; }
+  .public-detail-page .verified-information-facts > div { padding-block: .8rem .15rem; }
+  .public-detail-page .verified-information-facts dt,
+  .public-detail-page .condition-metrics dt,
+  .public-detail-page .passport-summary dt { margin-bottom: .25rem; color: #667069; font-size: .72rem; font-weight: 650; letter-spacing: .065em; line-height: 1.35; }
+  .public-detail-page .verified-information-facts dd,
+  .public-detail-page .condition-metrics dd,
+  .public-detail-page .passport-summary dd { font-size: 1rem; font-weight: 650; line-height: 1.35; }
+  .public-detail-page .public-information-disclosure { padding: .65rem .9rem; }
+  .public-detail-page .public-information-disclosure__summary { min-height: 2.6rem; }
+  .public-detail-page .public-information-disclosure__label { font-size: .75rem; font-weight: 650; line-height: 1.3; }
+  .public-detail-page .public-information-disclosure__count { font-size: .95rem; font-weight: 650; line-height: 1.4; }
+  .public-detail-page .public-information-disclosure__content { padding-top: .7rem; margin-top: .7rem; }
+  .public-detail-page .public-information-disclosure__content li { margin-block: .45rem; font-size: .96rem; line-height: 1.55; }
+  .public-detail-page .dossier-stage-supporting { gap: .85rem; }
+  .public-detail-page .dossier-stage-supporting .decision-information > header { margin-bottom: 1.25rem; }
+  .public-detail-page .condition-metrics { gap: .75rem; }
+  .public-detail-page .condition-metrics > div { min-height: 6.25rem; gap: .75rem; padding: 1rem; }
+  .condition-metric__icon { width: 1.8rem; height: 1.8rem; }
+  .public-detail-page .supporting-images-disclosure { padding-inline: 1rem; }
+  .public-detail-page .supporting-images-disclosure > summary { min-height: 4.6rem; gap: .7rem; }
+  .public-detail-page .supporting-images-disclosure > summary .eyebrow { font-size: .7rem; }
+  .public-detail-page .supporting-images-disclosure > summary strong { font-size: 1rem; font-weight: 650; line-height: 1.25; }
+  .supporting-images-disclosure__action { max-width: 8rem; font-size: .82rem; line-height: 1.4; }
+  .public-detail-page .dossier-stage-passport { padding-top: 2.75rem; }
+  .public-detail-page .dossier-stage-passport .passport-dossier { padding: 1.15rem; }
+  .public-detail-page .passport-heading { margin-bottom: 1rem; }
+  .public-detail-page .passport-summary { grid-template-columns: minmax(0, 1fr); }
+  .public-detail-page .passport-summary > div { min-height: 0; grid-template-columns: 2rem minmax(0, 1fr); gap: .8rem; padding: 1rem 0; border-left: 0; border-bottom: 1px solid #d9d7ce; }
+  .public-detail-page .passport-summary > div:last-child { border-bottom: 0; }
+  .passport-fact__icon { width: 1.75rem; height: 1.75rem; }
+  .public-detail-page .support-section { margin-top: 1rem; }
+  .public-detail-page .support-section h2 { font-size: 2rem; font-weight: 560; line-height: 1.16; }
+  .public-detail-page .support-section p,
+  .public-detail-page .support-section li { font-size: .96rem; line-height: 1.55; }
+  .public-machine-sticky { min-height: 3.75rem; }
+  .public-machine-sticky strong { font-size: .8rem; line-height: 1.2; }
+  .public-machine-sticky-specs { font-size: .7rem; line-height: 1.2; }
+}
+
+@media (max-width: 480px) {
+  .public-detail-page .detail-decision h1 { font-size: 2.25rem; }
+  .public-detail-page .dossier-navigation { gap: .35rem; }
+  .public-detail-page .dossier-navigation a { min-height: 2.5rem; gap: .3rem; padding: .4rem .35rem; font-size: .75rem; line-height: 1.2; }
+  .public-detail-page .dossier-navigation a svg { width: .95rem; height: .95rem; }
+  .public-detail-page .dossier-stage { padding-block: 2.5rem; }
+  .public-detail-page .decision-summary h2,
+  .public-detail-page .decision-information h2,
+  .public-detail-page .passport-dossier h2 { font-size: 1.625rem; }
+  .public-detail-page .dossier-status-pair > .public-information-status { padding: 1rem; }
+  .public-detail-page .verified-information-facts > div { padding-block: .7rem .1rem; }
+  .public-detail-page .public-information-disclosure { padding: .6rem .8rem; }
+  .public-detail-page .public-information-disclosure__copy { gap: .65rem; }
+  .public-detail-page .public-information-disclosure__icon { width: 1.4rem; height: 1.4rem; }
+  .supporting-information-row__icon { width: 1.55rem; height: 1.55rem; }
+  .public-detail-page .condition-metrics { gap: .65rem; }
+  .public-detail-page .condition-metrics > div { min-height: 5.9rem; gap: .6rem; padding: 1rem; }
+  .condition-metric__icon { width: 1.65rem; height: 1.65rem; }
+  .public-detail-page .condition-metrics dt { overflow-wrap: normal; word-break: normal; }
+  .public-detail-page .supporting-images-disclosure { padding-inline: .85rem; }
+  .public-detail-page .supporting-images-disclosure > summary { min-height: 4.7rem; grid-template-columns: auto minmax(0, 1fr) 6.25rem; gap: .55rem; }
+  .public-detail-page .supporting-images-disclosure > summary strong { font-size: .96rem; }
+  .supporting-images-disclosure__action { max-width: 6.25rem; font-size: .78rem; }
+  .public-detail-page .dossier-stage-passport .passport-dossier { padding: 1rem; }
+  .public-detail-page .passport-summary > div { padding-block: 1rem; }
+  .public-detail-page .support-section { margin-top: .75rem; }
+  .public-machine-sticky { gap: .5rem; padding-block: .35rem calc(.35rem + env(safe-area-inset-bottom)); }
+  .public-machine-sticky-price { font-size: .76rem; }
+  .public-machine-sticky a { min-height: 2.55rem; padding-inline: .6rem; font-size: .78rem; }
 }
