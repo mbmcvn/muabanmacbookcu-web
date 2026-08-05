@@ -16,5 +16,17 @@ export function PublicMachineDetailView({ machine }: { machine: PublicMachineDet
   const { channel } = useContactChannel();
   const summary = machine.summary;
   const displayName = formatPublicMachineDisplayName(summary.displayName);
-  return <PublicMachineMediaProvider images={machine.gallery} title={displayName}><div className="container public-detail-page"><nav className="detail-breadcrumb" aria-label="Đường dẫn"><Link href={withContactChannel("/may-dang-co", channel)}>Máy đang có</Link><span aria-hidden="true">/</span><span>{displayName}{summary.color ? ` · ${summary.color}` : ""}</span></nav><div className="detail-hero"><PublicMachineGallery title={displayName} /><DecisionPanel machine={machine} /></div><div className="detail-reading-entry"><p className="decision-hook">Phần tiếp theo giúp bạn đối chiếu chiếc máy này với nhu cầu và những điều còn chưa chắc chắn.</p><nav className="dossier-navigation" aria-label="Nội dung hồ sơ quyết định">{hasBalancedSuitability(machine) ? <a href="#danh-gia-phu-hop">Độ phù hợp</a> : null}<a href="#ho-so-cong-khai">Đã biết và chưa biết</a><a href="#thong-tin-ho-tro">Tình trạng thực tế</a><a href="#passport-cong-khai">Passport</a></nav></div><DecisionDossier machine={machine} /><PublicSpecifications machine={machine} /><PoliciesAndSupport machine={machine} /></div></PublicMachineMediaProvider>;
+  return <PublicMachineMediaProvider images={machine.gallery} title={displayName}>
+    <div className="container public-detail-page">
+      <nav className="detail-breadcrumb" aria-label="Đường dẫn"><Link href={withContactChannel("/may-dang-co", channel)}>Máy đang có</Link><span aria-hidden="true">/</span><span>{displayName}{summary.color ? ` · ${summary.color}` : ""}</span></nav>
+      <div className="detail-hero"><PublicMachineGallery title={displayName} /><DecisionPanel machine={machine} /></div>
+      <div className="detail-reading-entry">
+        <p className="decision-hook">Phần tiếp theo giúp bạn đối chiếu chiếc máy này với nhu cầu và những điều còn chưa chắc chắn.</p>
+        <nav className="dossier-navigation" aria-label="Nội dung hồ sơ quyết định">{hasBalancedSuitability(machine) ? <a href="#danh-gia-phu-hop">Độ phù hợp</a> : null}<a href="#ho-so-cong-khai">Đã biết và chưa biết</a><a href="#thong-tin-ho-tro">Tình trạng thực tế</a><a href="#passport-cong-khai">Passport</a></nav>
+      </div>
+      <DecisionDossier machine={machine} />
+      <PublicSpecifications machine={machine} />
+      <PoliciesAndSupport machine={machine} />
+    </div>
+  </PublicMachineMediaProvider>;
 }

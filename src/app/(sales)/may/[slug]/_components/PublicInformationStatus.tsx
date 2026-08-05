@@ -17,7 +17,7 @@ export function VerifiedPublicInformation({
       aria-labelledby="verified-information-heading"
     >
       <header>
-        <p className="eyebrow">Phạm vi hồ sơ hiện tại</p>
+        <p className="eyebrow"><span className="verified-information-mark" aria-hidden="true">✓</span> Phạm vi hồ sơ hiện tại</p>
         <h2 id="verified-information-heading">
           Đã xác minh trong hồ sơ công khai
         </h2>
@@ -26,7 +26,7 @@ export function VerifiedPublicInformation({
           máy này, không phải kết luận kiểm định toàn diện.
         </p>
       </header>
-      <dl className="detail-facts">
+      <dl className="detail-facts verified-information-facts">
         <div><dt>Mã máy</dt><dd>{summary.code}</dd></div>
         <div><dt>Model công khai</dt><dd>{formatPublicMachineDisplayName(summary.displayName)}</dd></div>
         <div><dt>Trạng thái công khai</dt><dd>{formatMachineAvailability(summary.availability, summary.reservationKind)}</dd></div>
@@ -44,15 +44,23 @@ export function PublicInformationLimitations({
   const limitations = buildPublicLimitations(machine);
   if (!limitations.length) return null;
   return (
-    <section
-      className="detail-section public-information-status"
-      aria-labelledby="information-limitations-heading"
+    <details
+      className="public-information-disclosure"
+      id="thong-tin-can-xac-nhan-them"
     >
-      <header>
-        <p className="eyebrow">Giới hạn của hồ sơ công khai</p>
-        <h2 id="information-limitations-heading">Chưa đủ thông tin</h2>
-      </header>
-      <ul>{limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
-    </section>
+      <summary className="public-information-disclosure__summary">
+        <span className="public-information-disclosure__copy">
+          <span className="public-information-disclosure__label">Thông tin cần xác nhận thêm</span>
+          <strong className="public-information-disclosure__count">Chưa có {limitations.length} nhóm thông tin xác nhận trong hồ sơ công khai</strong>
+        </span>
+        <span className="public-information-disclosure__icon" aria-hidden="true">
+          <span className="public-information-disclosure__icon-closed">+</span>
+          <span className="public-information-disclosure__icon-open">−</span>
+        </span>
+      </summary>
+      <div className="public-information-disclosure__content">
+        <ul>{limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
+      </div>
+    </details>
   );
 }

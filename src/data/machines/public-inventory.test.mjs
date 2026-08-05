@@ -571,7 +571,7 @@ test("public hero inventory sticky and support surfaces share canonical naming",
   assert.match(sticky,/public-machine-sticky-price/);
 });
 
-test("mobile sticky shows only canonical title and colorless specs while desktop retains price",()=>{
+test("mobile sticky shows canonical identity, price, and compact contact action",()=>{
   const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
   const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
@@ -583,13 +583,14 @@ test("mobile sticky shows only canonical title and colorless specs while desktop
   assert.match(stickyMarkup,/<strong>\{displayName\}<\/strong>\{specs \? <span className="public-machine-sticky-specs">\{specs\}<\/span> : null\}/);
   assert.match(stickyMarkup,/<ContactActionLink \/>/);
   assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
-  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{ display: none; \}/);
+  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-areas: "identity price cta"/);
+  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*display: block;[^}]*grid-area: price/);
   assert.match(css,/\.public-machine-sticky-price \{[^}]*font-weight: 700;[^}]*white-space: nowrap;/);
   assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-identity \{ row-gap: \.125rem; \}/);
   assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/);
 });
 
-test("desktop sticky separates identity price and Zalo CTA while mobile hides only price",()=>{
+test("desktop and mobile sticky layouts preserve separate identity, price, and channel CTA",()=>{
   const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
   const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
   const contact=readFileSync(new URL("../../config/contact.ts",import.meta.url),"utf8");
@@ -600,7 +601,7 @@ test("desktop sticky separates identity price and Zalo CTA while mobile hides on
   assert.match(sticky,/className="public-machine-sticky-identity"[\s\S]*?className="public-machine-sticky-price"[\s\S]*?<ContactActionLink \/>/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-columns: minmax\(16\.25rem, 1fr\) auto auto[^}]*grid-template-areas: "identity price cta"[^}]*grid-auto-flow: column/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*grid-area: price[^}]*font-size: 1\.25rem;[^}]*line-height: 1;/);
-  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{ display: none; \}/);
+  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*display: block;[^}]*grid-area: price/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*grid-area: cta[^}]*grid-row: 1[^}]*width: max-content[^}]*max-width: none[^}]*white-space: nowrap/);
   assert.doesNotMatch(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*(?:width: 100%|grid-column: 1 \/ -1|grid-column: 1 \/ span)/);
   assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
@@ -659,10 +660,10 @@ test("Decision Summary is concise and precedes the fit assessment",()=>{
   const summary=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionSummary.tsx",import.meta.url),"utf8");
   const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
   assert.match(summary,/Có nên tiếp tục cân nhắc chiếc máy này\?/);
-  assert.match(summary,/Hãy đọc cả trường hợp phù hợp/);
-  assert.match(summary,/chưa có đủ nhận định cân bằng/);
+  assert.match(summary,/Đây là phần đối chiếu nhanh trước khi bạn quyết định nhắn MBMC về chiếc máy này\./);
+  assert.doesNotMatch(summary,/Hãy đọc cả trường hợp phù hợp|chưa có đủ nhận định cân bằng/);
   assert.doesNotMatch(summary,/<ul|<ol|RAM|SSD|Chip/);
-  assert.ok(dossier.indexOf("<DecisionSummary machine={machine}")<dossier.indexOf("<SuitabilityAssessment"));
+  assert.ok(dossier.indexOf("<DecisionSummary />")<dossier.indexOf("<SuitabilityAssessment"));
 });
 
 test("Hero includes one lightweight decision hook before Decision Summary",()=>{
@@ -698,7 +699,7 @@ test("Suitable and Not Suitable publish only as a balanced pair",()=>{
   assert.match(source,/>Đánh giá từ MBMC</);
 });
 
-test("verified and insufficient-information sections use bounded public wording",()=>{
+test("verified information stays visible and limitations use a closed native disclosure",()=>{
   const base=publicDetailBySlug([row("MBMC-LIMITS")],"mbmc-limits");
   assert.ok(base);
   assert.deepEqual(buildPublicLimitations(base),[
@@ -709,9 +710,29 @@ test("verified and insufficient-information sections use bounded public wording"
   ]);
   const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",import.meta.url),"utf8");
   assert.match(source,/Đã xác minh trong hồ sơ công khai/);
-  assert.match(source,/>Chưa đủ thông tin</);
+  assert.match(source,/<section[\s\S]*aria-labelledby="verified-information-heading"/);
+  assert.match(source,/<details[\s\S]*className="public-information-disclosure"[\s\S]*id="thong-tin-can-xac-nhan-them"/);
+  assert.match(source,/<summary className="public-information-disclosure__summary">/);
+  assert.doesNotMatch(source,/<details[^>]*\sopen(?:=|\s|>)/);
+  assert.match(source,/Thông tin cần xác nhận thêm/);
+  assert.match(source,/Chưa có \{limitations\.length\} nhóm thông tin xác nhận trong hồ sơ công khai/);
+  assert.doesNotMatch(source,/Giới hạn của hồ sơ công khai/);
   assert.match(source,/không phải kết luận kiểm định toàn diện/);
   assert.doesNotMatch(source,/chưa từng sửa|không có bảo hành|không rõ nguồn gốc/i);
+});
+
+test("limitations disclosure derives its count, omits empty state, and renders every item",()=>{
+  const base=publicDetailBySlug([row("MBMC-DISCLOSURE")],"mbmc-disclosure");
+  assert.ok(base);
+  const limitations=buildPublicLimitations(base);
+  assert.equal(limitations.length,4);
+  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",import.meta.url),"utf8");
+  assert.match(source,/if \(!limitations\.length\) return null/);
+  assert.match(source,/limitations\.length/);
+  assert.match(source,/<div className="public-information-disclosure__content">[\s\S]*limitations\.map\(\(limitation\) => <li key=\{limitation\}>\{limitation\}<\/li>\)[\s\S]*<\/div>/);
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(css,/\.public-information-disclosure__content \{ position: static;/);
+  assert.doesNotMatch(css,/\.dossier-status-pair > \.public-information-status \{[^}]*height:\s*100%/);
 });
 
 test("unsupported fullbox wording is removed when the public included-items record has no box",()=>{
@@ -728,7 +749,10 @@ test("supporting facts and images are not labelled as complete Evidence",()=>{
   const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
   assert.match(facts,/Thông tin công khai hỗ trợ/);
   assert.match(images,/Hình ảnh công khai/);
+  assert.match(facts,/className="detail-facts condition-metrics"/);
   assert.match(images,/<details className="supporting-images-disclosure">/);
+  assert.match(images,/className="supporting-images-disclosure__action"/);
+  assert.match(images,/className="supporting-images-disclosure__content"/);
   assert.match(images,/<ImageGrid images=\{images\}/);
   assert.doesNotMatch(`${facts}\n${images}\n${hero}`,/Bằng chứng|Kiểm tra bằng hình ảnh|Thông tin đảm bảo|Có dữ liệu kiểm định/);
 });
@@ -740,6 +764,7 @@ test("Passport is a current identity record after supporting information without
   assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PassportDossier"));
   assert.match(passport,/Hồ sơ nhận diện công khai/);
   assert.match(passport,/không phải lịch sử đầy đủ/);
+  assert.match(passport,/<dt>Mã máy<\/dt><dd>\{passport\.code\}<\/dd>/);
   assert.doesNotMatch(passport,/passport\.timeline|passport\.facts|<ol/);
 });
 

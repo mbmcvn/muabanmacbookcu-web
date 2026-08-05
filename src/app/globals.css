@@ -273,7 +273,8 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .dossier-pair { display: grid; gap: 1rem; margin-top: clamp(1.75rem, 3vw, 2.5rem); }
 .dossier-pair:empty { display: none; }
 .dossier-status-pair > :only-child { grid-column: 1 / -1; }
-.dossier-fit-pair > .fit-section, .dossier-status-pair > .public-information-status { height: 100%; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--border-strong); border-radius: .8rem; background: var(--surface); }
+.dossier-fit-pair > .fit-section { height: 100%; }
+.dossier-fit-pair > .fit-section, .dossier-status-pair > .public-information-status { padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--border-strong); border-radius: .8rem; background: var(--surface); }
 .dossier-fit-pair > .fit-section { border-top: 3px solid var(--foreground); }
 .dossier-fit-pair > .fit-section + .fit-section { border-top-color: var(--accent); }
 .dossier-fit-pair .fit-section h2, .dossier-status-pair h2 { font-size: clamp(1.4rem, 2.5vw, 1.85rem); }
@@ -281,9 +282,21 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .dossier-stage-decision { display: grid; gap: 0; }
 .dossier-stage-decision > .expert-summary { max-width: 60rem; margin-top: clamp(1.75rem, 3vw, 2.5rem); padding: clamp(1.5rem, 3vw, 2.25rem); border: 0; border-left: 3px solid var(--accent); background: #f5f1e9; }
 .expert-summary h2 { font-size: clamp(1.75rem, 3vw, 2.45rem); }
-.dossier-status-pair { margin-top: 0; }
+.dossier-pair.dossier-status-pair { display: block; margin-top: 0; }
 .dossier-status-pair > .public-information-status:first-child { background: #f3f5f0; }
-.dossier-status-pair > .public-information-status:last-child { background: #f6f3ee; }
+.public-information-disclosure { min-width: 0; display: block; margin: .75rem 0 1.25rem; padding-block: .75rem; border-block: 1px solid var(--border); color: var(--muted); scroll-margin-top: 2rem; }
+.public-information-disclosure__summary { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem; cursor: pointer; list-style: none; }
+.public-information-disclosure__summary::-webkit-details-marker { display: none; }
+.public-information-disclosure__copy { min-width: 0; display: grid; gap: .2rem; overflow-wrap: anywhere; }
+.public-information-disclosure__label { color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .08em; line-height: 1.3; text-transform: uppercase; }
+.public-information-disclosure__count { color: var(--foreground); font-size: .95rem; line-height: 1.45; }
+.public-information-disclosure__icon { width: 1.5rem; height: 1.5rem; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--foreground); font-size: 1rem; line-height: 1; }
+.public-information-disclosure__icon-open { display: none; }
+.public-information-disclosure[open] .public-information-disclosure__icon-closed { display: none; }
+.public-information-disclosure[open] .public-information-disclosure__icon-open { display: inline; }
+.public-information-disclosure__content { position: static; min-width: 0; padding-top: .75rem; border-top: 1px solid var(--border); margin-top: .75rem; }
+.public-information-disclosure__content ul { margin: 0; padding-left: 1.15rem; }
+.public-information-disclosure__content li { margin-block: .35rem; line-height: 1.5; overflow-wrap: anywhere; }
 .dossier-stage-supporting { display: grid; gap: clamp(1.75rem, 3vw, 2.5rem); }
 .dossier-stage-supporting > .detail-section { padding: 0; border: 0; background: transparent; }
 .dossier-stage-supporting .decision-information > header, .dossier-stage-supporting .supporting-images > header { max-width: 56rem; }
@@ -358,7 +371,10 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-machine-sticky-identity { row-gap: .125rem; }
   .public-machine-sticky strong { line-height: 1.2; }
   .public-machine-sticky-specs { line-height: 1.2; }
-  .public-machine-sticky-price { display: none; }
+  .public-machine-sticky { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "identity price cta"; }
+  .public-machine-sticky-identity { grid-area: identity; }
+  .public-machine-sticky-price { display: block; grid-area: price; }
+  .public-machine-sticky > a { grid-area: cta; }
 }
 
 @media (max-width: 480px) {
@@ -395,4 +411,146 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .machine-card { transition: none; }
   .detail-main-image img { transition: none; }
   .carousel-track { transition-duration: .01ms; }
+}
+
+/* Public Machine Detail editorial-commerce refinement */
+.public-detail-page { width: min(80rem, calc(100% - 2rem)); padding-block: 1rem 8rem; }
+.public-detail-page .detail-breadcrumb { margin-bottom: 1rem; }
+.public-detail-page .detail-hero { gap: clamp(1.25rem, 3vw, 3rem); align-items: stretch; }
+.public-detail-page .detail-gallery { align-self: start; gap: .65rem; }
+.public-detail-page .detail-main-image { aspect-ratio: 1 / 1; border-color: #dedbd2; border-radius: .8rem; background: #f0eee7; }
+.public-detail-page .detail-main-image .carousel-slide img { padding: 1.5%; }
+.public-detail-page .detail-thumbnails { max-height: min(46rem, calc(100vw * .63)); scrollbar-width: thin; }
+.public-detail-page .detail-thumbnails button { border-color: #dedbd2; border-radius: .55rem; background: #f5f3ec; }
+.public-detail-page .detail-thumbnails button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.public-detail-page .detail-decision { align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: clamp(1rem, 2vw, 2rem) 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.public-detail-page .detail-status { justify-content: flex-start; gap: .5rem; margin-bottom: 1rem; }
+.public-detail-page .detail-status span:first-child { display: inline-flex; align-items: center; min-height: 1.75rem; padding: .2rem .65rem; border: 1px solid #b9c9bf; border-radius: 999px; background: var(--accent-soft); font-size: .78rem; }
+.public-detail-page .detail-status span + span { align-self: center; }
+.public-detail-page .detail-decision h1 { max-width: 12ch; margin-bottom: .65rem; font-size: clamp(2.25rem, 4vw, 3.65rem); line-height: 1.02; }
+.public-detail-page .detail-configuration { max-width: 32rem; margin-bottom: 0; font-size: 1.05rem; line-height: 1.5; }
+.public-detail-page .detail-price { margin: clamp(1.25rem, 3vw, 2rem) 0 1.1rem; color: #143f31; font-size: clamp(2.15rem, 4vw, 3rem); }
+.public-detail-page .detail-actions { max-width: 27rem; }
+.public-detail-page .detail-actions .primary-action { min-height: 3.35rem; border-color: var(--accent); border-radius: .55rem; background: var(--accent); }
+.public-detail-page .detail-actions .secondary-action { border-color: #bfc4bd; border-radius: .55rem; }
+.public-detail-page .contact-context { max-width: 27rem; line-height: 1.55; }
+.public-detail-page .detail-reading-entry { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem 2rem; margin-top: clamp(1.5rem, 3vw, 2.5rem); padding-block: 1rem; }
+.public-detail-page .decision-hook { margin: 0; font-size: .94rem; }
+.public-detail-page .dossier-navigation { justify-content: flex-end; }
+.public-detail-page .dossier-navigation a { min-height: 2.35rem; display: inline-flex; align-items: center; border-color: #d4d4cd; background: rgba(255,255,255,.55); color: #40443f; }
+.public-detail-page .dossier-navigation a:hover, .public-detail-page .dossier-navigation a:focus-visible { border-color: var(--accent); color: var(--accent); }
+.public-detail-page .dossier-stage { padding-block: clamp(2.25rem, 4vw, 3.25rem); }
+.public-detail-page .dossier-stage-decision > .decision-summary { max-width: 54rem; }
+.public-detail-page .decision-summary h2 { max-width: 19ch; margin-bottom: .7rem; font-size: clamp(2rem, 3.5vw, 3rem); }
+.public-detail-page .decision-summary > header > p:last-child { max-width: 40rem; color: var(--muted); font-size: 1.05rem; line-height: 1.65; }
+.public-detail-page .dossier-status-pair { margin-top: 1.5rem; }
+.public-detail-page .dossier-status-pair > .public-information-status { padding: clamp(1.2rem, 2.5vw, 1.75rem); border-color: #d8dfd8; border-radius: .7rem; background: #eef2ec; }
+.public-detail-page .public-information-status > header { max-width: 48rem; margin-bottom: 1.2rem; }
+.public-detail-page .public-information-status h2 { font-size: clamp(1.4rem, 2.3vw, 1.75rem); }
+.verified-information-mark { width: 1.25rem; height: 1.25rem; display: inline-grid; place-items: center; margin-right: .25rem; border-radius: 50%; background: var(--accent); color: white; font-size: .72rem; letter-spacing: 0; }
+.public-detail-page .verified-information-facts { gap: 0; border-top: 1px solid #d4ddd5; }
+.public-detail-page .verified-information-facts > div { display: block; grid-template-columns: none; padding: .9rem 1rem .15rem 0; border-radius: 0; background: transparent; }
+.public-detail-page .verified-information-facts dt { margin-bottom: .25rem; }
+.public-detail-page .public-information-disclosure { margin: .65rem 0 0; padding: .8rem .15rem; }
+.public-detail-page .public-information-disclosure__summary { min-height: 2.75rem; }
+.public-detail-page .public-information-disclosure__label { color: #60655f; }
+.public-detail-page .public-information-disclosure__icon { border-color: #cfd2cc; background: #f4f3ee; }
+.public-detail-page .dossier-fit-pair { gap: .8rem; margin-top: 1.5rem; }
+.public-detail-page .dossier-fit-pair > .fit-section { padding: 1.25rem 1.4rem; border-color: #d9d8d1; border-radius: .65rem; }
+.public-detail-page .dossier-stage-decision > .expert-summary { margin-top: 1.25rem; padding: 1.35rem 1.5rem; border-left-color: var(--accent); background: #f0eee6; }
+.public-detail-page .dossier-stage-supporting { gap: 1rem; }
+.public-detail-page .dossier-stage-supporting .decision-information > header { margin-bottom: 1.25rem; }
+.public-detail-page .condition-metrics { gap: .7rem; }
+.public-detail-page .condition-metrics > div { min-height: 7.25rem; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem; border: 1px solid #dedbd2; border-radius: .65rem; background: #f4f2eb; }
+.public-detail-page .condition-metrics dt { margin-bottom: .75rem; }
+.public-detail-page .condition-metrics dd { color: #263b33; font-size: 1.08rem; font-weight: 700; }
+.public-detail-page .supporting-images { margin: 0; }
+.public-detail-page .supporting-images-disclosure { border-block: 1px solid var(--border); }
+.public-detail-page .supporting-images-disclosure > summary { min-height: 4.5rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; list-style: none; }
+.public-detail-page .supporting-images-disclosure > summary::-webkit-details-marker { display: none; }
+.public-detail-page .supporting-images-disclosure > summary > span:first-child { min-width: 0; display: grid; gap: .1rem; }
+.public-detail-page .supporting-images-disclosure > summary .eyebrow { margin: 0; }
+.public-detail-page .supporting-images-disclosure > summary strong { font-size: 1.08rem; }
+.supporting-images-disclosure__action { color: var(--muted); font-size: .9rem; font-weight: 600; text-align: right; }
+.supporting-images-disclosure__content { padding-bottom: 1rem; }
+.public-detail-page .supporting-images-disclosure[open] > summary { margin-bottom: .75rem; border-bottom: 1px solid var(--border); }
+.public-detail-page .dossier-stage-passport { padding-top: 2.25rem; }
+.public-detail-page .dossier-stage-passport .passport-dossier { padding: clamp(1.3rem, 3vw, 2rem); border: 1px solid #dedbd2; border-radius: .75rem; background: #f1f0e9; }
+.public-detail-page .passport-heading { display: block; margin-bottom: 1.25rem; }
+.public-detail-page .passport-heading > div > p:last-child { max-width: 42rem; }
+.public-detail-page .passport-summary { border-block: 1px solid #d9d7ce; }
+.public-detail-page .passport-summary > div { min-width: 0; display: block; grid-template-columns: none; padding: 1rem; }
+.public-detail-page .passport-summary dt { font-size: .74rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.public-detail-page .passport-summary dd { overflow-wrap: anywhere; color: #263b33; }
+.public-detail-page .specification-section { padding-block: 2.25rem; }
+.public-detail-page .support-section { margin-top: 1rem; padding: clamp(1.5rem, 3.5vw, 2.5rem); gap: clamp(1.5rem, 4vw, 3rem); border-radius: .85rem; background: #173d31; }
+.public-detail-page .support-advice { max-width: 39rem; }
+.public-detail-page .support-section h2 { max-width: 16ch; font-size: clamp(2rem, 3.5vw, 2.85rem); }
+.public-detail-page .support-section ul { margin-bottom: 0; }
+.public-detail-page .support-contact { align-self: stretch; align-content: center; padding: clamp(1rem, 2vw, 1.5rem); border-color: rgba(255,255,255,.16); border-radius: .65rem; background: rgba(255,255,255,.06); }
+.public-detail-page .support-contact strong { font-size: 1.3rem; }
+.public-detail-page .support-contact .primary-action { min-height: 3.2rem; border-radius: .5rem; }
+.public-machine-sticky { border-color: #d9d9d2; box-shadow: 0 -.4rem 1.25rem rgba(24,24,23,.06); }
+.public-machine-sticky a { border-radius: .5rem; background: var(--accent); }
+
+@media (min-width: 40rem) {
+  .public-detail-page .verified-information-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .public-detail-page .condition-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .public-detail-page .passport-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .public-detail-page .passport-summary > div:nth-child(even) { border-left: 1px solid #d9d7ce; }
+}
+
+@media (min-width: 56rem) {
+  .public-detail-page .detail-hero { grid-template-columns: minmax(0, 1.62fr) minmax(20rem, .96fr); }
+  .public-detail-page .detail-decision { position: static; top: auto; }
+  .public-detail-page .verified-information-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .public-detail-page .verified-information-facts > div + div { padding-left: 1rem; border-left: 1px solid #d4ddd5; }
+  .public-detail-page .condition-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .public-detail-page .condition-metrics > .detail-fact-wide { grid-column: 1 / -1; min-height: 0; }
+  .public-detail-page .passport-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .public-detail-page .passport-summary > div + div { border-left: 1px solid #d9d7ce; }
+}
+
+@media (max-width: 55.99rem) {
+  .public-detail-page .detail-reading-entry { grid-template-columns: minmax(0, 1fr); }
+  .public-detail-page .dossier-navigation { justify-content: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .public-detail-page { width: min(100% - 2rem, 80rem); padding-top: .65rem; }
+  .public-detail-page .detail-gallery { width: 100%; margin-inline: 0; }
+  .public-detail-page .detail-main-image { border: 1px solid #dedbd2; border-radius: .7rem; }
+  .public-detail-page .detail-thumbnails { padding-inline: 0; }
+  .public-detail-page .detail-decision { padding-top: .45rem; }
+  .public-detail-page .detail-decision h1 { font-size: clamp(2.05rem, 10.5vw, 2.65rem); }
+  .public-detail-page .detail-configuration { font-size: .96rem; }
+  .public-detail-page .detail-price { margin: 1rem 0 .8rem; font-size: 2.15rem; }
+  .public-detail-page .detail-actions { max-width: none; }
+  .public-detail-page .detail-reading-entry { margin-top: 1.2rem; }
+  .public-detail-page .decision-hook { display: none; }
+  .public-detail-page .dossier-navigation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; overflow: visible; }
+  .public-detail-page .dossier-navigation:has(a:nth-child(4)) { display: flex; overflow-x: auto; }
+  .public-detail-page .dossier-navigation a { min-width: 0; justify-content: center; padding: .42rem .45rem; font-size: .72rem; line-height: 1.25; text-align: center; white-space: normal; }
+  .public-detail-page .dossier-navigation:has(a:nth-child(4)) a { flex: 0 0 auto; }
+  .public-detail-page .dossier-stage { padding-block: 2rem; }
+  .public-detail-page .decision-summary h2 { font-size: 2rem; }
+  .public-detail-page .decision-summary > header > p:last-child { font-size: 1rem; }
+  .public-detail-page .dossier-status-pair { margin-top: 1.25rem; }
+  .public-detail-page .dossier-status-pair > .public-information-status { padding: 1.05rem; }
+  .public-detail-page .verified-information-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .public-detail-page .verified-information-facts > div { padding: .75rem .5rem .2rem 0; }
+  .public-detail-page .verified-information-facts > div:nth-child(even) { padding-left: .75rem; border-left: 1px solid #d4ddd5; }
+  .public-detail-page .public-information-disclosure__summary { align-items: start; }
+  .public-detail-page .condition-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
+  .public-detail-page .condition-metrics > div { min-height: 6.5rem; padding: .85rem; }
+  .public-detail-page .condition-metrics > .detail-fact-wide { grid-column: 1 / -1; min-height: 0; }
+  .public-detail-page .supporting-images-disclosure > summary { grid-template-columns: minmax(0, 1fr) 7.5rem; gap: .75rem; }
+  .supporting-images-disclosure__action { font-size: .78rem; line-height: 1.35; }
+  .public-detail-page .passport-summary { grid-template-columns: minmax(0, 1fr); }
+  .public-detail-page .passport-summary > div { padding: .8rem 0; border-left: 0 !important; border-bottom: 1px solid #d9d7ce; }
+  .public-detail-page .passport-summary > div:last-child { border-bottom: 0; }
+  .public-detail-page .support-section { margin-top: .5rem; padding: 1.35rem; }
+  .public-detail-page .support-section h2 { font-size: 2rem; }
+  .public-detail-page .support-contact { padding: 1rem 0 0; border: 0; border-top: 1px solid rgba(255,255,255,.16); border-radius: 0; background: transparent; }
+  .public-machine-sticky-price { font-size: .78rem; }
 }
