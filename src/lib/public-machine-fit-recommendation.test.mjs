@@ -12,11 +12,13 @@ test("8GB configuration produces only the intended RAM caution", () => {
   assert.deepEqual(result.caution.map(({ id, source }) => ({ id, source })), [
     { id: "configuration-ram-8gb", source: "configuration" },
   ]);
+  assert.equal(result.caution[0].text, "Nếu thường xuyên chạy tác vụ cần nhiều RAM hoặc máy ảo, nên cân nhắc cấu hình RAM cao hơn.");
 });
 
 test("256GB storage produces only the intended storage caution", () => {
   const result = buildMachineFitRecommendation({ ramGb: null, ssdGb: 256 });
   assert.deepEqual(result.caution.map(({ id }) => id), ["configuration-ssd-256gb"]);
+  assert.equal(result.caution[0].text, "Nếu cần lưu nhiều dữ liệu trực tiếp trên máy, nên cân nhắc SSD lớn hơn 256GB.");
 });
 
 test("missing values do not produce inferred statements", () => {

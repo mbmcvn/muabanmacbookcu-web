@@ -794,8 +794,10 @@ test("fit recommendation is separate from specifications and hides only when ful
   const fit=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineFitRecommendation.tsx",import.meta.url),"utf8");
   const specifications=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicSpecifications.tsx",import.meta.url),"utf8");
   assert.match(fit,/if \(!hasMachineFitRecommendation\(recommendation\)\) return null/);
-  assert.match(fit,/title="Phù hợp nếu bạn"/);
-  assert.match(fit,/title="Nên cân nhắc máy khác nếu bạn"/);
+  assert.match(fit,/MBMC ĐÁNH GIÁ CẤU HÌNH/);
+  assert.match(fit,/Cấu hình này phù hợp với ai\?/);
+  assert.match(fit,/Cấu hình này phù hợp nếu bạn/);
+  assert.match(fit,/Điểm cần cân nhắc với cấu hình này/);
   assert.doesNotMatch(specifications,/FitRecommendation|Phù hợp nếu bạn|Nên cân nhắc máy khác/);
   assert.match(specifications,/>Đánh giá từ MBMC</);
 });

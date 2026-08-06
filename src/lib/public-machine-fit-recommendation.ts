@@ -60,7 +60,7 @@ export function buildMachineFitRecommendation(
   if (input.ramGb === 8) {
     configurationCautions.push({
       id: "configuration-ram-8gb",
-      text: "Thường xuyên chạy nhiều tác vụ cần RAM lớn, dự án chuyên nghiệp dung lượng lớn hoặc máy ảo cục bộ.",
+      text: "Nếu thường xuyên chạy tác vụ cần nhiều RAM hoặc máy ảo, nên cân nhắc cấu hình RAM cao hơn.",
       source: "configuration",
     });
   }
@@ -68,7 +68,7 @@ export function buildMachineFitRecommendation(
   if (input.ssdGb === 256) {
     configurationCautions.push({
       id: "configuration-ssd-256gb",
-      text: "Cần dung lượng lưu trữ nội bộ cao hơn 256GB.",
+      text: "Nếu cần lưu nhiều dữ liệu trực tiếp trên máy, nên cân nhắc SSD lớn hơn 256GB.",
       source: "configuration",
     });
   }
