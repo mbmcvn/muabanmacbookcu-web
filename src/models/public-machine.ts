@@ -8,6 +8,7 @@ export type {
   PublicInspection,
   PublicMachineDetailV1,
   PublicMachinePassportV1,
+  PublicMachineVerification,
   PublicMachineSummaryV1,
   PublicMoney,
   PublicPolicySummary,
@@ -15,4 +16,5 @@ export type {
   PublicSourceVerification,
   PublicTimelineEvent,
   PublicWarranty,
+  VerificationCode,
 } from "@/lib/public-projection/contracts.ts";

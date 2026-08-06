@@ -106,6 +106,8 @@ export function validatePublicMachineEligibility(
       code: facts.code!.trim(),
       slug: publication!.slug!,
       displayName: facts.displayName!.trim(),
+      modelSpecKey: facts.modelSpecKey,
+      verifications: facts.verifications.map((item) => ({ ...item })),
       family: facts.family,
       year: facts.year,
       screenSizeInches: facts.screenSizeInches,

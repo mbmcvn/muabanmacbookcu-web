@@ -5,6 +5,8 @@ import type {
   PublicImageVariants,
   PublicReservationKind,
 } from "./contracts.ts";
+import type { MachineVerificationItem, PublicMachineVerification } from "../machine-verification.ts";
+import { publicMachineVerifications } from "../machine-verification.ts";
 
 const PUBLIC_IMAGE_TYPES = new Set([
   "cover",
@@ -65,6 +67,8 @@ export type PublicMachineProjectionInput = {
   code: string | null;
   status: string;
   displayName: string | null;
+  modelSpecKey?: string | null;
+  verifications?: MachineVerificationItem[];
   family: "Air" | "Pro" | "Unknown";
   year?: number | null;
   screenSizeInches?: number | null;
@@ -100,6 +104,8 @@ export type NormalizedPublicMachineFacts = {
   code: string | null;
   machineStatus: string;
   displayName: string | null;
+  modelSpecKey: string | null;
+  verifications: PublicMachineVerification[];
   family: "Air" | "Pro" | "Unknown";
   year: number | null;
   screenSizeInches: number | null;
@@ -130,6 +136,8 @@ export type PublicProjectionKernel = {
   code: string;
   slug: string;
   displayName: string;
+  modelSpecKey: string | null;
+  verifications: PublicMachineVerification[];
   family: "Air" | "Pro" | "Unknown";
   year: number | null;
   screenSizeInches: number | null;
@@ -200,6 +208,8 @@ export function normalizePublicMachineFacts(
     code: input.code,
     machineStatus: input.status,
     displayName: input.displayName,
+    modelSpecKey: input.modelSpecKey ?? null,
+    verifications: publicMachineVerifications(input.verifications ?? []),
     family: input.family,
     year: input.year ?? null,
     screenSizeInches: input.screenSizeInches ?? null,

@@ -105,6 +105,8 @@ export function assemblePublicMachineDetailV1(
   return {
     schemaVersion: PUBLIC_MACHINE_DETAIL_V1_SCHEMA,
     summary: assemblePublicMachineSummaryV1(kernel),
+    modelSpecKey: kernel.modelSpecKey,
+    verifications: kernel.verifications.map((item) => ({ ...item })),
     gallery: kernel.images.map((image, index) =>
       assembleImage(image, kernel.displayName, index + 1),
     ),

@@ -23,7 +23,7 @@ import { formatMachineCardCondition, formatMachineCardDisplayName, formatMachine
 import { buildMachineEvidence, publicConditionDescription } from "../../app/(sales)/may/[slug]/_components/machine-evidence-presentation.ts";
 import { clampGalleryIndex, galleryIndexAfterSwipe, resistGalleryDrag, resolveGalleryDragIndex, wrapGalleryIndex } from "../../app/(sales)/may/[slug]/_components/gallery-navigation.ts";
 import { classifyGalleryImageShape } from "../../app/(sales)/may/[slug]/_components/gallery-image-shape.ts";
-import { buildPublicSpecificationRows } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
+import { buildPublicSpecificationRows, specificationsForMachine } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
 import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../lib/presentation/machine.ts";
 import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
@@ -31,6 +31,7 @@ import { selectHomepageMachines } from "../../app/(sales)/_components/home/homep
 import { buildPublicLimitations } from "../../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts";
 import { machinePolicyAnalyticsPayload } from "../../lib/analytics/machine-policy.ts";
 import { loadPublicMachinePolicySummary, mapPublicMachinePolicySummary } from "./public-machine-policy-summary.server.ts";
+import { PUBLIC_MACHINE_DETAIL_V1_KEYS } from "../../lib/public-projection/contracts.ts";
 
 function row(code="MBMC-A001",overrides={}){
   const revision=3;
@@ -50,6 +51,12 @@ test("summaries contain no operational fields or internal actor values",()=>{con
 test("search covers model, chip, RAM and SSD configuration",()=>{const items=publicSummaries([row()]);for(const query of ["MacBook Air","Apple M2","8gb ram","256gb ssd"])assert.equal(filterAndSortPublicInventory(items,query,"Tất cả","relevance").length,1,query);});
 test("price filters and sorting use DTO money deterministically",()=>{const items=publicSummaries([row("MBMC-HIGH",{retail_price_expected:19_000_000}),row("MBMC-LOW",{retail_price_expected:12_000_000}),row("MBMC-MID",{retail_price_expected:16_000_000})]);assert.deepEqual(filterAndSortPublicInventory(items,"","Dưới 15 triệu","relevance").map(x=>x.code),["MBMC-LOW"]);assert.deepEqual(filterAndSortPublicInventory(items,"","Tất cả","price-desc").map(x=>x.code),["MBMC-HIGH","MBMC-MID","MBMC-LOW"]);});
 test("detail resolves only an eligible immutable public slug",()=>{assert.equal(publicDetailBySlug([row()],"mbmc-a001")?.schemaVersion,"public-machine-detail.v1");assert.equal(publicDetailBySlug([row()],"unknown"),null);assert.equal(publicDetailBySlug([row("MBMC-SOLD",{status:"sold"})],"mbmc-sold"),null);});
+test("verification section is hidden when the public DTO is empty",()=>{const detail=publicDetailBySlug([row()],"mbmc-a001");assert.deepEqual(detail?.verifications,[]);const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineVerification.tsx",import.meta.url),"utf8");assert.match(source,/if \(items\.length === 0\) return null/);});
+test("verified public rows are allowlisted and ordered canonically",()=>{const machine=row("MBMC-VERIFY",{machine_verifications:[{verification_code:"WIFI",verified:true,verified_at:"2026-08-01T00:00:00Z",verified_by:"private-staff",public:true,internal_notes:"private"},{verification_code:"BOOT",verified:true,verified_at:"2026-08-01T00:00:00Z",verified_by:"private-staff",public:true}]});const detail=publicDetailBySlug([machine],"mbmc-verify");assert.deepEqual(detail?.verifications,[{code:"BOOT",verified:true,verifiedAt:"2026-08-01T00:00:00Z"},{code:"WIFI",verified:true,verifiedAt:"2026-08-01T00:00:00Z"}]);assert.doesNotMatch(JSON.stringify(detail?.verifications),/verified_by|internal_notes|private-staff/);});
+test("private, failed, incomplete, and unknown verification rows never render",()=>{const machine=row("MBMC-PRIVATE",{machine_verifications:[{verification_code:"DISPLAY",verified:true,verified_at:"2026-08-01T00:00:00Z",public:false},{verification_code:"KEYBOARD",verified:false,verified_at:"2026-08-01T00:00:00Z",public:true},{verification_code:"NOT_A_CODE",verified:true,verified_at:"2026-08-01T00:00:00Z",public:true}]});assert.deepEqual(publicDetailBySlug([machine],"mbmc-private")?.verifications,[]);});
+test("latest duplicate verification code wins without exposing a failed row",()=>{const machine=row("MBMC-DUPE",{machine_verifications:[{verification_code:"PORTS",verified:true,verified_at:"2026-08-01T00:00:00Z",public:true},{verification_code:"PORTS",verified:false,verified_at:"2026-08-02T00:00:00Z",public:true}]});assert.deepEqual(publicDetailBySlug([machine],"mbmc-dupe")?.verifications,[]);});
+test("verification component renders compact successful rows only",()=>{const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineVerification.tsx",import.meta.url),"utf8");assert.match(source,/items\.map/);assert.match(source,/✓/);assert.doesNotMatch(source,/Không xác minh|Thất bại|failed|verifiedAt/);const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");assert.ok(dossier.indexOf("<PublicMachineFitRecommendation")<dossier.indexOf("<MachineVerification"));assert.ok(dossier.indexOf("<MachineVerification")<dossier.indexOf("<VerifiedPublicInformation"));});
+test("detail DTO allow-list contains the verification collection without private fields",()=>{assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes("verifications"),true);for(const field of ["verifiedBy","staff","internalNotes","repairNotes","inspectionComments"])assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes(field),false);});
 const policyRpcRow={machine_public_identifier:"MBMC-A001",policy_version:"mbmc-policy-v1",summary_title:"Quyền lợi của máy này",warranty_summary_items:["Bảo hành theo bản chiếu"],care_availability_wording:"Care theo bản chiếu",warranty_policy_url:"/chinh-sach/bao-hanh",mbmc_care_policy_url:"/chinh-sach/mbmc-care",machine_id_persistence_wording:"Lưu theo Machine ID"};
 test("RPC row maps to the public policy DTO without calculating policy",()=>{
   assert.deepEqual(mapPublicMachinePolicySummary(policyRpcRow),{policyVersion:"mbmc-policy-v1",title:"Quyền lợi của máy này",warrantyItems:["Bảo hành theo bản chiếu"],careWording:"Care theo bản chiếu",warrantyPolicyUrl:"/chinh-sach/bao-hanh",carePolicyUrl:"/chinh-sach/mbmc-care",machineIdWording:"Lưu theo Machine ID"});
@@ -746,6 +753,27 @@ test("technical reference renders only additional trusted fields and omits Hero 
   const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
   assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PublicSpecifications"));
   assert.ok(dossier.indexOf("<PublicSpecifications")<dossier.indexOf("<PassportDossier"));
+});
+
+test("public detail allowlists exact model key and specifications resolve without title fallback",()=>{
+  const known=publicDetailBySlug([row("MBMC-MODEL",{model_spec_key:"macbook-air-13-m2-2022"})],"mbmc-model");
+  assert.ok(known);
+  assert.equal(known.modelSpecKey,"macbook-air-13-m2-2022");
+  assert.equal(specificationsForMachine(known).model?.displaySize,"13,6 inch");
+
+  const absent=publicDetailBySlug([row("MBMC-NO-MODEL",{model_text:"MacBook Air M2 2022 13 inch",model_spec_key:null})],"mbmc-no-model");
+  assert.ok(absent);
+  assert.equal(absent.modelSpecKey,null);
+  assert.equal(specificationsForMachine(absent).model,null);
+  assert.equal(specificationsForMachine(absent).machine.ram,"8 GB");
+
+  const invalid=publicDetailBySlug([row("MBMC-BAD-MODEL",{model_spec_key:"not-in-catalog"})],"mbmc-bad-model");
+  assert.ok(invalid);
+  assert.equal(specificationsForMachine(invalid).model,null);
+
+  const repository=readFileSync(new URL("./repositories/supabase-public-machine-repository.ts",import.meta.url),"utf8");
+  assert.match(repository,/model_spec_key/);
+  assert.doesNotMatch(repository,/seller|serial|internal_note/);
 });
 
 test("final detail page order retains observation specs support and sticky CTA",()=>{

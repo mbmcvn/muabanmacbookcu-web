@@ -67,8 +67,7 @@ export function specificationsForMachine(
       storage: summary.ssdGb === null ? null : `${summary.ssdGb} GB`,
       color: summary.color,
     },
-    // model_text is a display label, not a stable model identifier.
-    exactModelIdentifier: null,
+    exactModelIdentifier: machine.modelSpecKey,
   });
 }
 

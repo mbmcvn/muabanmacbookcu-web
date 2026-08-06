@@ -44,6 +44,8 @@ export type PublicSourceVerification =
   | "not_verified"
   | "unknown";
 export type PublicCosmeticGrade = string;
+export type { PublicMachineVerification, VerificationCode } from "../machine-verification.ts";
+import type { PublicMachineVerification } from "../machine-verification.ts";
 
 export type PublicWarranty =
   | {
@@ -144,6 +146,8 @@ export interface PublicMachinePassportV1 {
 export interface PublicMachineDetailV1 {
   schemaVersion: typeof PUBLIC_MACHINE_DETAIL_V1_SCHEMA;
   summary: PublicMachineSummaryV1;
+  modelSpecKey: string | null;
+  verifications: PublicMachineVerification[];
   gallery: PublicImage[];
   expertSummary: string | null;
   suitableFor: string[];
@@ -169,7 +173,7 @@ export const PUBLIC_MACHINE_SUMMARY_V1_KEYS = [
 ] as const satisfies readonly (keyof PublicMachineSummaryV1)[];
 
 export const PUBLIC_MACHINE_DETAIL_V1_KEYS = [
-  "schemaVersion", "summary", "gallery", "expertSummary", "suitableFor",
+  "schemaVersion", "summary", "modelSpecKey", "verifications", "gallery", "expertSummary", "suitableFor",
   "notSuitableFor", "decisionSpecifications", "technicalSpecifications",
   "includedItems", "policyApplicability", "policySummary", "passport", "relatedMachines",
 ] as const satisfies readonly (keyof PublicMachineDetailV1)[];

@@ -22,18 +22,47 @@ export type ModelSpecifications = {
   compatibleCharger?: string | null;
 };
 
+export type ModelSpecKey = "macbook-air-13-m2-2022";
+
+export type ModelSpecCatalogEntry = {
+  key: ModelSpecKey;
+  label: string;
+  family: "MacBook Air" | "MacBook Pro";
+  releaseYear: number;
+  screenSizeInches: number;
+  chipFamily: string;
+  specifications: Readonly<ModelSpecifications>;
+};
+
 export type PublicMachineSpecifications = {
   machine: MachineSpecificFacts;
   model: ModelSpecifications | null;
 };
 
-export type ModelSpecificationCatalog = Readonly<
-  Record<string, Readonly<ModelSpecifications>>
->;
+export type ModelSpecificationCatalog = Readonly<Record<string, Readonly<ModelSpecCatalogEntry>>>;
 
-// No stable exact model identifier is currently projected. Keep this catalog
-// empty until records can resolve a reviewed entry by exact key.
-export const MODEL_SPECIFICATION_CATALOG: ModelSpecificationCatalog = {};
+export const MODEL_SPECIFICATION_CATALOG: ModelSpecificationCatalog = {
+  "macbook-air-13-m2-2022": {
+    key: "macbook-air-13-m2-2022",
+    label: "MacBook Air 13 inch M2 (2022)",
+    family: "MacBook Air",
+    releaseYear: 2022,
+    screenSizeInches: 13.6,
+    chipFamily: "Apple M2",
+    specifications: {
+      displaySize: "13,6 inch",
+      displayType: "Liquid Retina (LED nền, IPS)",
+      displayResolution: "2560 × 1664 pixel, 224 ppi",
+      ports: ["MagSafe 3", "2 × Thunderbolt / USB 4", "3,5 mm"],
+      wifi: "Wi‑Fi 6 (802.11ax)",
+      bluetooth: "Bluetooth 5.3",
+      camera: "FaceTime HD 1080p",
+      touchId: true,
+      weight: "1,24 kg",
+      compatibleCharger: "USB‑C 30W hoặc 35W; hỗ trợ sạc nhanh với 70W",
+    },
+  },
+};
 
 function clean(value: string | null | undefined): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -88,7 +117,7 @@ export function resolveModelSpecifications(
   if (!identifier || !Object.prototype.hasOwnProperty.call(catalog, identifier)) {
     return null;
   }
-  return normalizeModelSpecifications(catalog[identifier]);
+  return normalizeModelSpecifications(catalog[identifier].specifications);
 }
 
 export function buildPublicMachineSpecifications(input: {

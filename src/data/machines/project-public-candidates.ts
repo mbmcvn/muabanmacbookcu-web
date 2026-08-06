@@ -12,6 +12,7 @@ import type {
   PublicImageVariants,
   PublicMachineSummaryV1,
 } from "../../lib/public-projection/contracts.ts";
+import { isVerificationCode, type MachineVerificationItem } from "../../lib/machine-verification.ts";
 
 type UnknownRow = Record<string, unknown>;
 const isRow = (value: unknown): value is UnknownRow => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -94,12 +95,16 @@ function publicImages(value: unknown): PublicImageInput[] {
   }
   return [...byUrl.values()].toSorted((a,b)=>(a.sortOrder??0)-(b.sortOrder??0)||a.id.localeCompare(b.id));
 }
+function machineVerifications(value: unknown): MachineVerificationItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => !isRow(item) || !isVerificationCode(item.verification_code) ? [] : [{ code:item.verification_code, verified:item.verified===true, verifiedAt:text(item.verified_at), public:item.public===true }]);
+}
 
 export function normalizePublicCandidate(value: unknown): PublicMachineProjectionInput | null {
   if(!isRow(value)) return null;
   const publication=oneRow(value.machine_publications),editorial=oneRow(value.machine_editorials),model=text(value.model_text);
   return {
-    code:text(value.machine_id),status:value.deleted_at===null?(text(value.status)??"unknown"):"deleted",displayName:model,family:family(model),chip:text(value.chip),ramGb:integer(value.ram_gb),ssdGb:integer(value.ssd_gb),color:text(value.color),retailPriceExpected:integer(value.retail_price_expected),batteryHealthPercent:integer(value.battery_health),cycleCount:integer(value.battery_cycle),cosmeticGrade:text(value.rank),reservations:reservations(value.sales),reservationStateInvalid:reservationStateInvalid(value.sales),
+    code:text(value.machine_id),status:value.deleted_at===null?(text(value.status)??"unknown"):"deleted",displayName:model,modelSpecKey:text(value.model_spec_key),verifications:machineVerifications(value.machine_verifications),family:family(model),chip:text(value.chip),ramGb:integer(value.ram_gb),ssdGb:integer(value.ssd_gb),color:text(value.color),retailPriceExpected:integer(value.retail_price_expected),batteryHealthPercent:integer(value.battery_health),cycleCount:integer(value.battery_cycle),cosmeticGrade:text(value.rank),reservations:reservations(value.sales),reservationStateInvalid:reservationStateInvalid(value.sales),
     publication:publication?{status:text(publication.status) as "draft"|"approved"|"published"|"archived",slug:text(publication.slug),revision:integer(publication.revision)??0,approvedBy:text(publication.approved_by),approvedAt:text(publication.approved_at),approvedEditorialRevision:integer(publication.approved_editorial_revision),publishedBy:text(publication.published_by),firstPublishedAt:text(publication.first_published_at),publishedAt:text(publication.published_at),publishedEditorialRevision:integer(publication.published_editorial_revision),updatedAt:text(publication.updated_at)}:null,
     editorial:editorial?{revision:integer(editorial.revision)??0,publicConditionSummary:text(editorial.public_condition_summary),expertSummary:text(editorial.expert_summary),suitableFor:stringArray(editorial.suitable_for),notSuitableFor:stringArray(editorial.not_suitable_for),contextualLabel:text(editorial.contextual_label),includedItems:includedItems(editorial.included_items),policyApplicability:stringArray(editorial.policy_applicability),reviewedBy:text(editorial.reviewed_by),reviewedAt:text(editorial.reviewed_at)}:null,
     images:publicImages(value.machine_images),privacyValid:true,

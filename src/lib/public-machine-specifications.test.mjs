@@ -12,10 +12,18 @@ import {
 
 const catalog = {
   "MacBookAir10,1": {
-    displaySize: "13,3 inch",
-    displayType: "Retina",
-    ports: ["2 × Thunderbolt / USB 4", "3,5 mm"],
-    touchId: true,
+    key: "MacBookAir10,1",
+    label: "Test model",
+    family: "MacBook Air",
+    releaseYear: 2020,
+    screenSizeInches: 13.3,
+    chipFamily: "M1",
+    specifications: {
+      displaySize: "13,3 inch",
+      displayType: "Retina",
+      ports: ["2 × Thunderbolt / USB 4", "3,5 mm"],
+      touchId: true,
+    },
   },
 };
 
@@ -55,6 +63,29 @@ test("exact model mapping never falls back to a similar public title", () => {
   assert.equal(resolveModelSpecifications("MacBookAir10,1", catalog)?.displayType, "Retina");
   assert.equal(resolveModelSpecifications("MacBook Air M1 2020 13 inch", catalog), null);
   assert.equal(resolveModelSpecifications("macbookair10,1", catalog), null);
+});
+
+test("canonical known key resolves the reviewed Apple specification entry", () => {
+  const model = resolveModelSpecifications("macbook-air-13-m2-2022");
+  assert.equal(model?.displaySize, "13,6 inch");
+  assert.equal(model?.displayResolution, "2560 × 1664 pixel, 224 ppi");
+});
+
+test("null and unknown keys resolve no model specifications", () => {
+  assert.equal(resolveModelSpecifications(null), null);
+  assert.equal(resolveModelSpecifications("unknown-model"), null);
+});
+
+test("RAM SSD and color do not participate in exact model resolution", () => {
+  const first = buildPublicMachineSpecifications({
+    exactModelIdentifier: "macbook-air-13-m2-2022",
+    machine: { ram: "8 GB", storage: "256 GB", color: "Midnight" },
+  });
+  const second = buildPublicMachineSpecifications({
+    exactModelIdentifier: "macbook-air-13-m2-2022",
+    machine: { ram: "24 GB", storage: "2 TB", color: "Bạc" },
+  });
+  assert.deepEqual(first.model, second.model);
 });
 
 test("accordion exposes button semantics and accessible state", () => {
