@@ -32,6 +32,7 @@ import { buildPublicLimitations } from "../../app/(sales)/may/[slug]/_components
 import { machinePolicyAnalyticsPayload } from "../../lib/analytics/machine-policy.ts";
 import { loadPublicMachinePolicySummary, mapPublicMachinePolicySummary } from "./public-machine-policy-summary.server.ts";
 import { PUBLIC_MACHINE_DETAIL_V1_KEYS } from "../../lib/public-projection/contracts.ts";
+import { compactContactLabel, resolveContactChannel, withContactChannel } from "../../hooks/useContactChannel.ts";
 
 function row(code="MBMC-A001",overrides={}){
   const revision=3;
@@ -112,13 +113,73 @@ test("public policy hub owns all five canonical destinations",()=>{
   const source=readFileSync(new URL("../../app/(sales)/chinh-sach/page.tsx",import.meta.url),"utf8");
   for(const route of ["/chinh-sach/bao-hanh","/chinh-sach/mbmc-care","/chinh-sach/version/mbmc-policy-v1","/chinh-sach/cong-tac-vien","/chinh-sach/dai-ly"])assert.match(source,new RegExp(`href: "${route}"`));
   assert.match(source,/title="Chính sách MBMC"/);
-  assert.match(source,/Đang hoàn thiện/);
+  assert.match(source,/Dành cho khách hàng/);
+  assert.match(source,/Dành cho đối tác/);
+  assert.equal(source.match(/status: "Đang hoàn thiện"/g)?.length,2);
+  const customer=source.match(/const customerPolicies:[\s\S]*?= \[([\s\S]*?)\n\];/)?.[1]??"";
+  const partner=source.match(/const partnerPolicies:[\s\S]*?= \[([\s\S]*?)\n\];/)?.[1]??"";
+  assert.equal(customer.match(/href: "\/chinh-sach\//g)?.length,3);
+  assert.equal(partner.match(/href: "\/chinh-sach\//g)?.length,2);
+  assert.match(source,/<h2 id="customer-policy-heading">Dành cho khách hàng<\/h2>/);
+  assert.match(source,/<h2 id="partner-policy-heading">Dành cho đối tác<\/h2>/);
+  assert.match(source,/ContactActionLink[^>]+label="Nhắn MBMC trên Zalo"/);
+  assert.match(source,/<Link className="policy-hub-card" href=\{policy\.href\}/);
+  assert.doesNotMatch(source,/<Link[^>]*>[\s\S]*?<a\b/);
+  assert.doesNotMatch(source,/😀|🛡|❤️|🤝|🏪|💬/);
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(css,/\.policy-hub-grid--customer \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css,/\.policy-hub-grid--partner \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-hub-grid--customer, \.policy-hub-grid--partner \{ grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(css,/\.policy-hub-card:focus-visible/);
 });
-test("desktop and mobile policy navigation use the canonical internal hub",()=>{
+test("desktop and mobile navigation share one canonical accessible link source",()=>{
   const source=readFileSync(new URL("../../components/layout/SiteHeader.tsx",import.meta.url),"utf8");
-  assert.equal(source.match(/<Link href="\/chinh-sach">Chính sách<\/Link>/g)?.length,2);
+  for(const label of ["Chọn MacBook","Máy đang có","Chính sách","Bán máy cho MBMC"])assert.match(source,new RegExp(`label: "${label}"`));
+  assert.match(source,/label: contactLabel/);
+  assert.match(source,/const links: readonly HeaderLink\[\] = \[/);
+  assert.match(source,/links\.map\(\(link\) => renderLink\(link\)\)/);
+  assert.match(source,/links\s*\.filter\(\(link\) => !link\.contact\)\s*\.map\(\(link\) => renderLink\(link, true\)\)/);
+  assert.match(source,/ContactActionLink[^>]+className="mobile-contact-action"[^>]+compact/);
+  for(const route of ["/chon-macbook","/may-dang-co","/chinh-sach","/"])assert.match(source,new RegExp(`withContactChannel\\("${route.replace("/","\\/")}"`));
+  assert.doesNotMatch(source,/withContactChannel\("https:\/\//);
+  assert.match(source,/aria-label=\{menuOpen \? "Đóng menu" : "Mở menu"\}/);
+  assert.match(source,/aria-expanded=\{menuOpen\}/);
+  assert.match(source,/mobile-menu-icon--open/);
+  assert.match(source,/onClick=\{mobile \? closeMenu : undefined\}/);
+  assert.match(source,/menuState\.open && menuState\.pathname === pathname/);
+  assert.match(source,/event\.key !== "Escape" \|\| !menuOpen/);
+  assert.match(source,/triggerRef\.current\?\.focus\(\)/);
+  assert.match(source,/!menuRef\.current\?\.contains\(event\.target as Node\)/);
+  assert.match(source,/window\.matchMedia\("\(min-width: 56rem\)"\)/);
+  assert.match(source,/if \(event\.matches\) closeMenu\(\)/);
+  for(const icon of ["selector","inventory","policy","sell","contact"])assert.match(source,new RegExp(`${icon}:`));
+  assert.match(source,/aria-hidden="true"[\s\S]*?className="mobile-nav-icon"/);
+  assert.doesNotMatch(source,/😀|☰|✕|🛡|🤝|💬/);
+  assert.match(source,/aria-current=\{current\}/);
   assert.doesNotMatch(source,/muabanmacbookcu\.com\/chinh-sach/);
-  assert.match(source,/mobile-header-actions[\s\S]*?<Link href="\/chinh-sach">Chính sách<\/Link>/);
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(css,/\.desktop-navigation \{ display: none;/);
+  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.desktop-navigation \{ display: flex; \}[\s\S]*?\.mobile-header-actions \{ display: none; \}/);
+  assert.match(css,/\.mobile-contact-action \{[^}]*white-space: nowrap/);
+  assert.match(css,/\.contact-action-icon \{ width: 1rem; height: 1rem/);
+  assert.match(css,/\.mobile-header-menu a \{[^}]*min-height: 2\.9rem;[^}]*gap: \.75rem/);
+  assert.doesNotMatch(css,/\.mobile-header-menu[^}]*white-space:\s*nowrap/);
+});
+test("contact channel resolution keeps compact labels destinations and internal attribution aligned",()=>{
+  assert.equal(resolveContactChannel("messenger"),"messenger");
+  assert.equal(resolveContactChannel("zalo"),"zalo");
+  assert.equal(resolveContactChannel(null),null);
+  assert.equal(resolveContactChannel("unsupported"),null);
+  assert.equal(compactContactLabel("messenger"),"Nhắn Messenger");
+  assert.equal(compactContactLabel("zalo"),"Nhắn Zalo");
+  assert.equal(compactContactLabel(null),"Nhắn MBMC");
+  assert.equal(withContactChannel("/chinh-sach","messenger"),"/chinh-sach?channel=messenger");
+  assert.equal(withContactChannel("/may/example?view=full","zalo"),"/may/example?view=full&channel=zalo");
+  assert.equal(withContactChannel("/chinh-sach",null),"/chinh-sach");
+  const contactAction=readFileSync(new URL("../../components/contact/ContactActionLink.tsx",import.meta.url),"utf8");
+  assert.match(contactAction,/compact \? compactContactLabel/);
+  assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
+  assert.doesNotMatch(contactAction,/m\.me|zalo\.me/);
 });
 test("temporary collaboration policy routes stay neutral and link to contact and hub",()=>{
   for(const route of ["cong-tac-vien","dai-ly"]){
@@ -146,6 +207,11 @@ test("policy routes share one layout with wide hero metrics and footer actions",
   assert.match(css,/\.policy-content \{ width: min\(100%, 46rem\)/);
   assert.match(css,/\.policy-hero h1 \{ max-width: none/);
   assert.doesNotMatch(css,/\.policy-hero h1[^}]*max-width:\s*1\dch/);
+  assert.match(css,/\.policy-metrics \{ display: grid; grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-metrics \{ grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-page \.policy-metrics > div \{ min-width: 0; display: grid; grid-template-columns: minmax\(0, 1fr\);[^}]*padding:/);
+  assert.match(css,/\.policy-metrics dt, \.policy-metrics dd \{ display: block; min-width: 0; overflow-wrap: break-word; \}/);
+  assert.doesNotMatch(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-metrics \{[^}]*repeat\([234],/);
 });
 test("warranty page publishes every approved V1 section",()=>{
   const source=readFileSync(new URL("../../app/(sales)/chinh-sach/bao-hanh/page.tsx",import.meta.url),"utf8");
@@ -159,6 +225,10 @@ test("Care page has mobile-safe comparison and frozen V1 prices without policy m
   const layout=readFileSync(new URL("../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",import.meta.url),"utf8");
   assert.match(source,/ResponsivePolicyTable/);
   assert.match(layout,/role="region"[^>]*aria-label=\{label\}[^>]*tabIndex=\{0\}/);
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(css,/\.policy-table-scroll \{ width: 100%; max-width: 100%; min-width: 0;[^}]*overflow-x: auto;/);
+  assert.match(css,/\.policy-table-scroll table \{ width: 100%; min-width: 38rem;/);
+  assert.doesNotMatch(css,/\.policy-page[^}]*overflow-x:\s*(?:hidden|clip)/);
   for(const value of ["Tổng 03 tháng","Tổng 06 tháng","600.000đ","1.200.000đ","800.000đ","1.600.000đ","1.000.000đ","2.000.000đ"])assert.match(source,new RegExp(value));
   assert.match(source,/Máy mượn[^<]*không được bảo đảm/);
   assert.match(source,/trong vòng 07 ngày sau bàn giao/);
@@ -744,7 +814,7 @@ test("desktop and mobile sticky layouts preserve separate identity, price, and c
   assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
   assert.match(contactAction,/target="_blank"/);
   assert.match(contactAction,/rel="noopener noreferrer"/);
-  assert.match(contactAction,/const label = requestedLabel \?\? "Nhắn MBMC xác nhận máy"/);
+  assert.match(contactAction,/requestedLabel \?\?[\s\S]*?compact \? compactContactLabel : "Nhắn MBMC xác nhận máy"/);
   assert.doesNotMatch(hero,/Tin nhắn đã có sẵn|buildMachineContactHref/);
   assert.match(hero,/Bạn có thể gửi:/);
 });
