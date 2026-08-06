@@ -81,6 +81,15 @@ export type PublicIncludedItems = {
   bag: boolean | null;
   accessories: string[];
 };
+export type PublicPolicySummary = {
+  policyVersion: string;
+  title: string;
+  warrantyItems: string[];
+  careWording: string;
+  warrantyPolicyUrl: string;
+  carePolicyUrl: string;
+  machineIdWording: string;
+};
 // Public facts are display-safe Evidence. Human judgement belongs in the
 // Recommendation fields on PublicMachineDetailV1.
 export type PublicFact = { label: string; value: string };
@@ -146,6 +155,7 @@ export interface PublicMachineDetailV1 {
   >;
   includedItems: PublicIncludedItems;
   policyApplicability: string[];
+  policySummary?: PublicPolicySummary;
   passport: PublicMachinePassportV1;
   relatedMachines: PublicMachineSummaryV1[];
 }
@@ -161,7 +171,7 @@ export const PUBLIC_MACHINE_SUMMARY_V1_KEYS = [
 export const PUBLIC_MACHINE_DETAIL_V1_KEYS = [
   "schemaVersion", "summary", "gallery", "expertSummary", "suitableFor",
   "notSuitableFor", "decisionSpecifications", "technicalSpecifications",
-  "includedItems", "policyApplicability", "passport", "relatedMachines",
+  "includedItems", "policyApplicability", "policySummary", "passport", "relatedMachines",
 ] as const satisfies readonly (keyof PublicMachineDetailV1)[];
 
 export const PUBLIC_MACHINE_PASSPORT_V1_KEYS = [

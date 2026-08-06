@@ -10,6 +10,7 @@ export type {
   PublicMachinePassportV1,
   PublicMachineSummaryV1,
   PublicMoney,
+  PublicPolicySummary,
   PublicRepairStatus,
   PublicSourceVerification,
   PublicTimelineEvent,

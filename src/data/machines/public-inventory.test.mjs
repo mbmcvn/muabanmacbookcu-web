@@ -29,6 +29,8 @@ import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { selectHomepageMachines } from "../../app/(sales)/_components/home/homepage-machine-selection.ts";
 import { buildPublicLimitations, hasBalancedSuitability } from "../../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts";
+import { machinePolicyAnalyticsPayload } from "../../lib/analytics/machine-policy.ts";
+import { loadPublicMachinePolicySummary, mapPublicMachinePolicySummary } from "./public-machine-policy-summary.server.ts";
 
 function row(code="MBMC-A001",overrides={}){
   const revision=3;
@@ -48,6 +50,57 @@ test("summaries contain no operational fields or internal actor values",()=>{con
 test("search covers model, chip, RAM and SSD configuration",()=>{const items=publicSummaries([row()]);for(const query of ["MacBook Air","Apple M2","8gb ram","256gb ssd"])assert.equal(filterAndSortPublicInventory(items,query,"Tất cả","relevance").length,1,query);});
 test("price filters and sorting use DTO money deterministically",()=>{const items=publicSummaries([row("MBMC-HIGH",{retail_price_expected:19_000_000}),row("MBMC-LOW",{retail_price_expected:12_000_000}),row("MBMC-MID",{retail_price_expected:16_000_000})]);assert.deepEqual(filterAndSortPublicInventory(items,"","Dưới 15 triệu","relevance").map(x=>x.code),["MBMC-LOW"]);assert.deepEqual(filterAndSortPublicInventory(items,"","Tất cả","price-desc").map(x=>x.code),["MBMC-HIGH","MBMC-MID","MBMC-LOW"]);});
 test("detail resolves only an eligible immutable public slug",()=>{assert.equal(publicDetailBySlug([row()],"mbmc-a001")?.schemaVersion,"public-machine-detail.v1");assert.equal(publicDetailBySlug([row()],"unknown"),null);assert.equal(publicDetailBySlug([row("MBMC-SOLD",{status:"sold"})],"mbmc-sold"),null);});
+const policyRpcRow={machine_public_identifier:"MBMC-A001",policy_version:"mbmc-policy-v1",summary_title:"Quyền lợi của máy này",warranty_summary_items:["Bảo hành theo bản chiếu"],care_availability_wording:"Care theo bản chiếu",warranty_policy_url:"/chinh-sach/bao-hanh",mbmc_care_policy_url:"/chinh-sach/mbmc-care",machine_id_persistence_wording:"Lưu theo Machine ID"};
+test("RPC row maps to the public policy DTO without calculating policy",()=>{
+  assert.deepEqual(mapPublicMachinePolicySummary(policyRpcRow),{policyVersion:"mbmc-policy-v1",title:"Quyền lợi của máy này",warrantyItems:["Bảo hành theo bản chiếu"],careWording:"Care theo bản chiếu",warrantyPolicyUrl:"/chinh-sach/bao-hanh",carePolicyUrl:"/chinh-sach/mbmc-care",machineIdWording:"Lưu theo Machine ID"});
+});
+test("policy RPC handles success, zero rows, errors, and malformed rows",async()=>{
+  const rpc=(data,error=null)=>({rpc:async()=>({data,error})});
+  assert.deepEqual(await loadPublicMachinePolicySummary(rpc([policyRpcRow]),"00000000-0000-0000-0000-000000000001"),mapPublicMachinePolicySummary(policyRpcRow));
+  assert.equal(await loadPublicMachinePolicySummary(rpc([]),"00000000-0000-0000-0000-000000000001"),null);
+  const originalError=console.error; console.error=()=>{};
+  try { assert.equal(await loadPublicMachinePolicySummary(rpc(null,{code:"RPC_FAIL"}),"00000000-0000-0000-0000-000000000001"),null); }
+  finally { console.error=originalError; }
+  assert.equal(await loadPublicMachinePolicySummary(rpc([{...policyRpcRow,warranty_summary_items:"invalid"}]),"00000000-0000-0000-0000-000000000001"),null);
+});
+test("editorial policy applicability remains array-only",()=>{
+  const candidate=row();
+  candidate.machine_editorials.policy_applicability=["editorial-only"];
+  const detail=publicDetailBySlug([candidate],"mbmc-a001");
+  assert.deepEqual(detail?.policyApplicability,["editorial-only"]);
+  assert.equal(detail?.policySummary,undefined);
+  candidate.machine_editorials.policy_applicability=policyRpcRow;
+  assert.deepEqual(publicDetailBySlug([candidate],"mbmc-a001")?.policyApplicability,[]);
+});
+test("missing policy projection is optional and produces no fabricated fallback",()=>{
+  const detail=publicDetailBySlug([row()],"mbmc-a001");
+  assert.ok(detail);
+  assert.equal(detail.policySummary,undefined);
+  assert.doesNotMatch(JSON.stringify(detail),/expiry|Care price|01 tháng|07 ngày/i);
+});
+test("policy analytics payload contains public context only",()=>{
+  const payload=machinePolicyAnalyticsPayload({publicMachineId:"MBMC-A001",machineSlug:"mbmc-a001",policyVersion:"v1",hasCareWording:true});
+  assert.deepEqual(Object.keys(payload),["publicMachineId","machineSlug","policyVersion","hasCareWording"]);
+  assert.doesNotMatch(JSON.stringify(payload),/phone|customer|saleId|ticket/i);
+});
+test("policy summary uses semantic mobile-safe markup and canonical projection links",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachinePolicySummary.tsx",import.meta.url),"utf8");
+  assert.match(source,/<section[^>]+aria-labelledby=/);
+  assert.match(source,/<h2 id="machine-policy-heading"/);
+  assert.match(source,/policy\.warrantyPolicyUrl/);
+  assert.match(source,/policy\.carePolicyUrl/);
+  assert.doesNotMatch(source,/01 tháng|07 ngày|\d+[.,]?\d*\s*(?:₫|VND|triệu)/i);
+});
+test("public repository owns RPC-supplied relative policy routes",()=>{
+  const repository=readFileSync(new URL("./repositories/supabase-public-machine-repository.ts",import.meta.url),"utf8");
+  assert.match(repository,/\bid,/);
+  assert.match(repository,/loadPublicMachinePolicySummary\(\s*client,\s*machineId,?\s*\)/);
+  for(const route of ["bao-hanh","mbmc-care","version/mbmc-policy-v1"]){
+    assert.equal(existsSync(new URL(`../../app/(sales)/chinh-sach/${route}/page.tsx`,import.meta.url)),true,route);
+  }
+  assert.equal(policyRpcRow.warranty_policy_url.startsWith("/"),true);
+  assert.equal(policyRpcRow.mbmc_care_policy_url.startsWith("/"),true);
+});
 test("one malformed candidate cannot break other valid results",()=>{const malformed={get machine_id(){throw new Error("bad row")}};let failures=0;const results=projectPublicCandidates([malformed,row()],()=>failures++);assert.equal(failures,1);assert.equal(results.length,1);assert.equal(results[0].eligible,true);});
 test("production pages do not import the removed static fixture",()=>{for(const relative of ["../../app/(sales)/may-dang-co/page.tsx","../../app/(sales)/may/[slug]/page.tsx"]){const source=readFileSync(new URL(relative,import.meta.url),"utf8");assert.doesNotMatch(source,/static-machine-repository|MBMC-SPJ9|MacBook Air M2 2022 13 inch/);}});
 test("two valid published candidates render two cards and both detail slugs resolve",()=>{

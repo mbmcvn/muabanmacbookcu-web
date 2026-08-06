@@ -12,6 +12,7 @@ import { PublicSpecifications } from "./SpecificationsAndRecommendation";
 import { PoliciesAndSupport } from "./SupportAndSticky";
 import { hasBalancedSuitability } from "./decision-dossier-presentation";
 import { MachineDetailIcon } from "./MachineDetailIcon";
+import { MachinePolicySummary } from "./MachinePolicySummary";
 
 export function PublicMachineDetailView({ machine }: { machine: PublicMachineDetailV1 }) {
   const { channel } = useContactChannel();
@@ -27,6 +28,7 @@ export function PublicMachineDetailView({ machine }: { machine: PublicMachineDet
       </div>
       <DecisionDossier machine={machine} />
       <PublicSpecifications machine={machine} />
+      <MachinePolicySummary machine={machine} />
       <PoliciesAndSupport machine={machine} />
     </div>
   </PublicMachineMediaProvider>;
