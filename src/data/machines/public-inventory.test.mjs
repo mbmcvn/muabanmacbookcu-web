@@ -101,6 +101,52 @@ test("public repository owns RPC-supplied relative policy routes",()=>{
   assert.equal(policyRpcRow.warranty_policy_url.startsWith("/"),true);
   assert.equal(policyRpcRow.mbmc_care_policy_url.startsWith("/"),true);
 });
+test("policy routes share one layout with wide hero metrics and footer actions",()=>{
+  const layout=readFileSync(new URL("../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(layout,/policy-breadcrumbs/);
+  assert.match(layout,/policy-version-badge/);
+  assert.match(layout,/policy-metrics/);
+  assert.match(layout,/policy-footer/);
+  assert.match(css,/\.policy-page \{ width: min\(64rem/);
+  assert.match(css,/\.policy-content \{ width: min\(100%, 46rem\)/);
+  assert.match(css,/\.policy-hero h1 \{ max-width: none/);
+  assert.doesNotMatch(css,/\.policy-hero h1[^}]*max-width:\s*1\dch/);
+});
+test("warranty page publishes every approved V1 section",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/bao-hanh/page.tsx",import.meta.url),"utf8");
+  for(const id of ["warranty-exchange","warranty-repair-first","warranty-non-fault-exchange","warranty-hardware","warranty-screen","warranty-battery","warranty-exclusions","warranty-processing","warranty-repaired-item","warranty-software","warranty-machine-id"])assert.match(source,new RegExp(`id="${id}"`));
+  for(const metric of ["01 tháng","07 ngày","30 ngày tối thiểu"])assert.match(source,new RegExp(metric));
+  assert.match(source,/khấu trừ mặc định 15%/);
+  assert.match(source,/1–7 ngày/);
+});
+test("Care page has mobile-safe comparison and frozen V1 prices without policy math",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/mbmc-care/page.tsx",import.meta.url),"utf8");
+  const layout=readFileSync(new URL("../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",import.meta.url),"utf8");
+  assert.match(source,/ResponsivePolicyTable/);
+  assert.match(layout,/role="region"[^>]*aria-label=\{label\}[^>]*tabIndex=\{0\}/);
+  for(const value of ["Tổng 03 tháng","Tổng 06 tháng","600.000đ","1.200.000đ","800.000đ","1.600.000đ","1.000.000đ","2.000.000đ"])assert.match(source,new RegExp(value));
+  assert.match(source,/Máy mượn[^<]*không được bảo đảm/);
+  assert.match(source,/trong vòng 07 ngày sau bàn giao/);
+  assert.doesNotMatch(source,/reduce\(|calculate|price\s*\*|switch\s*\(/i);
+});
+test("archived V1 page is immutable and links back to current policy pages",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/version/mbmc-policy-v1/page.tsx",import.meta.url),"utf8");
+  assert.match(source,/title="Chính sách MBMC V1"/);
+  assert.match(source,/badge="Bản lưu · V1"/);
+  assert.match(source,/tham chiếu lịch sử cố định/i);
+  assert.match(source,/không nhất thiết là chính sách hiện hành/i);
+  assert.match(source,/href: "\/chinh-sach\/bao-hanh"/);
+  assert.match(source,/href: "\/chinh-sach\/mbmc-care"/);
+});
+test("machine policy hierarchy remains entirely projection-driven",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachinePolicySummary.tsx",import.meta.url),"utf8");
+  assert.match(source,/\{policy\.title\}/);
+  assert.match(source,/policy\.warrantyItems\.map/);
+  assert.match(source,/\{policy\.careWording\}/);
+  assert.match(source,/\{policy\.machineIdWording\}/);
+  assert.doesNotMatch(source,/Tóm tắt chính sách trước khi mua|Quyền lợi của máy này|01 tháng|07 ngày/);
+});
 test("one malformed candidate cannot break other valid results",()=>{const malformed={get machine_id(){throw new Error("bad row")}};let failures=0;const results=projectPublicCandidates([malformed,row()],()=>failures++);assert.equal(failures,1);assert.equal(results.length,1);assert.equal(results[0].eligible,true);});
 test("production pages do not import the removed static fixture",()=>{for(const relative of ["../../app/(sales)/may-dang-co/page.tsx","../../app/(sales)/may/[slug]/page.tsx"]){const source=readFileSync(new URL(relative,import.meta.url),"utf8");assert.doesNotMatch(source,/static-machine-repository|MBMC-SPJ9|MacBook Air M2 2022 13 inch/);}});
 test("two valid published candidates render two cards and both detail slugs resolve",()=>{

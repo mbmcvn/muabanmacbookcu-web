@@ -19,9 +19,6 @@ export function MachinePolicySummary({
   machine: PublicMachineDetailV1;
 }) {
   const policy = machine.policySummary;
-  const items = policy
-    ? [...policy.warrantyItems, policy.careWording, policy.machineIdWording]
-    : [];
   const payload = machinePolicyAnalyticsPayload({
     publicMachineId: machine.summary.code,
     machineSlug: machine.summary.slug,
@@ -30,9 +27,9 @@ export function MachinePolicySummary({
   });
 
   useEffect(() => {
-    if (policy && items.length)
+    if (policy)
       trackMachinePolicyEvent("machine_policy_summary_viewed", payload);
-  }, [items.length, payload, policy]);
+  }, [payload, policy]);
 
   if (!policy) return null;
 
@@ -65,12 +62,28 @@ export function MachinePolicySummary({
         <p className="eyebrow">Bảo hành và chăm sóc</p>
         <h2 id="machine-policy-heading">{policy.title}</h2>
       </header>
-      <ul>
-        {items.map((item) => (
-          <li key={item}>{item}</li>
+      <ol className="machine-policy-primary">
+        {policy.warrantyItems.map((item, index) => (
+          <li key={item}>
+            <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+            <p>{item}</p>
+          </li>
         ))}
-      </ul>
-      <nav aria-label="Tài liệu chính sách của máy">
+      </ol>
+      <div className="machine-policy-notes">
+        <div>
+          <strong>MBMC Care</strong>
+          <p>{policy.careWording}</p>
+        </div>
+        <div>
+          <strong>Theo đúng chiếc máy</strong>
+          <p>{policy.machineIdWording}</p>
+        </div>
+      </div>
+      <nav
+        className="machine-policy-links"
+        aria-label="Tài liệu chính sách của máy"
+      >
         {policyLink(
           policy.warrantyPolicyUrl,
           "Chính sách bảo hành",
