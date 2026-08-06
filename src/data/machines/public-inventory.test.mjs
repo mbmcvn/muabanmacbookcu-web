@@ -28,7 +28,7 @@ import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../
 import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { selectHomepageMachines } from "../../app/(sales)/_components/home/homepage-machine-selection.ts";
-import { buildPublicLimitations, hasBalancedSuitability } from "../../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts";
+import { buildPublicLimitations } from "../../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts";
 import { machinePolicyAnalyticsPayload } from "../../lib/analytics/machine-policy.ts";
 import { loadPublicMachinePolicySummary, mapPublicMachinePolicySummary } from "./public-machine-policy-summary.server.ts";
 
@@ -728,6 +728,7 @@ test("decision dossier places supporting information before Passport and mobile 
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
   assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PassportDossier"));
   assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PassportDossier"));
+  assert.ok(dossier.indexOf("<PublicSpecifications")<dossier.indexOf("<PassportDossier"));
   assert.match(css,/\.decision-dossier \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.decision-dossier \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
@@ -742,15 +743,19 @@ test("technical reference renders only additional trusted fields and omits Hero 
   assert.equal(rows.some(item=>item.label==="internal_note"||item.value==="private"),false);
   assert.equal(rows.some(item=>item.label==="Trọng lượng"),false);
   assert.equal(rows.some(item=>["Model","Chip","RAM","Lưu trữ","Màu","Năm ra mắt"].includes(item.label)),false);
-  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  assert.ok(view.indexOf("<DecisionDossier")<view.indexOf("<PublicSpecifications"));
+  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
+  assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PublicSpecifications"));
+  assert.ok(dossier.indexOf("<PublicSpecifications")<dossier.indexOf("<PassportDossier"));
 });
 
 test("final detail page order retains observation specs support and sticky CTA",()=>{
   const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  const sequence=["detail-breadcrumb","detail-hero","<DecisionDossier","<PublicSpecifications","<PoliciesAndSupport"];
+  const sequence=["detail-breadcrumb","detail-hero","<DecisionDossier","<PoliciesAndSupport"];
   for(let index=1;index<sequence.length;index++)assert.ok(view.indexOf(sequence[index-1])<view.indexOf(sequence[index]),sequence[index]);
   assert.doesNotMatch(view,/<DetailedImages/);
+  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
+  assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PublicSpecifications"));
+  assert.ok(dossier.indexOf("<PublicSpecifications")<dossier.indexOf("<PassportDossier"));
   const page=readFileSync(new URL("../../app/(sales)/may/[slug]/page.tsx",import.meta.url),"utf8");
   assert.match(page,/<PublicMachineStickyBar machine=\{machine\}/);
 });
@@ -762,7 +767,7 @@ test("Decision Summary is concise and precedes the fit assessment",()=>{
   assert.match(summary,/Đây là phần đối chiếu nhanh trước khi bạn quyết định nhắn MBMC về chiếc máy này\./);
   assert.doesNotMatch(summary,/Hãy đọc cả trường hợp phù hợp|chưa có đủ nhận định cân bằng/);
   assert.doesNotMatch(summary,/<ul|<ol|RAM|SSD|Chip/);
-  assert.ok(dossier.indexOf("<DecisionSummary />")<dossier.indexOf("<SuitabilityAssessment"));
+  assert.ok(dossier.indexOf("<DecisionSummary />")<dossier.indexOf("<PublicMachineFitRecommendation"));
 });
 
 test("Hero includes one lightweight decision hook before Decision Summary",()=>{
@@ -785,17 +790,14 @@ test("sticky contact appears only between the Hero action and final Decision Pan
   assert.match(sticky,/if \(!isVisible\) return null/);
 });
 
-test("Suitable and Not Suitable publish only as a balanced pair",()=>{
-  const base=publicDetailBySlug([row("MBMC-FIT")],"mbmc-fit");
-  assert.ok(base);
-  assert.equal(hasBalancedSuitability({...base,suitableFor:["Công việc văn phòng"],notSuitableFor:["Dựng phim nặng"]}),true);
-  assert.equal(hasBalancedSuitability({...base,suitableFor:["Công việc văn phòng"],notSuitableFor:[]}),false);
-  assert.equal(hasBalancedSuitability({...base,suitableFor:[],notSuitableFor:["Dựng phim nặng"]}),false);
-  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SpecificationsAndRecommendation.tsx",import.meta.url),"utf8");
-  assert.match(source,/if \(!hasBalancedSuitability\(machine\)\) return null/);
-  assert.match(source,/>Phù hợp với</);
-  assert.match(source,/>Không phù hợp nếu</);
-  assert.match(source,/>Đánh giá từ MBMC</);
+test("fit recommendation is separate from specifications and hides only when fully empty",()=>{
+  const fit=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineFitRecommendation.tsx",import.meta.url),"utf8");
+  const specifications=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicSpecifications.tsx",import.meta.url),"utf8");
+  assert.match(fit,/if \(!hasMachineFitRecommendation\(recommendation\)\) return null/);
+  assert.match(fit,/title="Phù hợp nếu bạn"/);
+  assert.match(fit,/title="Nên cân nhắc máy khác nếu bạn"/);
+  assert.doesNotMatch(specifications,/FitRecommendation|Phù hợp nếu bạn|Nên cân nhắc máy khác/);
+  assert.match(specifications,/>Đánh giá từ MBMC</);
 });
 
 test("verified information stays visible and limitations use a closed native disclosure",()=>{
@@ -887,7 +889,7 @@ test("Machine Detail mobile typography keeps supporting rows subordinate and pas
 });
 
 test("first Decision Dossier release omits unsupported future sections",()=>{
-  const files=["DecisionDossier.tsx","PublicMachineDetailView.tsx","SupportAndSticky.tsx","SpecificationsAndRecommendation.tsx"];
+  const files=["DecisionDossier.tsx","PublicMachineDetailView.tsx","SupportAndSticky.tsx","PublicSpecifications.tsx"];
   const source=files.map(file=>readFileSync(new URL(`../../app/(sales)/may/[slug]/_components/${file}`,import.meta.url),"utf8")).join("\n");
   assert.doesNotMatch(source,/Benefits|Trade-offs|Timeline|RelatedMachines|relatedMachines|Decision Stories|Recommendation quiz/i);
 });
