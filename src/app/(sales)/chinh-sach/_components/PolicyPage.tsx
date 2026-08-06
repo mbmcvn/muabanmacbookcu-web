@@ -26,7 +26,7 @@ export function PolicyPage({
       <nav className="policy-breadcrumbs" aria-label="Đường dẫn">
         <Link href="/">Trang chủ</Link>
         <span aria-hidden="true">/</span>
-        <span>Chính sách</span>
+        <Link href="/chinh-sach">Chính sách</Link>
       </nav>
       <header className="policy-hero">
         <div className="policy-hero-heading">

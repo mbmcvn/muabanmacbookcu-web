@@ -15,11 +15,12 @@ export function SiteHeader() {
         <nav className="desktop-navigation" aria-label="Điều hướng chính">
           <Link href="/chon-macbook">Chọn MacBook</Link>
           <Link aria-current="page" href={inventoryHref}>Máy đang có</Link>
-          <a href="https://muabanmacbookcu.com/chinh-sach/bao-hanh/">Chính sách</a>
+          <Link href="/chinh-sach">Chính sách</Link>
           <a href="https://muabanmacbookcu.com/thumua/">Bán máy cho MBMC</a>
           <a className="header-contact" href={contactUrl ?? defaultContact.href}>{contactLabel ?? "Liên hệ"}</a>
         </nav>
         <div className="mobile-header-actions">
+          <Link href="/chinh-sach">Chính sách</Link>
           <a href="#inventory-search" aria-label="Tìm máy">Tìm</a>
           <a href={contactUrl ?? defaultContact.href} aria-label={contactLabel ?? "Liên hệ MBMC"}>{contactLabel ?? "Liên hệ"}</a>
         </div>

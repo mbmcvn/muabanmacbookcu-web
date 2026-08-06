@@ -22,6 +22,7 @@ export default function MbmcCarePolicyPage() {
       badge="Bảng quyền lợi V1"
       metrics={metrics}
       actions={[
+        { href: "/chinh-sach", label: "Tất cả chính sách" },
         { href: "/chinh-sach/bao-hanh", label: "Chính sách bảo hành" },
         {
           href: "/chinh-sach/version/mbmc-policy-v1",

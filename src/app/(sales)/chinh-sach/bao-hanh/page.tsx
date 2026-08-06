@@ -19,6 +19,7 @@ export default function WarrantyPolicyPage() {
       badge="Phiên bản V1"
       metrics={metrics}
       actions={[
+        { href: "/chinh-sach", label: "Tất cả chính sách" },
         { href: "/chinh-sach/mbmc-care", label: "Xem MBMC Care" },
         {
           href: "/chinh-sach/version/mbmc-policy-v1",

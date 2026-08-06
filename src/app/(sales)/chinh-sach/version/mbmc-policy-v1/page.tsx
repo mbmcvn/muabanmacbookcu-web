@@ -15,6 +15,7 @@ export default function PolicyVersionPage() {
         { value: "Machine ID", label: "Khóa đối chiếu quyền lợi" },
       ]}
       actions={[
+        { href: "/chinh-sach", label: "Tất cả chính sách" },
         { href: "/chinh-sach/bao-hanh", label: "Chính sách bảo hành hiện tại" },
         {
           href: "/chinh-sach/mbmc-care",

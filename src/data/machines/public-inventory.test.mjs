@@ -108,6 +108,33 @@ test("public repository owns RPC-supplied relative policy routes",()=>{
   assert.equal(policyRpcRow.warranty_policy_url.startsWith("/"),true);
   assert.equal(policyRpcRow.mbmc_care_policy_url.startsWith("/"),true);
 });
+test("public policy hub owns all five canonical destinations",()=>{
+  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/page.tsx",import.meta.url),"utf8");
+  for(const route of ["/chinh-sach/bao-hanh","/chinh-sach/mbmc-care","/chinh-sach/version/mbmc-policy-v1","/chinh-sach/cong-tac-vien","/chinh-sach/dai-ly"])assert.match(source,new RegExp(`href: "${route}"`));
+  assert.match(source,/title="Chính sách MBMC"/);
+  assert.match(source,/Đang hoàn thiện/);
+});
+test("desktop and mobile policy navigation use the canonical internal hub",()=>{
+  const source=readFileSync(new URL("../../components/layout/SiteHeader.tsx",import.meta.url),"utf8");
+  assert.equal(source.match(/<Link href="\/chinh-sach">Chính sách<\/Link>/g)?.length,2);
+  assert.doesNotMatch(source,/muabanmacbookcu\.com\/chinh-sach/);
+  assert.match(source,/mobile-header-actions[\s\S]*?<Link href="\/chinh-sach">Chính sách<\/Link>/);
+});
+test("temporary collaboration policy routes stay neutral and link to contact and hub",()=>{
+  for(const route of ["cong-tac-vien","dai-ly"]){
+    const source=readFileSync(new URL(`../../app/(sales)/chinh-sach/${route}/page.tsx`,import.meta.url),"utf8");
+    assert.match(source,/badge="Đang hoàn thiện"/);
+    assert.match(source,/ContactActionLink/);
+    assert.match(source,/href: "\/chinh-sach"/);
+    assert.doesNotMatch(source,/\d+\s*%|hoa hồng|chiết khấu|thanh toán|hạn mức|độc quyền|phân bổ bảo hành|cam kết tồn kho/i);
+  }
+});
+test("every policy detail page links back to the policy hub",()=>{
+  for(const route of ["bao-hanh","mbmc-care","version/mbmc-policy-v1","cong-tac-vien","dai-ly"]){
+    const source=readFileSync(new URL(`../../app/(sales)/chinh-sach/${route}/page.tsx`,import.meta.url),"utf8");
+    assert.match(source,/href: "\/chinh-sach"/);
+  }
+});
 test("policy routes share one layout with wide hero metrics and footer actions",()=>{
   const layout=readFileSync(new URL("../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",import.meta.url),"utf8");
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
