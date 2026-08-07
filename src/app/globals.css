@@ -476,7 +476,10 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .public-detail-page .detail-decision { align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: clamp(1rem, 2vw, 2rem) 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .public-detail-page .detail-status { justify-content: flex-start; gap: .5rem; margin-bottom: 1rem; }
 .public-detail-page .detail-status span:first-child { display: inline-flex; align-items: center; min-height: 1.75rem; padding: .2rem .65rem; border: 1px solid #b9c9bf; border-radius: 999px; background: var(--accent-soft); font-size: .78rem; }
-.public-detail-page .detail-status span + span { align-self: center; }
+.public-detail-page .detail-status > span:not(:first-child) { align-self: center; }
+.public-detail-page .machine-share-action { align-self: center; padding: .2rem .35rem; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 580; cursor: pointer; }
+.public-detail-page .machine-share-action:hover { color: var(--accent); }
+.public-detail-page .machine-share-action:focus-visible { border-radius: .3rem; outline: 2px solid var(--accent); outline-offset: 2px; }
 .public-detail-page .detail-decision h1 { max-width: 12ch; margin-bottom: .65rem; font-size: clamp(2.25rem, 4vw, 3.65rem); line-height: 1.02; }
 .public-detail-page .detail-configuration { max-width: 32rem; margin-bottom: 0; font-size: 1.05rem; line-height: 1.5; }
 .public-detail-page .detail-price { margin: clamp(1.25rem, 3vw, 2rem) 0 1.1rem; color: #143f31; font-size: clamp(2.15rem, 4vw, 3rem); }

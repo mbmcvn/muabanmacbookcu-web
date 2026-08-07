@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   MBMC_CONTACTS,
+  buildMachineShareUrl,
   canonicalReferralCode,
+  copyMachineShareUrl,
   resolveContact,
   resolveReferralContext,
   validFacebookContactUrl,
@@ -216,4 +218,57 @@ test("browser resolver sends only the canonical referral-code RPC argument", () 
   );
   assert.match(source, /p_referral_code: referralCode/);
   assert.doesNotMatch(source, /p_referral_phone|referral_phone/);
+});
+
+test("machine share URLs include the resolved referral owner but never channel", () => {
+  assert.equal(
+    buildMachineShareUrl("https://mbmc.vn/may/mbmc-8d5x", "PYKB"),
+    "https://mbmc.vn/may/mbmc-8d5x?ref=PYKB",
+  );
+  assert.equal(
+    buildMachineShareUrl(
+      "https://mbmc.vn/may/mbmc-8d5x?ref=PYKB&channel=zalo",
+      "PYKB",
+    ),
+    "https://mbmc.vn/may/mbmc-8d5x?ref=PYKB",
+  );
+  assert.equal(
+    buildMachineShareUrl(
+      "https://mbmc.vn/may/mbmc-8d5x?view=full&channel=messenger",
+      "PYKB",
+    ),
+    "https://mbmc.vn/may/mbmc-8d5x?view=full&ref=PYKB",
+  );
+});
+
+test("machine share URLs stay clean without a valid CTV context", () => {
+  assert.equal(
+    buildMachineShareUrl("https://mbmc.vn/may/mbmc-8d5x?channel=zalo", null),
+    "https://mbmc.vn/may/mbmc-8d5x",
+  );
+});
+
+test("clipboard success and failure return safe feedback state", async () => {
+  let copied = "";
+  assert.equal(
+    await copyMachineShareUrl(
+      "https://mbmc.vn/may/mbmc-8d5x",
+      "PYKB",
+      async (value) => {
+        copied = value;
+      },
+    ),
+    true,
+  );
+  assert.equal(copied, "https://mbmc.vn/may/mbmc-8d5x?ref=PYKB");
+  assert.equal(
+    await copyMachineShareUrl(
+      "https://mbmc.vn/may/mbmc-8d5x",
+      "PYKB",
+      async () => {
+        throw new Error("denied");
+      },
+    ),
+    false,
+  );
 });

@@ -108,21 +108,47 @@ export async function resolveReferralContext(
   lookup: (referral: string) => Promise<CtvContactOwner | null>,
 ): Promise<{
   owner: CtvContactOwner | null;
+  referralCode: string | null;
   referralToPersist: string | null;
 }> {
   if (currentReferral !== null) {
     const code = canonicalReferralCode(currentReferral);
     if (code) {
       const owner = await lookup(code);
-      if (owner) return { owner, referralToPersist: code };
+      if (owner) return { owner, referralCode: code, referralToPersist: code };
     }
   }
   if (persistedReferral) {
     const code = canonicalReferralCode(persistedReferral);
     if (code) {
       const owner = await lookup(code);
-      if (owner) return { owner, referralToPersist: null };
+      if (owner) return { owner, referralCode: code, referralToPersist: null };
     }
   }
-  return { owner: null, referralToPersist: null };
+  return { owner: null, referralCode: null, referralToPersist: null };
+}
+
+export function buildMachineShareUrl(
+  canonicalUrl: string,
+  referralCode: string | null,
+): string {
+  const url = new URL(canonicalUrl);
+  url.searchParams.delete("ref");
+  url.searchParams.delete("channel");
+  const code = referralCode ? canonicalReferralCode(referralCode) : null;
+  if (code) url.searchParams.set("ref", code);
+  return url.toString();
+}
+
+export async function copyMachineShareUrl(
+  canonicalUrl: string,
+  referralCode: string | null,
+  writeText: (value: string) => Promise<void>,
+): Promise<boolean> {
+  try {
+    await writeText(buildMachineShareUrl(canonicalUrl, referralCode));
+    return true;
+  } catch {
+    return false;
+  }
 }

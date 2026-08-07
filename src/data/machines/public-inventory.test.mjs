@@ -808,7 +808,7 @@ test("desktop and mobile sticky layouts preserve separate identity, price, and c
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*grid-area: cta[^}]*grid-row: 1[^}]*width: max-content[^}]*max-width: none[^}]*white-space: nowrap/);
   assert.doesNotMatch(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*(?:width: 100%|grid-column: 1 \/ -1|grid-column: 1 \/ span)/);
   assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
-  assert.match(hero,/<ContactActionLink[^>]*className="primary-action" \/>/);
+  assert.match(hero,/<ContactActionLink[^>]*className="primary-action"[\s\S]*?\/>/);
   assert.match(sticky,/<ContactActionLink className="primary-action" \/>/);
   assert.match(sticky,/<ContactActionLink \/>/);
   assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);

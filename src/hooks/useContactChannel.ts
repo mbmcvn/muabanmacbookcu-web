@@ -115,6 +115,7 @@ export function withContactChannel(
 export function useContactChannel() {
   const [channel, setChannel] = useState<ContactChannel>(null);
   const [owner, setOwner] = useState<CtvContactOwner | null>(cachedOwner);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
 
   useEffect(() => {
     const urlValue = new URLSearchParams(window.location.search).get("channel");
@@ -135,7 +136,10 @@ export function useContactChannel() {
         resolveReferral,
       );
       if (context.referralToPersist) persistReferral(context.referralToPersist);
-      if (!cancelled && context.owner) setOwner(context.owner);
+      if (!cancelled && context.owner) {
+        setOwner(context.owner);
+        setReferralCode(context.referralCode);
+      }
     })();
     return () => {
       cancelled = true;
@@ -147,6 +151,7 @@ export function useContactChannel() {
 
   return {
     channel,
+    referralCode,
     ownerType: contact.ownerType,
     contactUrl: contact.href,
     contactLabel: contact.label,
