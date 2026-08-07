@@ -83,6 +83,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .active-facets button { min-height: 2.5rem; display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .75rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: #44443f; cursor: pointer; font-size: .86rem; }
 .active-facets button:hover { border-color: var(--border-strong); }
 .active-facets .clear-facets { border-color: transparent; background: transparent; color: var(--accent); font-weight: 650; }
+.active-facets .copy-inventory-link { margin-left: auto; border-color: transparent; background: transparent; color: var(--accent); font-weight: 650; }
 .mobile-sort-control { display: block; }
 .inventory-toolbar { min-height: 4rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--border); }
 .inventory-toolbar p { margin: 0; color: var(--muted); }

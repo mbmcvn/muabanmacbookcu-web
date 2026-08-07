@@ -132,6 +132,13 @@ export function buildMachineShareUrl(
   canonicalUrl: string,
   referralCode: string | null,
 ): string {
+  return buildReferralShareUrl(canonicalUrl, referralCode);
+}
+
+export function buildReferralShareUrl(
+  canonicalUrl: string,
+  referralCode: string | null,
+): string {
   const url = new URL(canonicalUrl);
   url.searchParams.delete("ref");
   url.searchParams.delete("channel");
@@ -146,7 +153,7 @@ export async function copyMachineShareUrl(
   writeText: (value: string) => Promise<void>,
 ): Promise<boolean> {
   try {
-    await writeText(buildMachineShareUrl(canonicalUrl, referralCode));
+    await writeText(buildReferralShareUrl(canonicalUrl, referralCode));
     return true;
   } catch {
     return false;

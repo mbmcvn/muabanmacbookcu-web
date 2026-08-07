@@ -1,12 +1,25 @@
 import type { PublicMachineSummaryV1 } from "../../lib/public-projection/contracts.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
+import { buildReferralShareUrl } from "../../lib/contact-routing.ts";
 
 export const priceFacetValues = ["under-15", "15-18", "over-18"] as const;
 export const familyFacetValues = ["air", "pro"] as const;
-export const chipFacetValues = ["intel", "m1", "m1-pro-max", "m2", "m2-pro-max", "m3-plus"] as const;
+export const chipFacetValues = [
+  "intel",
+  "m1",
+  "m1-pro-max",
+  "m2",
+  "m2-pro-max",
+  "m3-plus",
+] as const;
 export const ramFacetValues = ["8", "16", "32-plus"] as const;
 export const screenFacetValues = ["compact", "large"] as const;
-export const inventorySortValues = ["relevance", "newest", "price-asc", "price-desc"] as const;
+export const inventorySortValues = [
+  "relevance",
+  "newest",
+  "price-asc",
+  "price-desc",
+] as const;
 
 export type PriceFacet = (typeof priceFacetValues)[number];
 export type FamilyFacet = (typeof familyFacetValues)[number];
@@ -49,7 +62,10 @@ export const emptyInventoryFacets = (): InventoryFacets => ({
   screen: [],
 });
 
-function includesValue<T extends string>(values: readonly T[], value: string): value is T {
+function includesValue<T extends string>(
+  values: readonly T[],
+  value: string,
+): value is T {
   return values.includes(value as T);
 }
 
@@ -84,7 +100,9 @@ function normalizePriceFacet(amount: number): PriceFacet {
   return "over-18";
 }
 
-export function normalizePublicInventory(machines: PublicMachineSummaryV1[]): NormalizedPublicMachine[] {
+export function normalizePublicInventory(
+  machines: PublicMachineSummaryV1[],
+): NormalizedPublicMachine[] {
   return machines.map((machine) => ({
     machine,
     searchable: [
@@ -93,11 +111,20 @@ export function normalizePublicInventory(machines: PublicMachineSummaryV1[]): No
       machine.family,
       machine.chip,
       machine.ramGb === null ? "" : `${machine.ramGb}gb ram`,
-      machine.ssdGb === null ? "" : `${machine.ssdGb}gb ssd ${formatCompactStorage(machine.ssdGb)} ssd`,
+      machine.ssdGb === null
+        ? ""
+        : `${machine.ssdGb}gb ssd ${formatCompactStorage(machine.ssdGb)} ssd`,
       machine.color,
-    ].join(" ").toLocaleLowerCase("vi"),
+    ]
+      .join(" ")
+      .toLocaleLowerCase("vi"),
     price: normalizePriceFacet(machine.price.amount),
-    family: machine.family === "Air" ? "air" : machine.family === "Pro" ? "pro" : null,
+    family:
+      machine.family === "Air"
+        ? "air"
+        : machine.family === "Pro"
+          ? "pro"
+          : null,
     chip: normalizeChipFacet(machine.chip),
     ram: normalizeRamFacet(machine.ramGb),
     screen: normalizeScreenFacet(machine.displayName),
@@ -105,17 +132,28 @@ export function normalizePublicInventory(machines: PublicMachineSummaryV1[]): No
 }
 
 function matchesSearch(item: NormalizedPublicMachine, query: string): boolean {
-  const terms = query.toLocaleLowerCase("vi").trim().split(/\s+/).filter(Boolean);
+  const terms = query
+    .toLocaleLowerCase("vi")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   return terms.every((term) => item.searchable.includes(term));
 }
 
-function matchesFacets(item: NormalizedPublicMachine, facets: InventoryFacets): boolean {
+function matchesFacets(
+  item: NormalizedPublicMachine,
+  facets: InventoryFacets,
+): boolean {
   return (
     (facets.price === null || item.price === facets.price) &&
-    (!facets.family.length || (item.family !== null && facets.family.includes(item.family))) &&
-    (!facets.chip.length || (item.chip !== null && facets.chip.includes(item.chip))) &&
-    (!facets.ram.length || (item.ram !== null && facets.ram.includes(item.ram))) &&
-    (!facets.screen.length || (item.screen !== null && facets.screen.includes(item.screen)))
+    (!facets.family.length ||
+      (item.family !== null && facets.family.includes(item.family))) &&
+    (!facets.chip.length ||
+      (item.chip !== null && facets.chip.includes(item.chip))) &&
+    (!facets.ram.length ||
+      (item.ram !== null && facets.ram.includes(item.ram))) &&
+    (!facets.screen.length ||
+      (item.screen !== null && facets.screen.includes(item.screen)))
   );
 }
 
@@ -124,7 +162,9 @@ export function filterNormalizedPublicInventory(
   query: string,
   facets: InventoryFacets,
 ): NormalizedPublicMachine[] {
-  return items.filter((item) => matchesSearch(item, query) && matchesFacets(item, facets));
+  return items.filter(
+    (item) => matchesSearch(item, query) && matchesFacets(item, facets),
+  );
 }
 
 export function sortNormalizedPublicInventory(
@@ -133,7 +173,9 @@ export function sortNormalizedPublicInventory(
 ): NormalizedPublicMachine[] {
   return items.toSorted((a, b) => {
     if (sort === "newest") {
-      const order = Date.parse(b.machine.publishedAt ?? "") - Date.parse(a.machine.publishedAt ?? "");
+      const order =
+        Date.parse(b.machine.publishedAt ?? "") -
+        Date.parse(a.machine.publishedAt ?? "");
       if (order) return order;
     }
     if (sort === "price-asc") {
@@ -185,12 +227,25 @@ export function removeFacetOption(
   option: string,
 ): InventoryFacets {
   if (group === "price") return { ...facets, price: null };
-  return { ...facets, [group]: facets[group].filter((value) => value !== option) };
+  return {
+    ...facets,
+    [group]: facets[group].filter((value) => value !== option),
+  };
 }
 
-export function parseInventoryUrlState(params: URLSearchParams): InventoryUrlState {
-  const parseList = <T extends string>(key: string, allowed: readonly T[]): T[] =>
-    [...new Set((params.get(key) ?? "").split(",").filter((value) => includesValue(allowed, value)))];
+export function parseInventoryUrlState(
+  params: URLSearchParams,
+): InventoryUrlState {
+  const parseList = <T extends string>(
+    key: string,
+    allowed: readonly T[],
+  ): T[] => [
+    ...new Set(
+      (params.get(key) ?? "")
+        .split(",")
+        .filter((value) => includesValue(allowed, value)),
+    ),
+  ];
   const price = params.get("price") ?? "";
   const sort = params.get("sort") ?? "";
   return {
@@ -211,15 +266,93 @@ export function serializeInventoryUrlState(state: InventoryUrlState): string {
   if (state.query.trim()) params.set("q", state.query.trim());
   if (state.facets.price) params.set("price", state.facets.price);
   for (const group of ["family", "chip", "ram", "screen"] as const) {
-    if (state.facets[group].length) params.set(group, state.facets[group].join(","));
+    if (state.facets[group].length)
+      params.set(group, state.facets[group].join(","));
   }
   if (state.sort !== "relevance") params.set("sort", state.sort);
   const query = params.toString();
   return query ? `?${query}` : "";
 }
 
+export function buildInventoryShareUrl(
+  origin: string,
+  state: InventoryUrlState,
+  referralCode: string | null,
+): string {
+  const canonical = new URL(
+    `/may-dang-co${serializeInventoryUrlState(state)}`,
+    origin,
+  );
+  return buildReferralShareUrl(canonical.toString(), referralCode);
+}
+
+export async function copyInventoryShareUrl(
+  origin: string,
+  state: InventoryUrlState,
+  referralCode: string | null,
+  writeText: (value: string) => Promise<void>,
+): Promise<boolean> {
+  try {
+    await writeText(buildInventoryShareUrl(origin, state, referralCode));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function inventoryShareLabel(facets: InventoryFacets): string {
+  const selected = [
+    ...(facets.price ? [facets.price] : []),
+    ...facets.family,
+    ...facets.chip,
+    ...facets.ram,
+    ...facets.screen,
+  ];
+  if (!selected.length || selected.length > 3) return "Sao chép liên kết";
+  const family = facets.family.map((value) =>
+    value === "air" ? "Air" : "Pro",
+  );
+  const chip: Record<ChipFacet, string> = {
+    intel: "Intel",
+    m1: "M1",
+    "m1-pro-max": "M1 Pro+",
+    m2: "M2",
+    "m2-pro-max": "M2 Pro+",
+    "m3-plus": "M3+",
+  };
+  const rest = [
+    ...(facets.price
+      ? [
+          {
+            "under-15": "<15 triệu",
+            "15-18": "15–18 triệu",
+            "over-18": ">18 triệu",
+          }[facets.price],
+        ]
+      : []),
+    ...facets.ram.map((value) =>
+      value === "32-plus" ? "32GB+" : `${value}GB`,
+    ),
+    ...facets.screen.map((value) =>
+      value === "compact" ? '13–14"' : '15–16"',
+    ),
+  ];
+  const leading = [...family, ...facets.chip.map((value) => chip[value])].join(
+    " ",
+  );
+  const detail = [leading, ...rest].filter(Boolean).join(" • ");
+  return detail ? `Sao chép liên kết ${detail}` : "Sao chép liên kết";
+}
+
 // Kept for callers and regression tests using the original single quick-filter API.
-export type PublicInventoryFilter = "Tất cả" | "Dưới 15 triệu" | "15–18 triệu" | "Trên 18 triệu" | "MacBook Air" | "MacBook Pro" | "16GB RAM";
+export type PublicInventoryFilter =
+  | "Tất cả"
+  | "Dưới 15 triệu"
+  | "15–18 triệu"
+  | "Trên 18 triệu"
+  | "MacBook Air"
+  | "MacBook Pro"
+  | "16GB RAM";
 export type PublicInventorySort = InventorySort;
 
 export function filterAndSortPublicInventory(
@@ -236,7 +369,11 @@ export function filterAndSortPublicInventory(
   if (filter === "MacBook Pro") facets.family = ["pro"];
   if (filter === "16GB RAM") facets.ram = ["16"];
   return sortNormalizedPublicInventory(
-    filterNormalizedPublicInventory(normalizePublicInventory(machines), query, facets),
+    filterNormalizedPublicInventory(
+      normalizePublicInventory(machines),
+      query,
+      facets,
+    ),
     sort,
   ).map((item) => item.machine);
 }

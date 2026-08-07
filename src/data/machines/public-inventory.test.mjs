@@ -3,10 +3,13 @@ import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { projectPublicCandidates, publicDetailBySlug, publicSummaries } from "./project-public-candidates.ts";
 import {
+  buildInventoryShareUrl,
   countFacetOption,
+  copyInventoryShareUrl,
   emptyInventoryFacets,
   filterAndSortPublicInventory,
   filterNormalizedPublicInventory,
+  inventoryShareLabel,
   normalizeChipFacet,
   normalizePublicInventory,
   normalizeRamFacet,
@@ -487,7 +490,7 @@ test("filter dropdown renders only the canonical open panel with accessible trig
   assert.match(source,/const isOpen = openFilter === group/);
   assert.match(source,/aria-expanded=\{isOpen\}/);
   assert.match(source,/aria-controls=\{panelId\}/);
-  assert.match(source,/\{isOpen \? <fieldset/);
+  assert.match(source,/\{isOpen \? \([\s\S]*?<fieldset/);
   assert.doesNotMatch(source,/<details|<summary/);
 });
 
@@ -595,8 +598,8 @@ test("mobile filter controls form a two-row three-column grid including sort",()
 test("mobile option selection closes while the shared open-filter state allows only one panel",()=>{
   const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
   assert.match(source,/useState<OpenFilter>\(null\)/);
-  assert.match(source,/selectFacetValues\(selected, option\.value, mobile\)[\s\S]*onMultiChange\(group, values\);[\s\S]*if \(mobile\) closeFilter\(true\)/);
-  assert.match(source,/openFilter === "sort" \? <fieldset/);
+  assert.match(source,/selectFacetValues\([\s\S]*?selected,[\s\S]*?option\.value,[\s\S]*?mobile,[\s\S]*?\)[\s\S]*onMultiChange\(group, values\);[\s\S]*if \(mobile\) closeFilter\(true\)/);
+  assert.match(source,/openFilter === "sort" \? \([\s\S]*?<fieldset/);
 });
 
 test("mobile cards are horizontal with image left and content right while tablet restores vertical cards",()=>{
@@ -1112,4 +1115,26 @@ test("first homepage release contains no Decision Stories component or placehold
   const content=readFileSync(new URL("home-content.ts",homeDirectory),"utf8");
   assert.equal(existsSync(new URL("DecisionStoriesPreview.tsx",homeDirectory)),false);
   assert.doesNotMatch(`${view}\n${content}`,/Decision Stor|Chuyện người dùng|coming soon|sắp ra mắt/i);
+});
+
+test("inventory share URL preserves canonical filter order and referral owner only",()=>{
+  const state={query:"",sort:"relevance",facets:{...emptyInventoryFacets(),family:["air"],chip:["m2"],ram:["8"]}};
+  assert.equal(buildInventoryShareUrl("https://mbmc.vn",state,"2MDE"),"https://mbmc.vn/may-dang-co?family=air&chip=m2&ram=8&ref=2MDE");
+  assert.equal(buildInventoryShareUrl("https://mbmc.vn",state,null),"https://mbmc.vn/may-dang-co?family=air&chip=m2&ram=8");
+  assert.equal(inventoryShareLabel(state.facets),"Sao chép liên kết Air M2 • 8GB");
+});
+
+test("inventory share URL supports no filters and canonical query merging",()=>{
+  const empty={query:"",sort:"relevance",facets:emptyInventoryFacets()};
+  assert.equal(buildInventoryShareUrl("https://mbmc.vn",empty,"2MDE"),"https://mbmc.vn/may-dang-co?ref=2MDE");
+  const searched={...empty,query:"MacBook Air",sort:"price-asc"};
+  assert.equal(buildInventoryShareUrl("https://mbmc.vn",searched,"2MDE"),"https://mbmc.vn/may-dang-co?q=MacBook+Air&sort=price-asc&ref=2MDE");
+});
+
+test("inventory clipboard helper reports success and failure safely",async()=>{
+  const state={query:"",sort:"relevance",facets:{...emptyInventoryFacets(),family:["air"]}};
+  let copied="";
+  assert.equal(await copyInventoryShareUrl("https://mbmc.vn",state,"2MDE",async(value)=>{copied=value;}),true);
+  assert.equal(copied,"https://mbmc.vn/may-dang-co?family=air&ref=2MDE");
+  assert.equal(await copyInventoryShareUrl("https://mbmc.vn",state,"2MDE",async()=>{throw new Error("denied");}),false);
 });

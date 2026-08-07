@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import type {
   FacetGroup,
   InventoryFacets,
@@ -72,7 +73,11 @@ const mobileOptionLabels: Record<string, string> = {
   large: '15–16"',
 };
 
-const sortOptions: readonly { value: InventorySort; label: string; shortLabel: string }[] = [
+const sortOptions: readonly {
+  value: InventorySort;
+  label: string;
+  shortLabel: string;
+}[] = [
   { value: "relevance", label: "Phù hợp nhất", shortLabel: "Phù hợp" },
   { value: "newest", label: "Mới nhập", shortLabel: "Mới nhất" },
   { value: "price-asc", label: "Giá thấp đến cao", shortLabel: "Giá thấp" },
@@ -90,14 +95,25 @@ function selectedValues(facets: InventoryFacets, group: FacetGroup): string[] {
   return facets[group];
 }
 
-function summaryFor(group: FacetGroup, facets: InventoryFacets, mobile: boolean): string {
+function summaryFor(
+  group: FacetGroup,
+  facets: InventoryFacets,
+  mobile: boolean,
+): string {
   const selected = selectedValues(facets, group);
   const groupLabel = mobile ? mobileGroupLabels[group] : groupLabels[group];
   if (!selected.length) return groupLabel;
-  const options = facetOptions[group] as readonly { value: string; label: string }[];
+  const options = facetOptions[group] as readonly {
+    value: string;
+    label: string;
+  }[];
   const label = options.find((option) => option.value === selected[0])?.label;
-  const selectedLabel = mobile ? (mobileOptionLabels[selected[0]] ?? label) : label;
-  return selected.length === 1 ? `${groupLabel} · ${selectedLabel}` : `${groupLabel} · ${selected.length}`;
+  const selectedLabel = mobile
+    ? (mobileOptionLabels[selected[0]] ?? label)
+    : label;
+  return selected.length === 1
+    ? `${groupLabel} · ${selectedLabel}`
+    : `${groupLabel} · ${selected.length}`;
 }
 
 function useMobileInventoryMode(): boolean {
@@ -122,6 +138,7 @@ export function InventoryFilters({
   onSortChange,
   onRemove,
   onClearAll,
+  shareAction,
 }: {
   facets: InventoryFacets;
   sort: InventorySort;
@@ -132,14 +149,20 @@ export function InventoryFilters({
   onSortChange: (value: InventorySort) => void;
   onRemove: (group: FacetGroup, value: string) => void;
   onClearAll: () => void;
+  shareAction: ReactNode;
 }) {
   const mobile = useMobileInventoryMode();
   const [openFilter, setOpenFilter] = useState<OpenFilter>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const triggerRefs = useRef<Partial<Record<FilterControlGroup, HTMLButtonElement>>>({});
-  const groups = (["price", "family", "chip", "ram", "screen"] as const);
+  const triggerRefs = useRef<
+    Partial<Record<FilterControlGroup, HTMLButtonElement>>
+  >({});
+  const groups = ["price", "family", "chip", "ram", "screen"] as const;
   const active = groups.flatMap((group) => {
-    const options = facetOptions[group] as readonly { value: string; label: string }[];
+    const options = facetOptions[group] as readonly {
+      value: string;
+      label: string;
+    }[];
     return selectedValues(facets, group).map((value) => ({
       group,
       value,
@@ -147,11 +170,14 @@ export function InventoryFilters({
     }));
   });
 
-  const closeFilter = (returnFocus = false) => {
-    const trigger = openFilter ? triggerRefs.current[openFilter] : null;
-    setOpenFilter(null);
-    if (returnFocus) window.requestAnimationFrame(() => trigger?.focus());
-  };
+  const closeFilter = useCallback(
+    (returnFocus = false) => {
+      const trigger = openFilter ? triggerRefs.current[openFilter] : null;
+      setOpenFilter(null);
+      if (returnFocus) window.requestAnimationFrame(() => trigger?.focus());
+    },
+    [openFilter],
+  );
 
   useEffect(() => {
     if (openFilter === null) return;
@@ -170,96 +196,167 @@ export function InventoryFilters({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [openFilter]);
+  }, [closeFilter, openFilter]);
 
-  return <div className="facet-filter">
-    <div className="facet-groups" aria-label="Bộ lọc danh sách máy" ref={toolbarRef}>
-      {groups.map((group) => {
-        const isOpen = openFilter === group;
-        const selected = selectedValues(facets, group);
-        const options = (facetOptions[group] as readonly { value: string; label: string }[])
-          .filter((option) => showModernChip || group !== "chip" || option.value !== "m3-plus");
-        const panelId = `facet-panel-${group}`;
-        return <div className="facet-group" data-open={isOpen} key={group}>
+  return (
+    <div className="facet-filter">
+      <div
+        className="facet-groups"
+        aria-label="Bộ lọc danh sách máy"
+        ref={toolbarRef}
+      >
+        {groups.map((group) => {
+          const isOpen = openFilter === group;
+          const selected = selectedValues(facets, group);
+          const options = (
+            facetOptions[group] as readonly { value: string; label: string }[]
+          ).filter(
+            (option) =>
+              showModernChip || group !== "chip" || option.value !== "m3-plus",
+          );
+          const panelId = `facet-panel-${group}`;
+          return (
+            <div className="facet-group" data-open={isOpen} key={group}>
+              <button
+                className="facet-trigger"
+                type="button"
+                aria-label={`Bộ lọc ${groupLabels[group]}${selected.length ? `, ${summaryFor(group, facets, false)}` : ""}`}
+                title={summaryFor(group, facets, false)}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                ref={(node) => {
+                  triggerRefs.current[group] = node ?? undefined;
+                }}
+                onClick={() =>
+                  setOpenFilter((current) => nextOpenFilter(current, group))
+                }
+              >
+                <span className="facet-trigger-label">
+                  {summaryFor(group, facets, mobile)}
+                </span>
+                <span className="facet-trigger-chevron" aria-hidden="true">
+                  ⌄
+                </span>
+              </button>
+              {isOpen ? (
+                <fieldset id={panelId}>
+                  <legend>{groupLabels[group]}</legend>
+                  {mobile ? (
+                    <button
+                      type="button"
+                      aria-pressed={!selected.length}
+                      onClick={() => {
+                        if (group === "price") onPriceChange(null);
+                        else onMultiChange(group, []);
+                        closeFilter(true);
+                      }}
+                    >
+                      <span>Tất cả</span>
+                    </button>
+                  ) : null}
+                  {options.map((option) => {
+                    const isSelected = selected.includes(option.value);
+                    const count = counts[optionKey(group, option.value)] ?? 0;
+                    const disabled = count === 0 && !isSelected;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={isSelected}
+                        disabled={disabled}
+                        onClick={() => {
+                          if (group === "price") {
+                            onPriceChange(
+                              isSelected
+                                ? null
+                                : (option.value as InventoryFacets["price"]),
+                            );
+                            closeFilter(true);
+                          } else {
+                            const values = selectFacetValues(
+                              selected,
+                              option.value,
+                              mobile,
+                            );
+                            onMultiChange(group, values);
+                            if (mobile) closeFilter(true);
+                          }
+                        }}
+                      >
+                        <span>{option.label}</span>
+                        <span aria-label={`${count} máy`}>{count}</span>
+                      </button>
+                    );
+                  })}
+                </fieldset>
+              ) : null}
+            </div>
+          );
+        })}
+        <div
+          className="facet-group mobile-sort-control"
+          data-open={openFilter === "sort"}
+        >
           <button
             className="facet-trigger"
             type="button"
-            aria-label={`Bộ lọc ${groupLabels[group]}${selected.length ? `, ${summaryFor(group, facets, false)}` : ""}`}
-            title={summaryFor(group, facets, false)}
-            aria-expanded={isOpen}
-            aria-controls={panelId}
-            ref={(node) => { triggerRefs.current[group] = node ?? undefined; }}
-            onClick={() => setOpenFilter((current) => nextOpenFilter(current, group))}
-          ><span className="facet-trigger-label">{summaryFor(group, facets, mobile)}</span><span className="facet-trigger-chevron" aria-hidden="true">⌄</span></button>
-          {isOpen ? <fieldset id={panelId}>
-            <legend>{groupLabels[group]}</legend>
-            {mobile ? <button
-              type="button"
-              aria-pressed={!selected.length}
-              onClick={() => {
-                if (group === "price") onPriceChange(null);
-                else onMultiChange(group, []);
-                closeFilter(true);
-              }}
-            ><span>Tất cả</span></button> : null}
-            {options.map((option) => {
-              const isSelected = selected.includes(option.value);
-              const count = counts[optionKey(group, option.value)] ?? 0;
-              const disabled = count === 0 && !isSelected;
-              return <button
-                key={option.value}
-                type="button"
-                aria-pressed={isSelected}
-                disabled={disabled}
-                onClick={() => {
-                  if (group === "price") {
-                    onPriceChange(isSelected ? null : option.value as InventoryFacets["price"]);
-                    closeFilter(true);
-                  } else {
-                    const values = selectFacetValues(selected, option.value, mobile);
-                    onMultiChange(group, values);
-                    if (mobile) closeFilter(true);
-                  }
-                }}
-              >
-                <span>{option.label}</span><span aria-label={`${count} máy`}>{count}</span>
-              </button>;
-            })}
-          </fieldset> : null}
-        </div>;
-      })}
-      <div className="facet-group mobile-sort-control" data-open={openFilter === "sort"}>
-        <button
-          className="facet-trigger"
-          type="button"
-          aria-label={`Sắp xếp, ${sortOptions.find((option) => option.value === sort)?.label}`}
-          aria-expanded={openFilter === "sort"}
-          aria-controls="facet-panel-sort"
-          ref={(node) => { triggerRefs.current.sort = node ?? undefined; }}
-          onClick={() => setOpenFilter((current) => nextOpenFilter(current, "sort"))}
-        ><span className="facet-trigger-label">Sắp xếp · {sortOptions.find((option) => option.value === sort)?.shortLabel}</span><span className="facet-trigger-chevron" aria-hidden="true">⌄</span></button>
-        {openFilter === "sort" ? <fieldset id="facet-panel-sort">
-          <legend>Sắp xếp</legend>
-          {sortOptions.map((option) => <button
-            key={option.value}
-            type="button"
-            aria-pressed={sort === option.value}
-            onClick={() => {
-              onSortChange(option.value);
-              closeFilter(true);
+            aria-label={`Sắp xếp, ${sortOptions.find((option) => option.value === sort)?.label}`}
+            aria-expanded={openFilter === "sort"}
+            aria-controls="facet-panel-sort"
+            ref={(node) => {
+              triggerRefs.current.sort = node ?? undefined;
             }}
-          ><span>{option.label}</span></button>)}
-        </fieldset> : null}
+            onClick={() =>
+              setOpenFilter((current) => nextOpenFilter(current, "sort"))
+            }
+          >
+            <span className="facet-trigger-label">
+              Sắp xếp ·{" "}
+              {sortOptions.find((option) => option.value === sort)?.shortLabel}
+            </span>
+            <span className="facet-trigger-chevron" aria-hidden="true">
+              ⌄
+            </span>
+          </button>
+          {openFilter === "sort" ? (
+            <fieldset id="facet-panel-sort">
+              <legend>Sắp xếp</legend>
+              {sortOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={sort === option.value}
+                  onClick={() => {
+                    onSortChange(option.value);
+                    closeFilter(true);
+                  }}
+                >
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </fieldset>
+          ) : null}
+        </div>
+      </div>
+      <div className="active-facets" aria-label="Bộ lọc đang áp dụng">
+        {active.map((item) => (
+          <button
+            key={`${item.group}:${item.value}`}
+            type="button"
+            onClick={() => onRemove(item.group, item.value)}
+            aria-label={`Bỏ bộ lọc ${item.label}`}
+          >
+            {item.label}
+            <span aria-hidden="true">×</span>
+          </button>
+        ))}
+        {active.length ? (
+          <button className="clear-facets" type="button" onClick={onClearAll}>
+            Xóa tất cả
+          </button>
+        ) : null}
+        {shareAction}
       </div>
     </div>
-    {active.length ? <div className="active-facets" aria-label="Bộ lọc đang áp dụng">
-      {active.map((item) => <button
-        key={`${item.group}:${item.value}`}
-        type="button"
-        onClick={() => onRemove(item.group, item.value)}
-        aria-label={`Bỏ bộ lọc ${item.label}`}
-      >{item.label}<span aria-hidden="true">×</span></button>)}
-      <button className="clear-facets" type="button" onClick={onClearAll}>Xóa tất cả</button>
-    </div> : null}
-  </div>;
+  );
 }

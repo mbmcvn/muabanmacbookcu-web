@@ -24,7 +24,11 @@ import { InventoryEmptyState } from "./InventoryEmptyState";
 import { InventoryFilters, type FacetCountMap } from "./InventoryFilters";
 import { InventoryToolbar } from "./InventoryToolbar";
 import { MachineCatalog } from "./MachineCatalog";
-import { useContactChannel, withContactChannel } from "@/hooks/useContactChannel";
+import {
+  useContactChannel,
+  withContactChannel,
+} from "@/hooks/useContactChannel";
+import { CopyInventoryLink } from "@/components/contact/CopyInventoryLink";
 
 const defaultState = (): InventoryUrlState => ({
   query: "",
@@ -32,30 +36,51 @@ const defaultState = (): InventoryUrlState => ({
   facets: emptyInventoryFacets(),
 });
 
-export function InventoryExplorer({ machines }: { machines: PublicMachineSummaryV1[] }) {
+export function InventoryExplorer({
+  machines,
+}: {
+  machines: PublicMachineSummaryV1[];
+}) {
   const { channel } = useContactChannel();
   const [state, setState] = useState<InventoryUrlState>(defaultState);
-  const normalized = useMemo(() => normalizePublicInventory(machines), [machines]);
+  const normalized = useMemo(
+    () => normalizePublicInventory(machines),
+    [machines],
+  );
 
   useEffect(() => {
-    const readUrl = () => setState(parseInventoryUrlState(new URLSearchParams(window.location.search)));
+    const readUrl = () =>
+      setState(
+        parseInventoryUrlState(new URLSearchParams(window.location.search)),
+      );
     readUrl();
     window.addEventListener("popstate", readUrl);
     return () => window.removeEventListener("popstate", readUrl);
   }, []);
 
-  const commit = (next: InventoryUrlState, mode: "push" | "replace" = "push") => {
+  const commit = (
+    next: InventoryUrlState,
+    mode: "push" | "replace" = "push",
+  ) => {
     setState(next);
     const url = `${withContactChannel(`${window.location.pathname}${serializeInventoryUrlState(next)}`, channel)}${window.location.hash}`;
-    window.history[mode === "push" ? "pushState" : "replaceState"](null, "", url);
+    window.history[mode === "push" ? "pushState" : "replaceState"](
+      null,
+      "",
+      url,
+    );
   };
 
   const filtered = useMemo(
-    () => filterNormalizedPublicInventory(normalized, state.query, state.facets),
+    () =>
+      filterNormalizedPublicInventory(normalized, state.query, state.facets),
     [normalized, state.facets, state.query],
   );
   const results = useMemo(
-    () => sortNormalizedPublicInventory(filtered, state.sort).map((item) => item.machine),
+    () =>
+      sortNormalizedPublicInventory(filtered, state.sort).map(
+        (item) => item.machine,
+      ),
     [filtered, state.sort],
   );
   const counts = useMemo(() => {
@@ -82,42 +107,59 @@ export function InventoryExplorer({ machines }: { machines: PublicMachineSummary
   }, [normalized, state.facets, state.query]);
   const showModernChip = normalized.some((item) => item.chip === "m3-plus");
 
-  return <>
-    <div className="inventory-controls">
-      <label className="search-field" htmlFor="inventory-search">
-        <span className="visually-hidden">Tìm trong danh sách máy</span>
-        <span aria-hidden="true">⌕</span>
-        <input
-          id="inventory-search"
-          type="search"
-          placeholder="Tìm theo model, chip, RAM, màu…"
-          value={state.query}
-          onChange={(event) => commit({ ...state, query: event.target.value }, "replace")}
+  return (
+    <>
+      <div className="inventory-controls">
+        <label className="search-field" htmlFor="inventory-search">
+          <span className="visually-hidden">Tìm trong danh sách máy</span>
+          <span aria-hidden="true">⌕</span>
+          <input
+            id="inventory-search"
+            type="search"
+            placeholder="Tìm theo model, chip, RAM, màu…"
+            value={state.query}
+            onChange={(event) =>
+              commit({ ...state, query: event.target.value }, "replace")
+            }
+          />
+        </label>
+        <InventoryFilters
+          facets={state.facets}
+          sort={state.sort}
+          counts={counts}
+          showModernChip={showModernChip}
+          onPriceChange={(price) =>
+            commit({ ...state, facets: { ...state.facets, price } })
+          }
+          onMultiChange={(group: MultiFacetGroup, values: string[]) =>
+            commit({
+              ...state,
+              facets: { ...state.facets, [group]: values },
+            })
+          }
+          onSortChange={(sort) => commit({ ...state, sort })}
+          onRemove={(group, value) =>
+            commit({
+              ...state,
+              facets: removeFacetOption(state.facets, group, value),
+            })
+          }
+          onClearAll={() =>
+            commit({ ...state, facets: emptyInventoryFacets() })
+          }
+          shareAction={<CopyInventoryLink state={state} />}
         />
-      </label>
-      <InventoryFilters
-        facets={state.facets}
+      </div>
+      <InventoryToolbar
+        total={results.length}
         sort={state.sort}
-        counts={counts}
-        showModernChip={showModernChip}
-        onPriceChange={(price) => commit({ ...state, facets: { ...state.facets, price } })}
-        onMultiChange={(group: MultiFacetGroup, values: string[]) => commit({
-          ...state,
-          facets: { ...state.facets, [group]: values },
-        })}
         onSortChange={(sort) => commit({ ...state, sort })}
-        onRemove={(group, value) => commit({
-          ...state,
-          facets: removeFacetOption(state.facets, group, value),
-        })}
-        onClearAll={() => commit({ ...state, facets: emptyInventoryFacets() })}
       />
-    </div>
-    <InventoryToolbar
-      total={results.length}
-      sort={state.sort}
-      onSortChange={(sort) => commit({ ...state, sort })}
-    />
-    {results.length ? <MachineCatalog machines={results} /> : <InventoryEmptyState />}
-  </>;
+      {results.length ? (
+        <MachineCatalog machines={results} />
+      ) : (
+        <InventoryEmptyState />
+      )}
+    </>
+  );
 }
