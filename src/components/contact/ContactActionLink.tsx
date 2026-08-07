@@ -17,9 +17,10 @@ export function ContactActionLink({
   label: requestedLabel,
   ...props
 }: ContactActionLinkProps) {
-  const { compactContactLabel, contactUrl } = useContactChannel();
+  const { compactContactLabel, contactLabel, contactUrl, ownerType } =
+    useContactChannel();
   const label =
-    requestedLabel ??
+    (ownerType === "ctv" ? contactLabel : requestedLabel) ??
     (compact ? compactContactLabel : "Nhắn MBMC xác nhận máy");
 
   return (

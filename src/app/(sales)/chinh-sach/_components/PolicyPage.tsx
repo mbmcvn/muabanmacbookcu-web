@@ -11,6 +11,7 @@ export function PolicyPage({
   badge,
   metrics = [],
   actions = [],
+  variant = "default",
   children,
 }: {
   eyebrow: string;
@@ -19,10 +20,11 @@ export function PolicyPage({
   badge?: string;
   metrics?: readonly PolicyMetric[];
   actions?: readonly PolicyAction[];
+  variant?: "default" | "hub";
   children: ReactNode;
 }) {
   return (
-    <article className="container policy-page">
+    <article className={`container policy-page policy-page--${variant}`}>
       <nav className="policy-breadcrumbs" aria-label="Đường dẫn">
         <Link href="/">Trang chủ</Link>
         <span aria-hidden="true">/</span>

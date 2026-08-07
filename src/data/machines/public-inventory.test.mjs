@@ -814,7 +814,7 @@ test("desktop and mobile sticky layouts preserve separate identity, price, and c
   assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
   assert.match(contactAction,/target="_blank"/);
   assert.match(contactAction,/rel="noopener noreferrer"/);
-  assert.match(contactAction,/requestedLabel \?\?[\s\S]*?compact \? compactContactLabel : "Nhắn MBMC xác nhận máy"/);
+  assert.match(contactAction,/ownerType === "ctv" \? contactLabel : requestedLabel[\s\S]*?compact \? compactContactLabel : "Nhắn MBMC xác nhận máy"/);
   assert.doesNotMatch(hero,/Tin nhắn đã có sẵn|buildMachineContactHref/);
   assert.match(hero,/Bạn có thể gửi:/);
 });
