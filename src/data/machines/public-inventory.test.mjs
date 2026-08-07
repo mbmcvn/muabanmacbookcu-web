@@ -26,6 +26,7 @@ import { formatMachineCardCondition, formatMachineCardDisplayName, formatMachine
 import { buildMachineEvidence, publicConditionDescription } from "../../app/(sales)/may/[slug]/_components/machine-evidence-presentation.ts";
 import { clampGalleryIndex, galleryIndexAfterSwipe, resistGalleryDrag, resolveGalleryDragIndex, wrapGalleryIndex } from "../../app/(sales)/may/[slug]/_components/gallery-navigation.ts";
 import { classifyGalleryImageShape } from "../../app/(sales)/may/[slug]/_components/gallery-image-shape.ts";
+import { clampInspectionScale, clampInspectionTransform, inspectionPanBounds } from "../../app/(sales)/may/[slug]/_components/image-inspection-transform.ts";
 import { buildPublicSpecificationRows, specificationsForMachine } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
 import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../lib/presentation/machine.ts";
 import { MBMC_ZALO_URL } from "../../config/contact.ts";
@@ -1115,6 +1116,27 @@ test("first homepage release contains no Decision Stories component or placehold
   const content=readFileSync(new URL("home-content.ts",homeDirectory),"utf8");
   assert.equal(existsSync(new URL("DecisionStoriesPreview.tsx",homeDirectory)),false);
   assert.doesNotMatch(`${view}\n${content}`,/Decision Stor|Chuyện người dùng|coming soon|sắp ra mắt/i);
+});
+
+test("mobile fullscreen inspection clamps continuous zoom and portrait or landscape pan bounds",()=>{
+  assert.equal(clampInspectionScale(.7),1);
+  assert.equal(clampInspectionScale(2.26),2.26);
+  assert.equal(clampInspectionScale(5),4);
+  assert.deepEqual(inspectionPanBounds(2,{viewportWidth:390,viewportHeight:844,naturalWidth:1200,naturalHeight:1600}),{x:195,y:98});
+  assert.deepEqual(inspectionPanBounds(2,{viewportWidth:390,viewportHeight:844,naturalWidth:1600,naturalHeight:1200}),{x:195,y:0});
+  assert.deepEqual(clampInspectionTransform({scale:1,x:100,y:-100},{viewportWidth:390,viewportHeight:844,naturalWidth:1200,naturalHeight:1600}),{scale:1,x:0,y:0});
+  assert.deepEqual(clampInspectionTransform({scale:2,x:900,y:-900},{viewportWidth:390,viewportHeight:844,naturalWidth:1200,naturalHeight:1600}),{scale:2,x:195,y:-98});
+});
+
+test("fullscreen inspection keeps gesture state local and separates zoomed pan from carousel navigation",()=>{
+  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  assert.match(track,/variant === "lightbox" && event\.pointerType === "touch"/);
+  assert.match(track,/touches\.length === 2/);
+  assert.match(track,/transformRef\.current\.scale > MIN_INSPECTION_SCALE/);
+  assert.match(track,/resetInspectionTransform\(\)/);
+  assert.match(track,/DOUBLE_TAP_INSPECTION_SCALE/);
+  assert.match(css,/\.carousel-viewport-lightbox \{ touch-action: none; overscroll-behavior: contain; \}/);
 });
 
 test("inventory share URL preserves canonical filter order and referral owner only",()=>{
