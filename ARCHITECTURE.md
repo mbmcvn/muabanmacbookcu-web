@@ -26,6 +26,7 @@ Product and phase documents in this repository govern product intent or preserve
 - public Care presentation and route handlers;
 - server-side Supabase adapters and public read-model assembly;
 - public caching/rendering behavior.
+- public CTV referral persistence, contact routing, and referral-aware share links.
 
 `mbmc-care` remains the operational source of truth and owns operational mutations, Machine Publication/Editorial, and canonical public contract semantics.
 
@@ -33,14 +34,14 @@ Product and phase documents in this repository govern product intent or preserve
 
 The `(sales)` App Router group provides the main public sales layout without adding a URL segment.
 
-| Route | Responsibility | Current rendering/data behavior |
-|---|---|---|
-| `/` | Homepage | Server page; public Machine inventory state; `revalidate = 60` |
-| `/may-dang-co` | Inventory | Server load plus client exploration; `revalidate = 60` |
-| `/may/[slug]` | Public Machine detail/dossier | Server lookup; `revalidate = 60` |
-| `/may-dang-co/[slug]` | Compatibility redirect | Redirects to `/may/[slug]` |
-| `/chon-macbook` | Recommendation questionnaire | Public recommendation flow with local/client state |
-| `/care/[machine_id]` | Public Care | Force-dynamic server page over a minimized Care read model |
+| Route                 | Responsibility                | Current rendering/data behavior                                |
+| --------------------- | ----------------------------- | -------------------------------------------------------------- |
+| `/`                   | Homepage                      | Server page; public Machine inventory state; `revalidate = 60` |
+| `/may-dang-co`        | Inventory                     | Server load plus client exploration; `revalidate = 60`         |
+| `/may/[slug]`         | Public Machine detail/dossier | Server lookup; `revalidate = 60`                               |
+| `/may-dang-co/[slug]` | Compatibility redirect        | Redirects to `/may/[slug]`                                     |
+| `/chon-macbook`       | Recommendation questionnaire  | Public recommendation flow with local/client state             |
+| `/care/[machine_id]`  | Public Care                   | Force-dynamic server page over a minimized Care read model     |
 
 Canonical route locations:
 
@@ -85,6 +86,20 @@ Machine detail uses the public Detail/Passport DTO family under `src/app/(sales)
 ## Recommendation flow
 
 `/chon-macbook` is implemented under `src/app/(sales)/chon-macbook`. Its recommendation engine and questionnaire state are website presentation/product behavior, not operational Machine truth.
+
+## CTV referral and contact routing
+
+The implemented public contact model keeps contact owner and communication
+channel independent: `ref` determines **who** owns the contact, while `channel`
+determines **how** that owner is contacted. The website resolves public CTV
+codes through the public-safe RPC, persists valid ownership in a first-party
+cookie, composes destinations through the shared contact abstraction, and
+includes ownership—but not channel attribution—in Machine and filtered
+inventory share links.
+
+The verified contract, precedence, cross-repository ownership, shipped share
+surfaces, and accepted MVP limitation are recorded in
+[CTV referral routing](docs/CTV_REFERRAL_ROUTING.md).
 
 ## Public Care
 
@@ -136,10 +151,10 @@ the current Care Profile.
 First-time activation and returning-owner unlock are intentionally different
 authorization boundaries:
 
-| Boundary | Verification basis |
-|---|---|
-| First-time Care Activation | Customer name and the authoritative completed Sale phone |
-| Returning-owner unlock | The current `machine_owners.phone` for the authoritative Sale cycle |
+| Boundary                   | Verification basis                                                  |
+| -------------------------- | ------------------------------------------------------------------- |
+| First-time Care Activation | Customer name and the authoritative completed Sale phone            |
+| Returning-owner unlock     | The current `machine_owners.phone` for the authoritative Sale cycle |
 
 Absence of a current ownership is an activation state, not an ownership-phone
 mismatch. Once ownership exists, the activation boundary must not act as an
