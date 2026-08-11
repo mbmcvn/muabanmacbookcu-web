@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { choices, getQuestionFlow, questionCopy, type Choice } from "./quiz-questions";
 import { clearQuiz, freshAnswers, loadQuiz, saveQuiz } from "./quiz-storage";
 import { recommendMacBook } from "./recommendation-engine";
-import { isUsageAnswerComplete, toggleUsageAnswer } from "./quiz-state";
+import { isUsageAnswerComplete, setComfortBudget, toggleUsageAnswer } from "./quiz-state";
 import type { DesignWorkload, DevelopmentWorkload, MainUse, QuestionId, QuizAnswers, SpecializedWorkload, VideoWorkload } from "./quiz-types";
 import { QuestionCard } from "./QuestionCard";
 import { QuizProgress } from "./QuizProgress";
@@ -12,6 +12,7 @@ import { RecommendationView } from "./RecommendationView";
 import { UsageQuestion } from "./UsageQuestion";
 import { quizIllustrations } from "./_lib/quiz-illustrations";
 import { QuizIllustration } from "./QuizIllustration";
+import { BudgetQuestion } from "./BudgetQuestion";
 
 type Stage = "intro" | "questions" | "processing" | "result";
 
@@ -64,9 +65,13 @@ export function MacBookQuiz() {
     else if (questionId === "deposit") next.deposit = value as QuizAnswers["deposit"];
     else if (questionId === "portability") next.portability = value as QuizAnswers["portability"];
     else if (questionId === "screen") next.screen = value as QuizAnswers["screen"];
-    else if (questionId === "fulfilment") next.fulfilment = value as QuizAnswers["fulfilment"];
+    else if (questionId === "fulfilment") {
+      next.fulfilment = value as QuizAnswers["fulfilment"];
+      if (value !== "province") next.province = undefined;
+    }
     if (questionId === "payment") {
-      next.budget = undefined; next.deposit = undefined; next.monthlyPayment = undefined;
+      if (value === "installment") { next.budget = undefined; next.stretchBudget = undefined; }
+      if (value === "full") { next.deposit = undefined; next.monthlyPayment = undefined; }
     }
     setAnswers(next);
     if (questionId === "fulfilment" && value === "province") return;
@@ -99,8 +104,13 @@ export function MacBookQuiz() {
 
   const copy = questionCopy[questionId];
   const isUses = questionId === "uses";
+  const isBudget = questionId === "budget";
   const needsProvince = questionId === "fulfilment" && answers.fulfilment === "province";
-  const canContinue = isUses ? isUsageAnswerComplete(answers) : needsProvince;
+  const canContinue = isUses
+    ? isUsageAnswerComplete(answers)
+    : isBudget
+      ? Boolean(answers.budget && (answers.budget === "unknown" || answers.stretchBudget))
+      : needsProvince;
   return (
     <div className={`quiz-page${isUses ? " quiz-page-usage" : ""}`}>
       <div className="quiz-topbar"><button type="button" onClick={() => index > 0 ? setIndex(index - 1) : setStage("intro")}>← Quay lại</button><button type="button" onClick={restart}>Làm lại</button></div>
@@ -122,11 +132,18 @@ export function MacBookQuiz() {
             onSpecializedWorkload={(specializedWorkload: SpecializedWorkload) => setAnswers({ ...answers, specializedWorkload })}
             onSpecializedSoftware={(specializedSoftware: string) => setAnswers({ ...answers, specializedSoftware })}
           />
+        ) : isBudget ? (
+          <BudgetQuestion
+            budget={answers.budget}
+            stretchBudget={answers.stretchBudget}
+            onBudget={(budget) => setAnswers(setComfortBudget(answers, budget))}
+            onStretch={(stretchBudget) => setAnswers({ ...answers, stretchBudget })}
+          />
         ) : (
           <QuestionCard choices={optionsFor(questionId)} selected={valueFor(answers, questionId)} illustrated={questionId === "portability"} onSelect={selectSingle} />
         )}
         {needsProvince && <label className="quiz-field">Tỉnh hoặc thành phố (không bắt buộc)<input value={answers.province ?? ""} onChange={(event) => setAnswers({ ...answers, province: event.target.value })} placeholder="Ví dụ: Đà Nẵng" /></label>}
-        {isUses
+        {isUses || isBudget
           ? <button type="button" className="quiz-primary quiz-continue" disabled={!canContinue} onClick={() => finishOrAdvance()}>Tiếp tục</button>
           : canContinue && <button type="button" className="quiz-primary quiz-continue" onClick={() => finishOrAdvance()}>Tiếp tục</button>}
       </section>

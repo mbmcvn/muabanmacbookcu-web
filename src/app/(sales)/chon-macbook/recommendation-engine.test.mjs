@@ -1,300 +1,316 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { buildZaloSummary, recommendMacBook } from "./recommendation-engine.ts";
-import { getRecommendationTitle, getResultCtaCopy, getUpgradeOptionTitle } from "./result-cta.ts";
-import { resultIllustration } from "./_lib/quiz-illustrations.ts";
-import { designBranch, videoBranch } from "./quiz-branches.ts";
+import { buildZaloSummary, normalizeRecommendationSignals, recommendMacBook, resolveRecommendationProfile } from "./recommendation-engine.ts";
 
 const base = {
   payment: "full", budget: "16-22", uses: ["office"],
   portability: "frequent", screen: "compact", fulfilment: "showroom",
 };
-const balancedCompact = { ...base, portability: "stationary", screen: "compact" };
 
-test("design and video branches no longer expose unknown", () => {
-  assert.equal(designBranch.choices.some((choice) => choice.value === "unknown"), false);
-  assert.equal(videoBranch.choices.some((choice) => choice.value === "unknown"), false);
+function profile(overrides = {}) {
+  return recommendMacBook({ ...base, ...overrides }).profile;
+}
+
+test("office resolves to 8/256 with Air and Pro valid", () => {
+  const result = profile();
+  assert.equal(result.technical.minimumRamGb, 8);
+  assert.equal(result.technical.defaultStorageGb, 256);
+  assert.equal(result.technical.minimumStorageGb, undefined);
+  assert.deepEqual(result.family.allowed, ["air", "pro"]);
+  assert.equal(result.family.preferred, undefined);
+  assert.equal(result.confidence.overall, "high");
 });
 
-test("compact Air maps to MacBook Air 13 inch", () => {
-  const result = recommendMacBook(base);
-  assert.equal(result.bestFit.label, "MacBook Air 13 inch");
+test("personal resolves to the high-confidence light baseline", () => {
+  const result = profile({ uses: ["personal"] });
+  assert.equal(result.technical.minimumRamGb, 8);
+  assert.equal(result.confidence.overall, "high");
+  assert.equal(result.family.preferred, undefined);
 });
 
-test("no storage signal recommends only 256GB", () => {
-  const result = recommendMacBook({ ...base, uses: ["development"] });
-  assert.equal(result.preferredStorage, "256GB");
-  assert.equal(result.storageGuidance, "256GB là đủ");
+test("unclear usage avoids false precision", () => {
+  const result = profile({ uses: ["unclear"] });
+  assert.equal(result.technical.minimumRamGb, 8);
+  assert.equal(result.confidence.overall, "low");
+  assert.equal(result.family.preferred, undefined);
 });
 
-test("no storage signal never mentions 512GB in primary output", () => {
-  const result = recommendMacBook(base);
-  const primaryOutput = [result.explanation, result.bestFit.configuration, result.bestFit.note, ...result.reasons, buildZaloSummary(base, result)].join(" ");
-  assert.equal(primaryOutput.includes("512GB"), false);
+test("light design remains 8/256", () => {
+  const result = profile({ uses: ["design"], designWorkload: "light" });
+  assert.equal(result.technical.minimumRamGb, 8);
+  assert.equal(result.technical.minimumStorageGb, undefined);
 });
 
-test("short social video allows 8GB Air and defaults to 256GB", () => {
-  const answers = { ...base, uses: ["video"], videoWorkload: "short_social" };
-  const result = recommendMacBook(answers);
-  assert.equal(result.minimumRam, 8);
-  assert.equal(result.family, "MacBook Air");
-  assert.equal(result.preferredStorage, "256GB");
+test("ordinary Photoshop remains 8/256", () => {
+  assert.equal(profile({ uses: ["design"], designWorkload: "photoshop_standard" }).technical.minimumRamGb, 8);
 });
 
-test("long video requires 16GB but not Pro without sustained load", () => {
-  const result = recommendMacBook({ ...base, uses: ["video"], videoWorkload: "long_high_quality" });
-  assert.equal(result.minimumRam, 16);
-  assert.equal(result.preferredStorage, "512GB");
-  assert.equal(result.family, "MacBook Air");
+test("heavy Photoshop resolves to 16/256 without inferring Pro", () => {
+  const result = profile({ uses: ["design"], designWorkload: "professional" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.technical.minimumStorageGb, undefined);
+  assert.equal(result.technical.sustainedPerformance, false);
+  assert.equal(result.family.preferred, undefined);
 });
 
-test("development heavy recommends at least 16GB and the Pro family", () => {
-  const result = recommendMacBook({ ...base, uses: ["development"], developmentWorkload: "development_heavy" });
-  assert.equal(result.family, "MacBook Pro");
-  assert.equal(result.minimumRam, 16);
+test("sustained heavy Photoshop prefers Pro but retains both allowed families", () => {
+  const result = profile({ uses: ["design"], designWorkload: "professional_sustained" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.technical.sustainedPerformance, true);
+  assert.equal(result.family.preferred, "pro");
+  assert.deepEqual(result.family.allowed, ["air", "pro"]);
 });
 
-test("lightweight image design does not independently require 16GB", () => {
-  const result = recommendMacBook({ ...base, uses: ["design"], designWorkload: "light" });
-  assert.equal(result.minimumRam, 8);
-  assert.equal(result.preferredStorage, "256GB");
+test("monthly 4K remains 8/256", () => {
+  const result = profile({ uses: ["video"], videoWorkload: "long_rare" });
+  assert.equal(result.technical.minimumRamGb, 8);
+  assert.equal(result.technical.minimumStorageGb, undefined);
 });
 
-test("professional image design requires 16GB and creates moderate storage guidance", () => {
-  const result = recommendMacBook({ ...base, uses: ["design"], designWorkload: "professional" });
-  assert.equal(result.minimumRam, 16);
-  assert.equal(result.storageGuidance, "512GB đáng cân nhắc");
-  assert.equal(result.family, "MacBook Air");
+test("weekly 4K raises RAM to 16 without preferring Pro", () => {
+  const result = profile({ uses: ["video"], videoWorkload: "long_regular" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.family.preferred, undefined);
 });
 
-test("personal use alone does not trigger 16GB, 512GB or Pro", () => {
-  const result = recommendMacBook({ ...base, uses: ["personal"] });
-  assert.equal(result.minimumRam, 8);
-  assert.equal(result.preferredStorage, "256GB");
-  assert.equal(result.family, "MacBook Air");
+test("daily sustained video raises RAM and prefers Pro", () => {
+  const result = profile({ uses: ["video"], videoWorkload: "sustained_daily" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.technical.sustainedPerformance, true);
+  assert.equal(result.family.preferred, "pro");
 });
 
-test("a heavy branch overrides a lightweight baseline without contradictory copy", () => {
-  const answers = { ...base, uses: ["personal", "development"], developmentWorkload: "development_heavy" };
-  const result = recommendMacBook(answers);
-  const customerCopy = [result.explanation, ...result.reasons, result.bestFit.note, result.cheaper?.note, result.upgrade.note].join(" ");
-  assert.equal(result.minimumRam, 16);
-  assert.equal(customerCopy.includes("8GB RAM đã đủ"), false);
-  assert.match(customerCopy, /16GB RAM/);
+test("basic development remains 8/256 with medium confidence", () => {
+  const result = profile({ uses: ["development"], developmentWorkload: "development_basic" });
+  assert.equal(result.technical.minimumRamGb, 8);
+  assert.equal(result.confidence.overall, "medium");
 });
 
-test("basic office use may return air_or_pro", () => {
-  assert.equal(recommendMacBook(balancedCompact).productFamilyFit, "air_or_pro");
+test("rare Docker remains acceptable at 8GB", () => {
+  assert.equal(profile({ uses: ["development"], developmentWorkload: "docker_rare" }).technical.minimumRamGb, 8);
 });
 
-test("Canva and Figma use may return air_or_pro", () => {
-  const result = recommendMacBook({ ...balancedCompact, uses: ["design"], designWorkload: "light" });
-  assert.equal(result.productFamilyFit, "air_or_pro");
-  assert.equal(result.minimumRam, 8);
+test("weekly Docker raises RAM to 16 without inferring Pro", () => {
+  const result = profile({ uses: ["development"], developmentWorkload: "docker_regular" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.family.preferred, undefined);
 });
 
-test("CapCut, TikTok and Reel use may return air_or_pro", () => {
-  const result = recommendMacBook({ ...balancedCompact, uses: ["video"], videoWorkload: "short_social" });
-  assert.equal(result.productFamilyFit, "air_or_pro");
+test("daily sustained development raises RAM and prefers Pro", () => {
+  const result = profile({ uses: ["development"], developmentWorkload: "development_sustained" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.technical.sustainedPerformance, true);
+  assert.equal(result.family.preferred, "pro");
 });
 
-test("basic development may return air_or_pro with 8GB RAM", () => {
-  const result = recommendMacBook({ ...balancedCompact, uses: ["development"], developmentWorkload: "development_basic" });
-  assert.equal(result.minimumRam, 8);
-  assert.equal(result.productFamilyFit, "air_or_pro");
+test("specialized basic is low confidence and does not infer Pro", () => {
+  const result = profile({ uses: ["specialized"], specializedWorkload: "specialized_basic" });
+  assert.equal(result.technical.minimumRamGb, 8);
+  assert.equal(result.family.preferred, undefined);
+  assert.equal(result.confidence.overall, "low");
+  assert.equal(result.verification.required, true);
 });
 
-test("development heavy branch is not counted twice toward RAM", () => {
-  const result = recommendMacBook({
-    ...balancedCompact,
-    uses: ["development"],
-    developmentWorkload: "development_heavy",
-  });
-  assert.equal(result.minimumRam, 16);
-  assert.equal(result.reasons.filter((reason) => reason.includes("16GB RAM")).length, 1);
-  assert.equal(result.requiresSustainedPerformance, true);
+test("specialized heavy is provisional 16GB and does not infer Pro", () => {
+  const result = profile({ uses: ["specialized"], specializedWorkload: "specialized_heavy" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.technical.sustainedPerformance, false);
+  assert.equal(result.family.preferred, undefined);
 });
 
-test("development and specialized basic keep 8GB valid", () => {
-  assert.equal(recommendMacBook({ ...balancedCompact, uses: ["development"], developmentWorkload: "development_basic" }).minimumRam, 8);
-  assert.equal(recommendMacBook({ ...balancedCompact, uses: ["specialized"], specializedWorkload: "specialized_basic" }).minimumRam, 8);
+test("sustained specialized work prefers Pro", () => {
+  const result = profile({ uses: ["specialized"], specializedWorkload: "specialized_sustained" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.family.preferred, "pro");
 });
 
-test("specialized heavy requires at least 16GB", () => {
-  const result = recommendMacBook({ ...balancedCompact, uses: ["specialized"], specializedWorkload: "specialized_heavy" });
-  assert.equal(result.minimumRam, 16);
-  assert.equal(result.needsVerification, true);
+test("named specialized software is preserved for verification without changing technical truth", () => {
+  const withoutName = profile({ uses: ["specialized"], specializedWorkload: "specialized_basic" });
+  const withName = profile({ uses: ["specialized"], specializedWorkload: "specialized_basic", specializedSoftware: "Revit" });
+  assert.equal(withName.verification.required, true);
+  assert.equal(withName.verification.softwareName, "Revit");
+  assert.deepEqual(withName.technical, withoutName.technical);
+  assert.deepEqual(withName.family, withoutName.family);
 });
 
-test("strong portability prefers Air", () => {
-  assert.equal(recommendMacBook(base).productFamilyFit, "air_preferred");
-});
-
-test("sustained-heavy rendering prefers Pro", () => {
-  const result = recommendMacBook({ ...balancedCompact, uses: ["specialized"], specializedWorkload: "specialized_heavy" });
-  assert.equal(result.productFamilyFit, "pro_preferred");
-  assert.equal(result.requiresSustainedPerformance, true);
-  assert.equal(result.model, "pro-13");
-  assert.equal(result.size, "13 inch");
-});
-
-test("sustained-heavy plus compact preference recommends Pro 13", () => {
-  const result = recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy" });
-  assert.equal(result.bestFit.label, "MacBook Pro 13 inch");
-  assert.equal(result.minimumRam, 16);
-  assert.equal(result.preferredStorage, "256GB");
-  assert.equal(getRecommendationTitle(result), "MacBook Pro 13 inch");
-});
-
-test("sustained-heavy alone does not automatically recommend Pro 14", () => {
-  const result = recommendMacBook({ ...balancedCompact, uses: ["specialized"], specializedWorkload: "specialized_heavy" });
-  assert.notEqual(result.model, "pro-14");
-});
-
-test("sustained-heavy plus large-screen preference recommends Pro 14, not Pro 16", () => {
-  const result = recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy", portability: "stationary", screen: "large" });
-  assert.equal(result.model, "pro-14");
-  assert.equal(result.bestFit.label, "MacBook Pro 14 inch");
-  assert.notEqual(result.model, "pro-16");
-});
-
-test("Pro 14 is the meaningful upgrade from a compact-heavy Pro 13 result", () => {
-  const result = recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy" });
-  assert.equal(result.upgrade.label, "MacBook Pro 14 inch");
-  assert.match(result.upgrade.note, /màn hình và dư địa hiệu năng lớn hơn/);
-});
-
-test("cheaper Pro 13 preserves the resolved minimum RAM", () => {
-  const result = recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy" });
-  assert.match(result.cheaper?.label ?? "", /MacBook Pro 13 inch/);
-  assert.match(result.cheaper?.configuration ?? "", /16GB RAM/);
-});
-
-test("Pro 13 Zalo copy is natural and exposes the resolved compact-heavy rationale", () => {
-  const answers = { ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy" };
-  const summary = buildZaloSummary(answers, recommendMacBook(answers));
-  assert.match(summary, /Nhóm phù hợp: MacBook Pro 13 inch/);
-  assert.match(summary, /Cấu hình tối thiểu: 16GB RAM, 256GB SSD/);
-  assert.match(summary, /cần giữ tải lâu nhưng vẫn ưu tiên máy nhỏ gọn/);
-});
-
-test("occasional 4K alone does not prefer Pro", () => {
-  const result = recommendMacBook({ ...balancedCompact, uses: ["video"], videoWorkload: "long_high_quality" });
-  assert.equal(result.minimumRam, 16);
-  assert.equal(result.productFamilyFit, "air_or_pro");
-});
-
-test("air_or_pro result uses a neutral title and equal technical minima", () => {
-  const result = recommendMacBook(balancedCompact);
-  assert.equal(getRecommendationTitle(result), "MacBook 13 inch");
-  assert.notEqual(getRecommendationTitle(result), "MacBook Air 13 inch");
-  assert.match(result.bestFit.configuration, /8GB RAM · 256GB SSD/);
-  assert.equal(result.cheaper?.configuration, result.bestFit.configuration);
-});
-
-test("cheaper option never violates minimum RAM", () => {
-  const result = recommendMacBook({ ...base, uses: ["video"], videoWorkload: "long_high_quality" });
-  assert.match(result.cheaper?.configuration ?? "", /16GB RAM/);
-});
-
-test("upgrade option differs meaningfully from best fit", () => {
-  const result = recommendMacBook(base);
-  assert.notEqual(result.upgrade.label, result.bestFit.label);
-  assert.notEqual(result.upgrade.note, result.bestFit.note);
-  assert.equal(getUpgradeOptionTitle(result), "NẾU MUỐN MÀN HÌNH RỘNG");
-});
-
-test("budget conflict preserves minimum RAM", () => {
-  const result = recommendMacBook({ ...base, budget: "under-12", uses: ["development"], developmentWorkload: "development_heavy" });
-  assert.equal(result.budgetConflict, true);
-  assert.equal(result.minimumRam, 16);
-  assert.match(result.bestFit.configuration, /16GB RAM/);
-  assert.match(result.cheaper?.configuration ?? "", /16GB RAM/);
-});
-
-test("budget conflict uses conflict-specific CTA copy", () => {
-  const result = recommendMacBook({ ...base, budget: "under-12", uses: ["development"], developmentWorkload: "development_heavy" });
-  assert.deepEqual(getResultCtaCopy(result), {
-    primary: "Xem máy gần nhu cầu nhất",
-    secondary: "Nhờ MBMC cân lại cấu hình",
-    primaryDestination: "inventory",
-  });
-});
-
-test("software verification uses outcome-oriented primary CTA", () => {
-  const result = recommendMacBook({
-    ...base,
-    uses: ["specialized"],
-    specializedWorkload: "specialized_basic",
-    specializedSoftware: "Revit",
-  });
-  assert.equal(getResultCtaCopy(result).primary, "Nhờ MBMC kiểm tra trước");
-});
-
-test("internal enum values never appear in customer-facing summary", () => {
-  const answers = { ...base, uses: ["video", "personal"], videoWorkload: "short_social" };
-  const summary = buildZaloSummary(answers, recommendMacBook(answers));
-  for (const internal of ["short_social", "long_high_quality", "development", "personal", "air_or_pro", "air_preferred", "pro_preferred", ": no"]) {
-    assert.equal(summary.includes(internal), false, summary);
+test("16GB never creates a storage minimum without a storage signal", () => {
+  for (const answers of [
+    { uses: ["design"], designWorkload: "professional" },
+    { uses: ["video"], videoWorkload: "sustained_daily" },
+    { uses: ["development"], developmentWorkload: "development_sustained" },
+    { uses: ["specialized"], specializedWorkload: "specialized_heavy" },
+  ]) {
+    const result = profile(answers);
+    assert.equal(result.technical.minimumRamGb, 16);
+    assert.equal(result.technical.minimumStorageGb, undefined);
+    assert.equal(JSON.stringify(result).includes("512"), false);
   }
-  assert.match(summary, /Nội dung ngắn bằng Canva/);
 });
 
-test("software name creates verification without changing the technical recommendation", () => {
-  const withoutSoftware = recommendMacBook({
-    ...balancedCompact,
-    uses: ["specialized"],
-    specializedWorkload: "specialized_basic",
-  });
-  const answers = {
-    ...balancedCompact,
-    uses: ["specialized"],
-    specializedWorkload: "specialized_basic",
-    specializedSoftware: "AutoCAD",
-  };
-  const withSoftware = recommendMacBook(answers);
-  assert.equal(withSoftware.needsVerification, true);
-  assert.equal(withSoftware.family, withoutSoftware.family);
-  assert.equal(withSoftware.minimumRam, 8);
-  assert.equal(withSoftware.preferredStorage, "256GB");
-  assert.match(buildZaloSummary(answers, withSoftware), /Phần mềm cần kiểm tra: AutoCAD/);
+test("portable high plus large screen retains an explicit trade-off", () => {
+  const result = profile({ portability: "frequent", screen: "large" });
+  assert.equal(result.size.hasTradeoff, true);
+  assert.deepEqual(result.size.preferredClasses, ["13", "14", "15", "16"]);
 });
 
-test("legacy Windows answers no longer change recommendation status", () => {
-  const clean = recommendMacBook(balancedCompact);
-  const legacy = recommendMacBook({ ...balancedCompact, windows: "yes", windowsSoftware: "Legacy app" });
-  assert.equal(legacy.needsVerification, clean.needsVerification);
-  assert.equal(legacy.family, clean.family);
-  assert.equal(legacy.minimumRam, clean.minimumRam);
+test("low portability plus compact retains compact preference", () => {
+  const result = profile({ portability: "stationary", screen: "compact" });
+  assert.equal(result.size.hasTradeoff, false);
+  assert.deepEqual(result.size.preferredClasses, ["13", "14"]);
 });
 
-test("new branch enum values never appear in customer-facing summaries", () => {
-  const answers = { ...base, uses: ["development"], developmentWorkload: "development_heavy" };
-  const summary = buildZaloSummary(answers, recommendMacBook(answers));
-  assert.equal(summary.includes("development_heavy"), false);
-  assert.match(summary, /Docker, máy ảo hoặc nhiều service cùng lúc/);
+test("stationary alone does not create a large-screen requirement", () => {
+  const result = profile({ portability: "stationary", screen: undefined });
+  assert.deepEqual(result.size.preferredClasses, ["13", "14", "15", "16"]);
 });
 
-test("air_or_pro Zalo summary uses natural Vietnamese", () => {
-  const result = recommendMacBook(balancedCompact);
-  const summary = buildZaloSummary(balancedCompact, result);
-  assert.match(summary, /Nhóm phù hợp: MacBook 13 inch/);
-  assert.match(summary, /Dòng máy: Air hoặc Pro đều phù hợp/);
-  assert.equal(summary.includes("air_or_pro"), false);
+test("low budget cannot weaken a 16GB requirement", () => {
+  const result = profile({ budget: "under-12", uses: ["development"], developmentWorkload: "development_sustained" });
+  assert.equal(result.technical.minimumRamGb, 16);
+  assert.equal(result.family.preferred, "pro");
+  assert.equal(result.financial.status, "unknown");
 });
 
-test("every decisive result category maps to its matching WebP", () => {
-  assert.equal(resultIllustration({ family: "MacBook Air", size: "13 inch" }), "/images/chon-macbook/result-states/air-13.webp");
-  assert.equal(resultIllustration({ family: "MacBook Air", size: "15 inch" }), "/images/chon-macbook/result-states/air-15.webp");
-  assert.equal(resultIllustration({ family: "MacBook Pro", size: "13 inch" }), "/images/chon-macbook/result-states/pro-14.webp");
-  assert.equal(resultIllustration({ family: "MacBook Pro", size: "14 inch" }), "/images/chon-macbook/result-states/pro-14.webp");
-  assert.equal(resultIllustration({ family: "MacBook Pro", size: "16 inch" }), "/images/chon-macbook/result-states/pro-16.webp");
+test("installment fields are preserved without fake affordability", () => {
+  const result = profile({ payment: "installment", budget: undefined, deposit: "medium", monthlyPayment: "low" });
+  assert.deepEqual(result.financial.installment, { deposit: "medium", monthlyPayment: "low" });
+  assert.equal(result.financial.status, "unknown");
 });
 
-test("customer-facing configuration copy always uses uppercase GB", () => {
-  const result = recommendMacBook({ ...base, uses: ["video"], videoWorkload: "long_high_quality" });
-  const copy = JSON.stringify(result);
-  assert.equal(/\d+gb\b/.test(copy), false);
+test("both payment mode preserves cash and optional installment context", () => {
+  const result = profile({ payment: "both", budget: "16-22", deposit: "medium", monthlyPayment: "low" });
+  assert.deepEqual(result.financial.comfortRange, { min: 16, max: 22 });
+  assert.deepEqual(result.financial.installment, { deposit: "medium", monthlyPayment: "low" });
+});
+
+test("ambiguous compact light work presents Air 13 and Pro 13", () => {
+  const result = recommendMacBook({ ...base, portability: "stationary", screen: "compact" });
+  assert.equal(result.profile.family.preferred, undefined);
+  assert.equal(result.presentation.bestFit.model, "air-13");
+  assert.equal(result.presentation.alternative?.model, "pro-13");
+});
+
+test("reasoning is generated from the final resolved profile", () => {
+  const result = recommendMacBook({ ...base, uses: ["personal", "development"], developmentWorkload: "development_sustained" });
+  const copy = [result.presentation.explanation, ...result.profile.reasoning].join(" ");
+  assert.equal(result.profile.technical.minimumRamGb, 16);
+  assert.equal(copy.includes("8GB RAM vẫn"), false);
   assert.match(copy, /16GB RAM/);
-  assert.match(copy, /512GB SSD/);
+  assert.match(copy, /MacBook Pro sẽ hợp hơn/);
+});
+
+test("Zalo summary preserves transaction and verification context", () => {
+  const answers = { ...base, payment: "installment", budget: undefined, deposit: "high", monthlyPayment: "medium", uses: ["specialized"], specializedWorkload: "specialized_basic", specializedSoftware: "AutoCAD" };
+  const summary = buildZaloSummary(answers, recommendMacBook(answers));
+  assert.match(summary, /trả góp/);
+  assert.match(summary, /AutoCAD/);
+  assert.match(summary, /sơ bộ/);
+});
+
+test("signal extraction and profile resolution are deterministic", () => {
+  const answers = { ...base, uses: ["video"], videoWorkload: "long_regular" };
+  const signals = normalizeRecommendationSignals(answers);
+  assert.deepEqual(signals, normalizeRecommendationSignals(structuredClone(answers)));
+  assert.deepEqual(resolveRecommendationProfile(answers, signals), resolveRecommendationProfile(structuredClone(answers), structuredClone(signals)));
+});
+
+test("recommendation engine contains no inventory dependency", async () => {
+  const source = await readFile(new URL("./recommendation-engine.ts", import.meta.url), "utf8");
+  assert.equal(/inventory|supabase|stock|margin/i.test(source), false);
+});
+
+test("comfort budget with no stretch keeps the ceiling unchanged", () => {
+  const result = profile({ budget: "16-22", stretchBudget: "none" });
+  assert.deepEqual(result.financial.comfortRange, { min: 16, max: 22 });
+  assert.equal(result.financial.stretchMax, undefined);
+});
+
+test("comfort budget plus 2–3m maps to a 3m stretch ceiling", () => {
+  const financial = profile({ budget: "16-22", stretchBudget: "plus-3" }).financial;
+  assert.equal(financial.stretchAmount, 3);
+  assert.equal(financial.stretchMax, 25);
+});
+
+test("comfort budget plus 5m maps to a 5m stretch ceiling", () => {
+  const financial = profile({ budget: "16-22", stretchBudget: "plus-5" }).financial;
+  assert.equal(financial.stretchAmount, 5);
+  assert.equal(financial.stretchMax, 27);
+});
+
+test("open-ended comfort band preserves stretch amount without inventing a ceiling", () => {
+  const financial = profile({ budget: "over-30", stretchBudget: "plus-5" }).financial;
+  assert.equal(financial.stretchAmount, 5);
+  assert.equal(financial.stretchMax, undefined);
+});
+
+test("unknown budget never creates a stretch ceiling", () => {
+  const result = profile({ budget: "unknown", stretchBudget: "plus-5" });
+  assert.equal(result.financial.comfortRange, undefined);
+  assert.equal(result.financial.stretchMax, undefined);
+});
+
+test("all customer-facing result text avoids internal vocabulary", () => {
+  const cases = [
+    recommendMacBook({ ...base }),
+    recommendMacBook({ ...base, uses: ["video"], videoWorkload: "sustained_daily" }),
+    recommendMacBook({ ...base, portability: "frequent", screen: "large" }),
+    recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_basic", specializedSoftware: "Revit" }),
+  ];
+  const banned = /technically valid|storage demand|\bfamily\b|trade-off|sustained workload|verification required|\bconfidence\b/i;
+  const textValues = (value) => {
+    if (typeof value === "string") return [value];
+    if (Array.isArray(value)) return value.flatMap(textValues);
+    if (value && typeof value === "object") return Object.values(value).flatMap(textValues);
+    return [];
+  };
+  for (const result of cases) {
+    const visible = [...textValues(result.presentation), ...result.profile.verification.reasons].join(" ");
+    assert.equal(banned.test(visible), false, visible);
+  }
+});
+
+test("ambiguous Air and Pro result uses natural Vietnamese", () => {
+  const result = recommendMacBook(base);
+  assert.match(result.presentation.explanation, /Cả MacBook Air và Pro đều phù hợp/);
+});
+
+test("Pro preference is presented as a preference, never a mandate", () => {
+  const result = recommendMacBook({ ...base, uses: ["video"], videoWorkload: "sustained_daily" });
+  const visible = JSON.stringify(result.presentation);
+  assert.match(visible, /MacBook Pro sẽ hợp hơn/);
+  assert.equal(/cần MacBook Pro|bắt buộc.*MacBook Pro/i.test(visible), false);
+});
+
+test("named specialized software receives customer-facing check copy", () => {
+  const result = recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_basic", specializedSoftware: "Revit" });
+  assert.match(result.profile.verification.reasons.join(" "), /Bạn đang dùng Revit/);
+  assert.match(result.profile.verification.reasons.join(" "), /MBMC cần kiểm tra thêm/);
+});
+test("named software uncertainty leads the summary before Air and Pro options", () => {
+  const result = recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy", specializedSoftware: "Revit" });
+  const summary = result.presentation.explanation;
+  assert.match(summary, /^Đây là gợi ý sơ bộ\./);
+  assert.match(summary, /16GB RAM và 256GB SSD/);
+  assert.match(summary, /Vì bạn đang dùng Revit, MBMC cần kiểm tra thêm cách bạn sử dụng phần mềm này trước khi chốt chính xác dòng máy\./);
+  assert.ok(summary.indexOf("MBMC cần kiểm tra thêm") < summary.indexOf("MacBook Air và Pro"));
+  assert.equal(result.presentation.family, "MacBook Air hoặc Pro");
+  assert.deepEqual(result.profile.family.allowed, ["air", "pro"]);
+  assert.doesNotMatch(summary, /Revit (?:tương thích|không tương thích|chạy được|không chạy được)/i);
+});
+test("unnamed specialized software keeps the regular opening summary", () => {
+  const result = recommendMacBook({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy" });
+  assert.doesNotMatch(result.presentation.explanation, /^Đây là gợi ý sơ bộ\./);
+});
+
+test("size conflict is explained without internal terminology", () => {
+  const result = recommendMacBook({ ...base, portability: "frequent", screen: "large" });
+  const visible = JSON.stringify(result.presentation);
+  assert.match(visible, /13\/14 inch sẽ gọn hơn/);
+  assert.equal(/trade-off/i.test(visible), false);
+});
+
+test("no-storage-signal result never mentions 512GB", () => {
+  const result = recommendMacBook({ ...base, uses: ["design"], designWorkload: "professional" });
+  assert.equal((JSON.stringify(result.presentation) + buildZaloSummary(base, result)).includes("512GB"), false);
 });

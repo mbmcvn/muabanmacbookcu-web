@@ -85,6 +85,28 @@
 .recommendation-option h3 { margin-bottom: .25rem; font-size: 1.2rem; }
 .recommendation-option strong, .recommendation-option span { display: block; }
 .recommendation-option span { margin-top: .5rem; color: var(--muted); font-size: .9rem; }
+.inventory-match-section { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.inventory-match-section > header { max-width: 42rem; }
+.inventory-match-section > header h2 { margin-bottom: .55rem; font-size: clamp(1.55rem, 4vw, 2.15rem); letter-spacing: -.035em; }
+.inventory-match-section > header > p:last-child, .inventory-match-tradeoff { color: var(--muted); line-height: 1.65; }
+.inventory-match-grid { display: grid; gap: .8rem; margin-top: 1.25rem; }
+.inventory-match-card { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: .65rem; background: var(--surface); }
+.inventory-match-card > a { height: 100%; display: grid; grid-template-columns: minmax(8rem, .72fr) minmax(0, 1.28fr); color: inherit; text-decoration: none; }
+.inventory-match-image { position: relative; min-height: 14rem; overflow: hidden; background: #efefeb; }
+.inventory-match-image img { object-fit: cover; }
+.inventory-match-card-body { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; padding: 1rem; }
+.inventory-match-budget { margin-bottom: .55rem; color: var(--accent); font-size: .74rem; font-weight: 720; }
+.inventory-match-card h3 { margin-bottom: .25rem; font-size: 1.08rem; line-height: 1.3; }
+.inventory-match-specs, .inventory-match-condition { color: var(--muted); font-size: .84rem; }
+.inventory-match-price { margin-top: .3rem; }
+.inventory-match-condition { margin-top: .3rem; }
+.inventory-match-reason { margin-top: .8rem; color: #454541; font-size: .84rem; line-height: 1.5; }
+.inventory-match-link { margin-top: auto; padding-top: .8rem; font-size: .84rem; font-weight: 680; }
+.inventory-match-state, .inventory-match-notice { margin-top: 1.2rem; padding: 1rem; border: 1px solid var(--border); border-radius: .55rem; background: rgba(255,255,255,.45); color: var(--muted); }
+.inventory-match-state strong { color: var(--foreground); }
+.inventory-match-state p { margin-top: .35rem; }
+.inventory-match-notice { border-left: 3px solid #9a6930; color: #66543f; }
+.inventory-match-tradeoff { margin-top: 1rem; }
 .result-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 2rem; }
 .zalo-summary { margin-top: 1.5rem; border-block: 1px solid var(--border); }
 .zalo-summary summary { padding: 1rem 0; cursor: pointer; font-weight: 650; }
@@ -98,6 +120,9 @@
 @media (min-width: 44rem) {
   .quiz-intro, .result-hero { grid-template-columns: minmax(0, 1.2fr) minmax(16rem, .8fr); }
   .recommendation-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .inventory-match-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .inventory-match-card > a { display: flex; flex-direction: column; }
+  .inventory-match-image { min-height: 0; aspect-ratio: 4 / 3; }
 }
 @media (min-width: 58rem) {
   .usage-layout { grid-template-columns: minmax(0, 42rem) minmax(16rem, 1fr); gap: 2rem; }
@@ -111,5 +136,7 @@
   .quiz-options-illustrated .quiz-option-image { aspect-ratio: 16 / 7; }
   .usage-preview-image { width: 100%; aspect-ratio: 16 / 7; }
   .usage-branch, .usage-branch-summary { margin-left: 1.25rem; }
+  .inventory-match-card > a { grid-template-columns: minmax(7rem, .7fr) minmax(0, 1.3fr); }
+  .inventory-match-image { min-height: 13rem; }
 }
 @media (prefers-reduced-motion: reduce) { .quiz-card, .quiz-processing span, .usage-branch, .usage-preview-image { animation: none; } .quiz-option, .usage-branch-option, .quiz-progress-track span { transition: none; } }

@@ -7,15 +7,8 @@ export interface ResultCtaCopy {
 }
 
 export function getResultCtaCopy(result: Recommendation): ResultCtaCopy {
-  if (result.needsVerification) {
+  if (result.profile.verification.required) {
     return { primary: "Nhờ MBMC kiểm tra trước", primaryDestination: "zalo" };
-  }
-  if (result.budgetConflict) {
-    return {
-      primary: "Xem máy gần nhu cầu nhất",
-      secondary: "Nhờ MBMC cân lại cấu hình",
-      primaryDestination: "inventory",
-    };
   }
   return {
     primary: "Xem máy phù hợp đang có",
@@ -24,32 +17,19 @@ export function getResultCtaCopy(result: Recommendation): ResultCtaCopy {
   };
 }
 
-export function getUpgradeOptionTitle(result: Recommendation): string {
-  if (result.upgrade.label.includes("MacBook Air 15 inch")) return "NẾU MUỐN MÀN HÌNH RỘNG";
-  if (result.upgrade.label.includes("MacBook Pro")) return "NÂNG CẤP HIỆU NĂNG";
-  if (result.storageGuidance !== "256GB là đủ" && result.upgrade.configuration !== result.bestFit.configuration) {
-    return "THÊM DUNG LƯỢNG";
-  }
-  return "PHƯƠNG ÁN KHÁC";
-}
-
 export function getRecommendationTitle(result: Recommendation): string {
-  return result.productFamilyFit === "air_or_pro"
-    ? "MacBook 13 inch"
-    : `${result.family} ${result.size}`;
+  return result.presentation.title;
 }
 
 export function getRecommendationOptionTitles(result: Recommendation) {
-  if (result.productFamilyFit === "air_or_pro") {
-    return {
-      bestFit: "PHƯƠNG ÁN MỎNG, TỐI GIẢN",
-      cheaper: "PHƯƠNG ÁN CÓ QUẠT / TOUCH BAR",
-      upgrade: "PHƯƠNG ÁN KHÁC",
-    };
-  }
+  const upgradeModel = result.presentation.upgrade?.model;
   return {
-    bestFit: "PHÙ HỢP NHẤT",
-    cheaper: "TIẾT KIỆM HƠN",
-    upgrade: getUpgradeOptionTitle(result),
+    bestFit: "GỢI Ý ĐỂ BẮT ĐẦU",
+    alternative: "PHƯƠNG ÁN CŨNG PHÙ HỢP",
+    upgrade: result.profile.size.hasTradeoff
+      ? "MỘT CÁCH CÂN BẰNG KHÁC"
+      : upgradeModel === "air-15" || upgradeModel === "pro-16"
+        ? "NẾU BẠN MUỐN MÀN HÌNH RỘNG HƠN"
+        : "NẾU BẠN MUỐN MÁY GỌN HƠN",
   };
 }

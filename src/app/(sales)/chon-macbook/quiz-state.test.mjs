@@ -1,121 +1,100 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isUsageAnswerComplete, normalizeStoredAnswers, shouldShowSpecializedSoftwareField, toggleUsageAnswer } from "./quiz-state.ts";
 import { getQuestionFlow } from "./quiz-questions.ts";
+import { isUsageAnswerComplete, normalizeStoredAnswers, setComfortBudget, shouldShowSpecializedSoftwareField, toggleUsageAnswer } from "./quiz-state.ts";
 
 const base = { uses: [] };
 
-test("unknown top-level usage is exclusive and clears child answers", () => {
-  const answers = { ...base, uses: ["video", "office"], videoWorkload: "short_social" };
-  assert.deepEqual(toggleUsageAnswer(answers, "unclear"), {
-    uses: ["unclear"], videoWorkload: undefined, designWorkload: undefined,
-    developmentWorkload: undefined, specializedWorkload: undefined, specializedSoftware: undefined,
-  });
-  assert.deepEqual(toggleUsageAnswer({ ...base, uses: ["unclear"] }, "personal").uses, ["personal"]);
+test("unclear usage is exclusive and clears every child", () => {
+  const result = toggleUsageAnswer({ ...base, uses: ["video", "specialized"], videoWorkload: "short_social", specializedWorkload: "specialized_heavy", specializedSoftware: "Revit" }, "unclear");
+  assert.deepEqual(result.uses, ["unclear"]);
+  assert.equal(result.videoWorkload, undefined);
+  assert.equal(result.specializedSoftware, undefined);
 });
 
-test("deselecting a branch parent clears its child answer", () => {
-  const answers = { ...base, uses: ["video"], videoWorkload: "long_high_quality" };
-  const next = toggleUsageAnswer(answers, "video");
-  assert.deepEqual(next.uses, []);
-  assert.equal(next.videoWorkload, undefined);
+test("usage remains limited to two", () => {
+  assert.deepEqual(toggleUsageAnswer({ ...base, uses: ["office", "personal"] }, "development").uses, ["office", "personal"]);
 });
 
-test("selecting and returning to another usage preserves parent and child answers", () => {
-  const answers = { ...base, uses: ["video"], videoWorkload: "short_social" };
-  const next = toggleUsageAnswer(answers, "office");
-  const restored = JSON.parse(JSON.stringify(next));
-  assert.deepEqual(restored.uses, ["video", "office"]);
-  assert.equal(restored.videoWorkload, "short_social");
-});
-
-test("usage is incomplete while a selected video branch lacks a child answer", () => {
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["video"] }), false);
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["video"], videoWorkload: "short_social" }), true);
-});
-
-test("usage is incomplete while a selected design branch lacks a child answer", () => {
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["design"] }), false);
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["design"], designWorkload: "light" }), true);
-});
-
-test("top-level usage remains limited to two", () => {
-  const answers = { ...base, uses: ["office", "personal"] };
-  assert.deepEqual(toggleUsageAnswer(answers, "development").uses, ["office", "personal"]);
-});
-
-test("old persisted unknown child values are cleared and require fresh answers", () => {
-  const restored = normalizeStoredAnswers({
-    ...base,
-    uses: ["video", "design"],
-    videoWorkload: "unknown",
-    designWorkload: "unknown",
-  });
-  assert.equal(restored.videoWorkload, undefined);
-  assert.equal(restored.designWorkload, undefined);
-  assert.equal(isUsageAnswerComplete(restored), false);
-});
-
-test("generic workload screen is absent from every normal flow", () => {
-  for (const uses of [["office"], ["personal"], ["design"], ["video"], ["development"], ["specialized"]]) {
-    assert.equal(getQuestionFlow({ ...base, uses }).includes("workload"), false);
+test("every technical parent requires a current V1 child answer", () => {
+  for (const use of ["design", "video", "development", "specialized"]) {
+    assert.equal(isUsageAnswerComplete({ ...base, uses: [use] }), false);
   }
+  assert.equal(isUsageAnswerComplete({ ...base, uses: ["design"], designWorkload: "professional_sustained" }), true);
+  assert.equal(isUsageAnswerComplete({ ...base, uses: ["video"], videoWorkload: "long_rare" }), true);
+  assert.equal(isUsageAnswerComplete({ ...base, uses: ["development"], developmentWorkload: "docker_regular" }), true);
+  assert.equal(isUsageAnswerComplete({ ...base, uses: ["specialized"], specializedWorkload: "specialized_sustained" }), true);
 });
 
-test("standalone Windows question is absent from flow and progress steps", () => {
-  const flow = getQuestionFlow({ ...base, payment: "full", uses: ["office"] });
-  assert.equal(flow.includes("windows"), false);
-  assert.deepEqual(flow, ["payment", "budget", "uses", "portability", "screen", "fulfilment"]);
+test("office, personal, and unclear need no child answer", () => {
+  for (const use of ["office", "personal", "unclear"]) assert.equal(isUsageAnswerComplete({ ...base, uses: [use] }), true);
 });
 
-test("office and personal do not require child answers", () => {
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["office"] }), true);
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["personal"] }), true);
+test("deselecting a parent clears its child and software metadata", () => {
+  const result = toggleUsageAnswer({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy", specializedSoftware: "Revit" }, "specialized");
+  assert.deepEqual(result.uses, []);
+  assert.equal(result.specializedWorkload, undefined);
+  assert.equal(result.specializedSoftware, undefined);
 });
 
-test("development requires a normalized child answer", () => {
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["development"] }), false);
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["development"], developmentWorkload: "development_basic" }), true);
+test("old ambiguous workload enums are cleared instead of guessed", () => {
+  const result = normalizeStoredAnswers({ ...base, uses: ["video", "development"], videoWorkload: "long_high_quality", developmentWorkload: "development_heavy" });
+  assert.equal(result.videoWorkload, undefined);
+  assert.equal(result.developmentWorkload, undefined);
+  assert.equal(isUsageAnswerComplete(result), false);
 });
 
-test("specialized requires a normalized child answer", () => {
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["specialized"] }), false);
-  assert.equal(isUsageAnswerComplete({ ...base, uses: ["specialized"], specializedWorkload: "specialized_basic" }), true);
+test("orphan child and software state is removed", () => {
+  const result = normalizeStoredAnswers({ ...base, uses: ["office"], specializedWorkload: "specialized_heavy", specializedSoftware: "Revit", videoWorkload: "short_social" });
+  assert.equal(result.specializedWorkload, undefined);
+  assert.equal(result.specializedSoftware, undefined);
+  assert.equal(result.videoWorkload, undefined);
 });
 
-test("deselecting development and specialized clears their child state", () => {
-  const development = toggleUsageAnswer({ ...base, uses: ["development"], developmentWorkload: "development_heavy" }, "development");
-  const specialized = toggleUsageAnswer({ ...base, uses: ["specialized"], specializedWorkload: "specialized_heavy" }, "specialized");
-  assert.equal(development.developmentWorkload, undefined);
-  assert.equal(specialized.specializedWorkload, undefined);
+test("payment normalization preserves only applicable financial context", () => {
+  const installment = normalizeStoredAnswers({ ...base, payment: "installment", budget: "22-30", deposit: "medium", monthlyPayment: "low" });
+  assert.equal(installment.budget, undefined);
+  assert.equal(installment.deposit, "medium");
+  const both = normalizeStoredAnswers({ ...base, payment: "both", budget: "22-30", deposit: "medium", monthlyPayment: "low" });
+  assert.equal(both.budget, "22-30");
+  assert.equal(both.deposit, "medium");
 });
 
-test("specialized software field is contextual, optional, and cleared with its parent", () => {
-  const specialized = {
-    ...base,
-    uses: ["specialized"],
-    specializedWorkload: "specialized_basic",
-    specializedSoftware: "Revit",
-  };
-  assert.equal(shouldShowSpecializedSoftwareField(specialized), true);
+test("province is removed unless province fulfilment remains selected", () => {
+  assert.equal(normalizeStoredAnswers({ ...base, fulfilment: "showroom", province: "Đà Nẵng" }).province, undefined);
+  assert.equal(normalizeStoredAnswers({ ...base, fulfilment: "province", province: "Đà Nẵng" }).province, "Đà Nẵng");
+});
+
+test("specialized software field is contextual and optional", () => {
+  assert.equal(shouldShowSpecializedSoftwareField({ ...base, uses: ["specialized"] }), true);
   assert.equal(shouldShowSpecializedSoftwareField({ ...base, uses: ["office"] }), false);
-  assert.equal(isUsageAnswerComplete({ ...specialized, specializedSoftware: "" }), true);
-  assert.equal(toggleUsageAnswer(specialized, "specialized").specializedSoftware, undefined);
 });
 
-test("old generic workload state is removed safely", () => {
-  const restored = normalizeStoredAnswers({ ...base, uses: ["office"], workload: "heavy", workloadClarification: "office" });
-  assert.equal("workload" in restored, false);
-  assert.equal("workloadClarification" in restored, false);
+test("question flow keeps cash and installment paths distinct", () => {
+  assert.deepEqual(getQuestionFlow({ ...base, payment: "full" }), ["payment", "budget", "uses", "portability", "screen", "fulfilment"]);
+  assert.deepEqual(getQuestionFlow({ ...base, payment: "both" }), ["payment", "budget", "uses", "portability", "screen", "fulfilment"]);
+  assert.deepEqual(getQuestionFlow({ ...base, payment: "installment" }), ["payment", "deposit", "monthly-payment", "uses", "portability", "screen", "fulfilment"]);
 });
 
-test("old Windows compatibility state is removed safely", () => {
-  const restored = normalizeStoredAnswers({
-    ...base,
-    uses: ["office"],
-    windows: "yes",
-    windowsSoftware: "Legacy app",
-  });
-  assert.equal("windows" in restored, false);
-  assert.equal("windowsSoftware" in restored, false);
+test("concrete comfort and stretch state restores together", () => {
+  const restored = normalizeStoredAnswers({ ...base, payment: "full", budget: "16-22", stretchBudget: "plus-3" });
+  assert.equal(restored.budget, "16-22");
+  assert.equal(restored.stretchBudget, "plus-3");
+});
+
+test("unknown comfort budget clears stretch state", () => {
+  const restored = normalizeStoredAnswers({ ...base, payment: "full", budget: "unknown", stretchBudget: "plus-5" });
+  assert.equal(restored.budget, "unknown");
+  assert.equal(restored.stretchBudget, undefined);
+});
+
+test("changing the comfort budget clears the previous stretch answer", () => {
+  const changed = setComfortBudget({ ...base, payment: "full", budget: "16-22", stretchBudget: "plus-5" }, "22-30");
+  assert.equal(changed.budget, "22-30");
+  assert.equal(changed.stretchBudget, undefined);
+});
+
+test("invalid persisted stretch state is cleared", () => {
+  const restored = normalizeStoredAnswers({ ...base, payment: "full", budget: "16-22", stretchBudget: "22-30" });
+  assert.equal(restored.stretchBudget, undefined);
 });

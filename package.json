@@ -7,8 +7,9 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
+        "audit:quiz": "node \"src/app/(sales)/chon-macbook/scenario-simulator.run.mjs\"",
         "test:public": "node --test src/data/machines/public-inventory.test.mjs src/lib/contact-routing.test.mjs",
-        "test:quiz": "node --test \"src/app/(sales)/chon-macbook/recommendation-engine.test.mjs\" \"src/app/(sales)/chon-macbook/quiz-state.test.mjs\""
+        "test:quiz": "node --test \"src/app/(sales)/chon-macbook/recommendation-engine.test.mjs\" \"src/app/(sales)/chon-macbook/quiz-state.test.mjs\" \"src/app/(sales)/chon-macbook/inventory-matcher.test.mjs\" \"src/app/(sales)/chon-macbook/inventory-match-presentation.test.mjs\" \"src/app/(sales)/chon-macbook/scenario-simulator.test.mjs\""
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.110.6",

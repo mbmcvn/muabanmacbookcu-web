@@ -1,4 +1,4 @@
-import type { DesignWorkload, MainUse, Recommendation, VideoWorkload } from "../quiz-types";
+import type { DesignWorkload, MainUse, RecommendationPresentation, VideoWorkload } from "../quiz-types";
 
 export const quizIllustrations = {
   intro: {
@@ -59,8 +59,8 @@ export function branchIllustration(kind: "video" | "design", value: VideoWorkloa
   return quizIllustrations.branches.designProfessional;
 }
 
-export function resultIllustration(result: Pick<Recommendation, "family" | "size">): string {
-  if (result.family === "MacBook Air") {
+export function resultIllustration(result: Pick<RecommendationPresentation, "family" | "size">): string {
+  if (result.family === "MacBook Air" || result.family === "MacBook Air hoặc Pro") {
     return result.size === "15 inch" ? quizIllustrations.results.air15 : quizIllustrations.results.air13;
   }
   // The approved asset set has no Pro 13 image yet; Pro 14 is the closest neutral Pro fallback.

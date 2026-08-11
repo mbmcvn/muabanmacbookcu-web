@@ -1,5 +1,6 @@
 import { EMPTY_ANSWERS, type QuizAnswers } from "./quiz-types";
 import { normalizeStoredAnswers } from "./quiz-state";
+import { getQuestionFlow } from "./quiz-questions";
 
 const STORAGE_KEY = "mbmc:chon-macbook:v1";
 
@@ -11,7 +12,12 @@ export function loadQuiz(): StoredQuiz | null {
     if (!value) return null;
     const parsed = JSON.parse(value) as StoredQuiz;
     if (!parsed.answers || !Array.isArray(parsed.answers.uses)) return null;
-    return { ...parsed, answers: normalizeStoredAnswers(parsed.answers) };
+    const answers = normalizeStoredAnswers(parsed.answers);
+    const maxIndex = Math.max(0, getQuestionFlow(answers).length - 1);
+    const questionIndex = Number.isInteger(parsed.questionIndex)
+      ? Math.min(Math.max(0, parsed.questionIndex), maxIndex)
+      : 0;
+    return { started: parsed.started === true, questionIndex, answers };
   } catch { return null; }
 }
 
