@@ -6,6 +6,38 @@ import type { RecommendationProfile } from "./quiz-types";
 
 export const INVENTORY_MATCH_LIMIT = 3;
 
+function representativeGroupKey(match: RankedMachineMatch): string {
+  const year = match.machine.year === null ? "unknown" : String(match.machine.year);
+  return [match.productClass, match.chipClass.generation, match.ramGb, match.ssdGb, year].join("|");
+}
+
+export function selectRepresentativeInventoryMatches(
+  rankedMatches: readonly RankedMachineMatch[],
+  limit = INVENTORY_MATCH_LIMIT,
+): RankedMachineMatch[] {
+  if (limit <= 0) return [];
+  const selected: RankedMachineMatch[] = [];
+  const skipped: RankedMachineMatch[] = [];
+  const seenGroups = new Set<string>();
+
+  for (const match of rankedMatches) {
+    const key = representativeGroupKey(match);
+    if (seenGroups.has(key)) {
+      skipped.push(match);
+      continue;
+    }
+    seenGroups.add(key);
+    selected.push(match);
+    if (selected.length === limit) return selected;
+  }
+
+  for (const match of skipped) {
+    selected.push(match);
+    if (selected.length === limit) break;
+  }
+  return selected;
+}
+
 export type InventoryMatchViewState =
   | { status: "ready"; mode: "matches" | "above-budget"; matches: InventoryMatchCardView[]; hasSizeTradeoff: boolean }
   | { status: "empty" }
@@ -79,7 +111,7 @@ export function presentInventoryMatches(
     return {
       status: "ready",
       mode: "matches",
-      matches: primary.slice(0, INVENTORY_MATCH_LIMIT).map((match) => toCard(profile, match)),
+      matches: selectRepresentativeInventoryMatches(primary).map((match) => toCard(profile, match)),
       hasSizeTradeoff: profile.size.hasTradeoff,
     };
   }
@@ -87,7 +119,7 @@ export function presentInventoryMatches(
     return {
       status: "ready",
       mode: "above-budget",
-      matches: result.eligible.slice(0, 2).map((match) => toCard(profile, match)),
+      matches: selectRepresentativeInventoryMatches(result.eligible, 2).map((match) => toCard(profile, match)),
       hasSizeTradeoff: profile.size.hasTradeoff,
     };
   }

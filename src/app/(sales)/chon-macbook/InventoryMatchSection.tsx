@@ -52,6 +52,7 @@ export function InventoryMatchSection({ state }: { state: InventoryMatchViewStat
           <div className="inventory-match-grid">
             {state.matches.map((match) => <MatchCard key={match.code} match={match} />)}
           </div>
+          <Link className="inventory-match-browse" href="/may-dang-co">Xem thêm máy phù hợp</Link>
         </>
       ) : null}
     </section>

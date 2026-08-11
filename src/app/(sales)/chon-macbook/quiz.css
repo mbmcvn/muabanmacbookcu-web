@@ -102,6 +102,7 @@
 .inventory-match-condition { margin-top: .3rem; }
 .inventory-match-reason { margin-top: .8rem; color: #454541; font-size: .84rem; line-height: 1.5; }
 .inventory-match-link { margin-top: auto; padding-top: .8rem; font-size: .84rem; font-weight: 680; }
+.inventory-match-browse { display: inline-flex; margin-top: 1rem; color: var(--foreground); font-weight: 680; text-underline-offset: .2em; }
 .inventory-match-state, .inventory-match-notice { margin-top: 1.2rem; padding: 1rem; border: 1px solid var(--border); border-radius: .55rem; background: rgba(255,255,255,.45); color: var(--muted); }
 .inventory-match-state strong { color: var(--foreground); }
 .inventory-match-state p { margin-top: .35rem; }
