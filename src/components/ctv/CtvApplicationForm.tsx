@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MBMC_CONTACTS } from "@/lib/contact-routing";
 import {
   CTV_ANSWERS_SCHEMA,
   CTV_APPLICATION_SCHEMA,
@@ -71,8 +72,35 @@ export function CtvApplicationForm() {
   if (state === "success")
     return (
       <section className="ctv-success" aria-live="polite">
-        <h2>Đã gửi đăng ký.</h2>
-        <p>MBMC sẽ xem phần trả lời và chủ động liên hệ nếu phù hợp.</p>
+        <h2>Đã gửi đăng ký</h2>
+        <p>MBMC đã nhận được phần trả lời của bạn.</p>
+        <div className="ctv-success-contact">
+          <h3>Muốn chủ động trao đổi thêm?</h3>
+          <p>
+            Nếu bạn muốn giới thiệu thêm về mình hoặc trao đổi trực tiếp về cách
+            cộng tác, có thể nhắn MBMC tại:
+          </p>
+          <div className="ctv-success-actions">
+            <a
+              href={MBMC_CONTACTS.messenger.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Nhắn qua Messenger
+            </a>
+            <a
+              href={MBMC_CONTACTS.zalo.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Nhắn qua Zalo
+            </a>
+          </div>
+          <p className="ctv-success-note">
+            Khi nhắn, chỉ cần nói bạn vừa hoàn thành bài đăng ký CTV. Việc nhắn
+            thêm là tùy chọn và không bắt buộc để đăng ký được xem xét.
+          </p>
+        </div>
       </section>
     );
 
