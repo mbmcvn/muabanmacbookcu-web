@@ -8,6 +8,12 @@ import type {
   RequirementSnapshotV1,
 } from "@/lib/demand-contract";
 
+export function maskDemandPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length < 7) return "số điện thoại đã cung cấp";
+  return `${digits.slice(0, 4)}•••${digits.slice(-3)}`;
+}
+
 export function DemandCaptureForm({
   sourceRoute,
   requirementSnapshot,
@@ -39,18 +45,23 @@ export function DemandCaptureForm({
   useEffect(() => {
     void refresh();
   }, []);
+
   if (state === "success")
     return (
       <section className="demand-success" aria-live="polite">
-        <strong>MBMC đã ghi nhận nhu cầu của bạn.</strong>
-        <p>MBMC sẽ chủ động liên hệ khi tìm được máy phù hợp.</p>
+        <strong>Đã ghi nhận nhu cầu.</strong>
+        <p>
+          MBMC sẽ liên hệ qua số {maskDemandPhone(phone)} khi có lựa chọn phù
+          hợp.
+        </p>
       </section>
     );
+
   return (
     <form
       className="demand-form"
-      onSubmit={async (e) => {
-        e.preventDefault();
+      onSubmit={async (event) => {
+        event.preventDefault();
         if (!challenge) return;
         setState("busy");
         try {
@@ -73,6 +84,7 @@ export function DemandCaptureForm({
         }
       }}
     >
+      <h3>Để MBMC liên hệ khi tìm được máy phù hợp</h3>
       <label>
         Số điện thoại
         <input
@@ -80,33 +92,37 @@ export function DemandCaptureForm({
           autoComplete="tel"
           required
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(event) => setPhone(event.target.value)}
           placeholder="Ví dụ: 0912 345 678"
         />
       </label>
       <label>
-        Nhập 4 số: <strong>{challenge?.representation ?? "…"}</strong>
+        <span>
+          Xác nhận:{" "}
+          <strong className="demand-challenge">
+            {challenge?.representation ?? "…"}
+          </strong>
+        </span>
         <input
           inputMode="numeric"
           pattern="[0-9]{4}"
           maxLength={4}
           required
           value={answer}
-          onChange={(e) =>
-            setAnswer(e.target.value.replace(/\D/g, "").slice(0, 4))
+          placeholder="Nhập 4 số trên"
+          aria-label="Nhập bốn số xác nhận"
+          onChange={(event) =>
+            setAnswer(event.target.value.replace(/\D/g, "").slice(0, 4))
           }
         />
       </label>
-      <small>
-        CAPTCHA chỉ giúp hạn chế spam, không xác minh quyền sở hữu số điện
-        thoại.
-      </small>
       {state === "error" && (
-        <p role="alert">
-          Chưa thể ghi nhận. Kiểm tra số điện thoại và CAPTCHA rồi thử lại.
+        <p className="demand-form-error" role="alert">
+          Chưa thể ghi nhận. Kiểm tra số điện thoại và 4 số xác nhận rồi thử
+          lại.
         </p>
       )}
-      <div>
+      <div className="demand-form-actions">
         <button
           className="quiz-primary"
           disabled={state === "busy" || !challenge}
@@ -115,7 +131,7 @@ export function DemandCaptureForm({
         </button>
         {onCancel && (
           <button type="button" className="quiz-secondary" onClick={onCancel}>
-            Quay lại
+            Hủy
           </button>
         )}
       </div>

@@ -23,10 +23,11 @@ import { resultIllustration } from "./_lib/quiz-illustrations";
 import { QuizIllustration } from "./QuizIllustration";
 import { useContactChannel } from "@/hooks/useContactChannel";
 import { DemandCaptureForm } from "@/components/demand/DemandCaptureForm";
+import { INVENTORY_CONTEXT_SCHEMA } from "@/lib/demand-contract";
 import {
-  INVENTORY_CONTEXT_SCHEMA,
-  REQUIREMENT_SNAPSHOT_SCHEMA,
-} from "@/lib/demand-contract";
+  buildQuizRequirementSnapshot,
+  getQuizDemandPresentation,
+} from "./demand-capture-presentation";
 
 function Option({
   title,
@@ -80,6 +81,11 @@ export function RecommendationView({
   const cta = getResultCtaCopy(result);
   const optionTitles = getRecommendationOptionTitles(result);
   const { profile, presentation } = result;
+  const demandPresentation = getQuizDemandPresentation(inventoryState);
+  const requirementSnapshot = buildQuizRequirementSnapshot(
+    answers,
+    result.profile,
+  );
   const openZalo = async () => {
     try {
       await navigator.clipboard.writeText(summary);
@@ -165,42 +171,7 @@ export function RecommendationView({
         )}
       </div>
       <InventoryMatchSection state={inventoryState} />
-      {inventoryState?.status === "empty" && (
-        <section className="family-preference">
-          <p className="quiz-eyebrow">Chưa có máy phù hợp đang sẵn tại MBMC.</p>
-          <p>
-            MBMC có thể ghi nhận nhu cầu này và liên hệ khi tìm được máy phù
-            hợp.
-          </p>
-          {capturingDemand ? (
-            <DemandCaptureForm
-              sourceRoute="chon_macbook"
-              referralEvidence={referralEvidence}
-              requirementSnapshot={{
-                schemaVersion: REQUIREMENT_SNAPSHOT_SCHEMA,
-                recommendationContractVersion: "chon-macbook.v1",
-                normalizedQuizAnswers: answers,
-                recommendationProfile: result.profile,
-              }}
-              inventoryContextSnapshot={{
-                schemaVersion: INVENTORY_CONTEXT_SCHEMA,
-                sourceRoute: "chon_macbook",
-                capturedAt: new Date().toISOString(),
-                matcherState: "empty",
-              }}
-              onCancel={() => setCapturingDemand(false)}
-            />
-          ) : (
-            <button
-              className="quiz-primary"
-              type="button"
-              onClick={() => setCapturingDemand(true)}
-            >
-              Báo mình khi có máy phù hợp
-            </button>
-          )}
-        </section>
-      )}
+
       <div className="result-actions">
         {cta.primaryDestination === "inventory" ? (
           <Link className="quiz-primary" href="/may-dang-co">
@@ -217,6 +188,42 @@ export function RecommendationView({
           </button>
         )}
       </div>
+      {demandPresentation && (
+        <section
+          className={`quiz-demand-alternative quiz-demand-${demandPresentation.hierarchy}`}
+        >
+          <p className="quiz-eyebrow">{demandPresentation.title}</p>
+          <p>{demandPresentation.description}</p>
+          {capturingDemand ? (
+            <DemandCaptureForm
+              sourceRoute="chon_macbook"
+              referralEvidence={referralEvidence}
+              requirementSnapshot={requirementSnapshot}
+              inventoryContextSnapshot={{
+                schemaVersion: INVENTORY_CONTEXT_SCHEMA,
+                sourceRoute: "chon_macbook",
+                capturedAt: new Date().toISOString(),
+                ...(demandPresentation.matcherState
+                  ? { matcherState: demandPresentation.matcherState }
+                  : {}),
+              }}
+              onCancel={() => setCapturingDemand(false)}
+            />
+          ) : (
+            <button
+              className={
+                demandPresentation.hierarchy === "prominent"
+                  ? "quiz-primary"
+                  : "quiz-secondary quiz-demand-action"
+              }
+              type="button"
+              onClick={() => setCapturingDemand(true)}
+            >
+              {demandPresentation.action}
+            </button>
+          )}
+        </section>
+      )}
       <details className="zalo-summary">
         <summary>Xem nội dung tóm tắt gửi cho MBMC</summary>
         <pre>{summary}</pre>
