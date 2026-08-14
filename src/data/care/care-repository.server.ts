@@ -55,7 +55,8 @@ export async function getPublicCarePassport(
     !ownership ||
     ownership.sale.id !== access.saleId ||
     ownership.owner.id !== access.ownershipId
-  ) return null;
+  )
+    return null;
   const sale = ownership.sale;
   const owner = ownership.owner;
 
@@ -102,6 +103,7 @@ export async function activateCarePassport(input: {
   machineCode: string;
   customerName: string;
   phone: string;
+  origin: string;
 }) {
   const client = createServerSupabaseClient();
   return activateCarePassportWithStore(
@@ -128,7 +130,11 @@ export async function resolvePublicCareState(
     .eq("machine_id", machineCode)
     .maybeSingle();
   if (error) {
-    return { state: "unsafe", machineCode, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
+    return {
+      state: "unsafe",
+      machineCode,
+      reasonCode: "CARE_ACTIVATION_AMBIGUOUS",
+    };
   }
   if (!machine) return { state: "not_found", machineCode };
   const lifecycle = await findCareLifecycle(client, {
@@ -140,7 +146,8 @@ export async function resolvePublicCareState(
     return {
       state: "unsafe",
       machineCode: machine.machine_id,
-      reasonCode: lifecycle.resolution.reasonCode ?? "CARE_ACTIVATION_AMBIGUOUS",
+      reasonCode:
+        lifecycle.resolution.reasonCode ?? "CARE_ACTIVATION_AMBIGUOUS",
     };
   }
   return { state: lifecycle.resolution.state, machineCode: machine.machine_id };
@@ -150,19 +157,31 @@ function createCareActivationStore(
   client: ReturnType<typeof createServerSupabaseClient>,
 ): CareActivationStore {
   return {
+    async consumeAttempt(keyHash) {
+      const { data, error } = await client.rpc(
+        "consume_public_care_verification_attempt",
+        { p_key_hash: keyHash, p_limit: 10, p_window_seconds: 900 },
+      );
+      return !error && data === true;
+    },
     async resolve(machineCode) {
       const { data, error } = await client
         .from("machines")
         .select("id, machine_id, status")
         .eq("machine_id", machineCode)
         .maybeSingle();
-      if (error) return { state: "unsafe", reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
-      if (!data) return { state: "unsafe", reasonCode: "CARE_MACHINE_NOT_FOUND" };
-      const { resolution, error: lifecycleError } = await findCareLifecycle(client, {
-        id: data.id,
-        machineCode: data.machine_id,
-        status: data.status,
-      });
+      if (error)
+        return { state: "unsafe", reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
+      if (!data)
+        return { state: "unsafe", reasonCode: "CARE_MACHINE_NOT_FOUND" };
+      const { resolution, error: lifecycleError } = await findCareLifecycle(
+        client,
+        {
+          id: data.id,
+          machineCode: data.machine_id,
+          status: data.status,
+        },
+      );
       if (lifecycleError || resolution.state === "unsafe") {
         return {
           state: "unsafe",
@@ -188,7 +207,10 @@ function createCareActivationStore(
       return {
         state: "activation_required",
         machine: { id: data.id, machineCode: data.machine_id },
-        sale: { id: resolution.sale.id, buyerPhone: resolution.sale.buyer_phone },
+        sale: {
+          id: resolution.sale.id,
+          buyerPhone: resolution.sale.buyer_phone,
+        },
       };
     },
     async findOwnerAccess(saleId) {
@@ -273,7 +295,8 @@ export async function submitCareSupport(
     !ownership ||
     ownership.sale.id !== access.saleId ||
     ownership.owner.id !== access.ownershipId
-  ) return "not_activated";
+  )
+    return "not_activated";
   const owner = ownership.owner;
 
   const { error: ticketError } = await client.from("support_tickets").insert({

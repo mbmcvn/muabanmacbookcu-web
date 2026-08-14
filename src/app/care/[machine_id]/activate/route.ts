@@ -7,6 +7,7 @@ import {
   careSessionCookieOptions,
   createCareSession,
 } from "@/data/care/care-session";
+import { requestOrigin } from "@/data/care/care-access.server";
 
 export async function POST(
   request: Request,
@@ -19,6 +20,7 @@ export async function POST(
     machineCode,
     customerName: String(form.get("customer_name") ?? ""),
     phone: String(form.get("phone") ?? ""),
+    origin: requestOrigin(request),
   });
   const activation = activationRedirectStatus(result);
   const response = NextResponse.redirect(

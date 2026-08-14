@@ -1,5 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
-import { normalizeMachineCode, prepareActivationName } from "./care-contract.ts";
+import { careAttemptKey } from "./care-access.ts";
+import {
+  normalizeMachineCode,
+  prepareActivationName,
+} from "./care-contract.ts";
 import { normalizeVietnamesePhone } from "./care-access.ts";
 import type { CareAccessContext } from "./care-session.ts";
 
@@ -10,6 +14,7 @@ export type ActivationReason =
   | "CARE_ACTIVATION_NAME_INVALID"
   | "CARE_ACTIVATION_PHONE_INVALID"
   | "CARE_ACTIVATION_PHONE_MISMATCH"
+  | "CARE_ACTIVATION_RATE_LIMITED"
   | "CARE_ALREADY_ACTIVATED"
   | "CARE_ACTIVATION_CREATE_FAILED"
   | "CARE_ACTIVATION_SUCCESS";
@@ -21,7 +26,11 @@ export type ActivationResult = Readonly<{
 type MachineIdentity = Readonly<{ id: string; machineCode: string }>;
 type SaleVerification = Readonly<{ id: string; buyerPhone: string | null }>;
 type ActivationResolution =
-  | Readonly<{ state: "activation_required"; machine: MachineIdentity; sale: SaleVerification }>
+  | Readonly<{
+      state: "activation_required";
+      machine: MachineIdentity;
+      sale: SaleVerification;
+    }>
   | Readonly<{ state: "activated"; access: CareAccessContext }>
   | Readonly<{
       state: "unsafe";
@@ -33,6 +42,7 @@ type ActivationResolution =
     }>;
 
 export type CareActivationStore = {
+  consumeAttempt(keyHash: string): Promise<boolean>;
   resolve(machineCode: string): Promise<ActivationResolution>;
   insertOwner(input: {
     saleId: string;
@@ -46,19 +56,23 @@ export type CareActivationStore = {
 
 export function activationRedirectStatus(result: ActivationResult) {
   if (result.reasonCode === "CARE_ACTIVATION_SUCCESS") return "success";
-  if (result.reasonCode === "CARE_ACTIVATION_PHONE_MISMATCH") return "mismatch";
-  if (
-    result.reasonCode === "CARE_ACTIVATION_NAME_INVALID" ||
-    result.reasonCode === "CARE_ACTIVATION_PHONE_INVALID"
-  ) return "invalid";
   return "failed";
 }
 
 export async function activateCarePassportWithStore(
-  input: { machineCode: string; customerName: string; phone: string },
+  input: {
+    machineCode: string;
+    customerName: string;
+    phone: string;
+    origin: string;
+  },
   store: CareActivationStore,
 ): Promise<ActivationResult> {
   const machineCode = normalizeMachineCode(input.machineCode);
+  const keyHash = careAttemptKey(machineCode, input.origin);
+  if (!(await store.consumeAttempt(keyHash))) {
+    return { reasonCode: "CARE_ACTIVATION_RATE_LIMITED", access: null };
+  }
   const customerName = prepareActivationName(input.customerName);
   const phone = normalizeVietnamesePhone(input.phone);
   if (!customerName) {
@@ -76,7 +90,9 @@ export async function activateCarePassportWithStore(
     return { reasonCode: "CARE_ALREADY_ACTIVATED", access: null };
   }
 
-  const expectedPhone = normalizeVietnamesePhone(resolved.sale.buyerPhone ?? "");
+  const expectedPhone = normalizeVietnamesePhone(
+    resolved.sale.buyerPhone ?? "",
+  );
   if (!expectedPhone || !phonesMatch(phone, expectedPhone)) {
     return { reasonCode: "CARE_ACTIVATION_PHONE_MISMATCH", access: null };
   }
