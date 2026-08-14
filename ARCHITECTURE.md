@@ -247,3 +247,6 @@ Use this file for website technical current state. Use product contracts for pro
 ## Soft Demand capture
 
 `/chon-macbook` offers Demand capture only after the recommendation and an empty technical inventory match. `/may-dang-co` keeps supply-filter semantics and opens an independent editable desired-spec flow only at zero results; URL buckets remain provenance and are never treated as exact desired facts. Both flows use server-only `/api/demand/captcha` and `/api/demand` boundaries. The first-party four-digit CAPTCHA is basic spam friction, not phone verification. The submitted phone remains unverified and owner-only after persistence; referral evidence is acquisition provenance only.
+## Telegram operator notification
+
+After the Demand RPC returns a newly created canonical row (`created: true`), the server-only API makes one best-effort signed call to the operational app. Existing/idempotent results, conflicts, and failed creation do not notify. Notification failure is isolated and never changes the successful Demand response; Telegram remains an operator interrupt while `demand_requests` remains canonical.

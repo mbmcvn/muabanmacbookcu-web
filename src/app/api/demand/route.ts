@@ -5,6 +5,7 @@ import {
   ACQUISITION_SNAPSHOT_SCHEMA,
 } from "@/lib/demand-contract";
 import { demandClientFingerprint, demandRpc } from "@/lib/demand-api.server";
+import { notifyNewDemandBestEffort } from "@/lib/demand-notification.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "submission_conflict" }, { status: 409 });
   if (error || !row)
     return NextResponse.json({ error: "demand_rejected" }, { status: 400 });
+  if (row.created) await notifyNewDemandBestEffort(row.demand_request_id);
   return NextResponse.json(
     { demandRequestId: row.demand_request_id },
     {
