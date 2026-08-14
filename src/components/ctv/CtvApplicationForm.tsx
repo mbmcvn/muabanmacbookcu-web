@@ -187,10 +187,7 @@ export function CtvApplicationForm() {
               >
                 Trải nghiệm mbmc.vn ↗
               </a>
-              <p>
-                Website sẽ mở trong tab mới. Khi trải nghiệm xong, quay lại tab
-                này và chia sẻ những gì bạn nhận thấy.
-              </p>
+              <p>Mở trong tab mới. Trải nghiệm xong, quay lại đây.</p>
             </div>
           )}
           <textarea

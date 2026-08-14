@@ -110,3 +110,59 @@
   color: var(--muted);
   font-size: 0.88rem;
 }
+
+@media (max-width: 39.99rem) {
+  .ctv-join-page {
+    padding-top: 2.5rem;
+  }
+  .ctv-join-page > header {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .ctv-join-page > header :is(h1, p) {
+    margin-bottom: 0;
+  }
+  .ctv-application-form {
+    gap: 1rem;
+  }
+  .ctv-application-form fieldset,
+  .ctv-question,
+  .ctv-captcha,
+  .ctv-success {
+    padding: 1.25rem;
+  }
+  .ctv-application-form fieldset {
+    gap: 1.05rem;
+  }
+  .ctv-application-form fieldset legend {
+    margin-bottom: 0.25rem;
+  }
+  .ctv-application-form label {
+    gap: 0.5rem;
+  }
+  .ctv-application-form input {
+    min-height: 3rem;
+  }
+  .ctv-question {
+    gap: 0.625rem;
+  }
+  .ctv-question textarea {
+    height: 8.25rem;
+    min-height: 7.5rem;
+  }
+  .ctv-question small {
+    line-height: 1.45;
+  }
+  .ctv-exploration-task {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  .ctv-exploration-task p {
+    margin-bottom: 0;
+  }
+  .ctv-exploration-task a {
+    justify-self: start;
+  }
+}
