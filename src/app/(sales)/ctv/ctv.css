@@ -1,0 +1,75 @@
+.ctv-join-page {
+  width: min(100% - 2rem, 48rem);
+  margin: auto;
+  padding: 4rem 0 6rem;
+}
+.ctv-join-page > header {
+  margin-bottom: 2.5rem;
+}
+.ctv-join-page h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+.ctv-application-form {
+  display: grid;
+  gap: 1.5rem;
+}
+.ctv-application-form fieldset,
+.ctv-question,
+.ctv-captcha,
+.ctv-success {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  padding: 1.35rem;
+  background: var(--surface);
+}
+.ctv-application-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+.ctv-application-form input,
+.ctv-question textarea {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+  background: #fff;
+  font: inherit;
+}
+.ctv-question textarea {
+  resize: vertical;
+}
+.ctv-question small {
+  color: var(--muted);
+}
+.ctv-exploration-task {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--accent-soft);
+}
+.ctv-exploration-task a,
+.ctv-application-form button {
+  display: inline-block;
+  border: 0;
+  border-radius: 0.65rem;
+  padding: 0.7rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ctv-application-form button {
+  justify-self: start;
+}
+.ctv-application-form button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.ctv-error {
+  color: #991b1b;
+}
