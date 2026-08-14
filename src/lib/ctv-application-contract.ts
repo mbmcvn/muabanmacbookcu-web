@@ -32,14 +32,10 @@ function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function safeProfileUrl(value: unknown) {
+export function safeProfileHint(value: unknown) {
   if (typeof value !== "string" || value.length > 500) return null;
-  try {
-    const url = new URL(value.trim());
-    return ["http:", "https:"].includes(url.protocol) ? url.toString() : null;
-  } catch {
-    return null;
-  }
+  const profileHint = value.trim();
+  return profileHint ? profileHint : null;
 }
 
 export function parseCtvApplicationV1(value: unknown): Result {
@@ -62,8 +58,8 @@ export function parseCtvApplicationV1(value: unknown): Result {
     value.submittedPhone.length > 40
   )
     return { ok: false, reason: "invalid_phone" };
-  const profileUrl = safeProfileUrl(value.profileUrl);
-  if (!profileUrl) return { ok: false, reason: "invalid_profile_url" };
+  const profileUrl = safeProfileHint(value.profileUrl);
+  if (!profileUrl) return { ok: false, reason: "invalid_profile_hint" };
   if (
     !record(value.answers) ||
     value.answers.schemaVersion !== CTV_ANSWERS_SCHEMA

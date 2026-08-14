@@ -161,9 +161,7 @@ export function CtvApplicationForm() {
           <input
             required
             maxLength={500}
-            type="url"
-            inputMode="url"
-            placeholder="https://…"
+            placeholder="Link, tên hoặc username"
             value={profileUrl}
             onChange={(event) => setProfileUrl(event.target.value)}
           />

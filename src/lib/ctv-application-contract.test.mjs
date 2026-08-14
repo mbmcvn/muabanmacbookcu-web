@@ -14,7 +14,7 @@ const js = ts.transpileModule(source, {
   },
 }).outputText;
 const compiled = { exports: {} };
-vm.runInNewContext(js, { module: compiled, exports: compiled.exports, URL });
+vm.runInNewContext(js, { module: compiled, exports: compiled.exports });
 const {
   parseCtvApplicationV1,
   CTV_QUESTION_IDS,
@@ -36,13 +36,34 @@ const valid = () => ({
 });
 test("complete application succeeds", () =>
   assert.equal(parseCtvApplicationV1(valid()).ok, true));
-test("missing name, unsafe URL, missing answer, and excessive answer fail", () => {
+test("profile discovery hint accepts bounded free-form text and only trims it", () => {
+  for (const profileUrl of [
+    "https://facebook.com/a",
+    "facebook.com/a",
+    "nguyen.a",
+    "@nguyen.a",
+    "Nguyễn A",
+    "javascript:alert(1)",
+  ]) {
+    const result = parseCtvApplicationV1({
+      ...valid(),
+      profileUrl: `  ${profileUrl}  `,
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.value.profileUrl, profileUrl);
+  }
+});
+test("missing name, missing or excessive profile hint, and invalid answers fail", () => {
   assert.equal(
     parseCtvApplicationV1({ ...valid(), displayName: "" }).ok,
     false,
   );
   assert.equal(
-    parseCtvApplicationV1({ ...valid(), profileUrl: "javascript:alert(1)" }).ok,
+    parseCtvApplicationV1({ ...valid(), profileUrl: "  " }).ok,
+    false,
+  );
+  assert.equal(
+    parseCtvApplicationV1({ ...valid(), profileUrl: "x".repeat(501) }).ok,
     false,
   );
   const missing = valid();
@@ -51,6 +72,14 @@ test("missing name, unsafe URL, missing answer, and excessive answer fail", () =
   const long = valid();
   long.answers.ctv_value = "x".repeat(4001);
   assert.equal(parseCtvApplicationV1(long).ok, false);
+});
+test("public form presents the profile field as a free-form discovery hint", () => {
+  const form = fs.readFileSync(
+    new URL("../components/ctv/CtvApplicationForm.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(form, /placeholder="Link, tên hoặc username"/);
+  assert.doesNotMatch(form, /type="url"|inputMode="url"/);
 });
 test("exploration workflow uses a new tab and session draft", () => {
   const form = fs.readFileSync(
