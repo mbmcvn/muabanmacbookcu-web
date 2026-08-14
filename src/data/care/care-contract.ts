@@ -51,13 +51,6 @@ export function normalizeMachineCode(value: string) {
   return value.trim().toUpperCase();
 }
 
-export function normalizePhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-  return digits.startsWith("84") && digits.length === 11
-    ? `0${digits.slice(2)}`
-    : digits;
-}
-
 export function prepareActivationName(value: string) {
   const trimmed = value.trim();
   const length = Array.from(trimmed).length;
@@ -82,3 +75,4 @@ export function mapPublicCareEvent(row: {
     createdAt: row.created_at,
   });
 }
+export { normalizePhone } from "../../lib/customer-phone.ts";

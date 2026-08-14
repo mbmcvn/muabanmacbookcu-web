@@ -87,6 +87,12 @@ Machine detail uses the public Detail/Passport DTO family under `src/app/(sales)
 
 `/chon-macbook` is implemented under `src/app/(sales)/chon-macbook`. Its recommendation engine and questionnaire state are website presentation/product behavior, not operational Machine truth.
 
+Versioned Demand Capture V1 value contracts and validation exist in
+`src/lib/demand-contract.ts`, but no public Demand Capture or Phone OTP UI is
+implemented. Canonical verified-contact and immutable soft-demand persistence
+belong to `mbmc-care`; production Phone OTP remains dependent on external
+Supabase Phone Auth and SMS-provider configuration.
+
 ## CTV referral and contact routing
 
 The implemented public contact model keeps contact owner and communication
@@ -237,3 +243,7 @@ No Handover route, reader, query, DTO, or Care block is claimed to exist. The ca
 ## Documentation authority
 
 Use this file for website technical current state. Use product contracts for product semantics. Treat `docs/repository-audit.md`, migration plans, phase plans, and gap analyses as historical/planning records unless explicitly re-verified.
+
+## Soft Demand capture
+
+`/chon-macbook` offers Demand capture only after the recommendation and an empty technical inventory match. `/may-dang-co` keeps supply-filter semantics and opens an independent editable desired-spec flow only at zero results; URL buckets remain provenance and are never treated as exact desired facts. Both flows use server-only `/api/demand/captcha` and `/api/demand` boundaries. The first-party four-digit CAPTCHA is basic spam friction, not phone verification. The submitted phone remains unverified and owner-only after persistence; referral evidence is acquisition provenance only.

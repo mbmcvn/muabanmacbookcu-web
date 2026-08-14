@@ -29,6 +29,7 @@ import {
   withContactChannel,
 } from "@/hooks/useContactChannel";
 import { CopyInventoryLink } from "@/components/contact/CopyInventoryLink";
+import { DesiredSpecDemand } from "./DesiredSpecDemand";
 
 const defaultState = (): InventoryUrlState => ({
   query: "",
@@ -41,7 +42,7 @@ export function InventoryExplorer({
 }: {
   machines: PublicMachineSummaryV1[];
 }) {
-  const { channel } = useContactChannel();
+  const { channel, referralEvidence } = useContactChannel();
   const [state, setState] = useState<InventoryUrlState>(defaultState);
   const normalized = useMemo(
     () => normalizePublicInventory(machines),
@@ -158,7 +159,13 @@ export function InventoryExplorer({
       {results.length ? (
         <MachineCatalog machines={results} />
       ) : (
-        <InventoryEmptyState />
+        <>
+          <InventoryEmptyState />
+          <DesiredSpecDemand
+            state={state}
+            referralEvidence={referralEvidence}
+          />
+        </>
       )}
     </>
   );

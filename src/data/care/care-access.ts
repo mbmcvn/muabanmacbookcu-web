@@ -1,5 +1,7 @@
 ﻿import { createHmac } from "node:crypto";
-import { normalizeMachineCode, normalizePhone } from "./care-contract.ts";
+import { normalizeMachineCode } from "./care-contract.ts";
+import { normalizeVietnamesePhone } from "../../lib/customer-phone.ts";
+export { normalizeVietnamesePhone } from "../../lib/customer-phone.ts";
 import type { CareAccessContext } from "./care-session.ts";
 import type { CareOwnershipReason } from "./care-ownership.ts";
 
@@ -41,10 +43,6 @@ export function careContextMatches(
     current.saleId === access.saleId &&
     current.ownershipId === access.ownershipId,
   );
-}
-export function normalizeVietnamesePhone(value: string) {
-  const normalized = normalizePhone(value);
-  return /^0(?:3|5|7|8|9)\d{8}$/.test(normalized) ? normalized : null;
 }
 export function careAttemptKey(machineCode: string, origin: string) {
   const secret = process.env.CARE_SESSION_SECRET;

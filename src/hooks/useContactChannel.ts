@@ -116,17 +116,24 @@ export function useContactChannel() {
   const [channel, setChannel] = useState<ContactChannel>(null);
   const [owner, setOwner] = useState<CtvContactOwner | null>(cachedOwner);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralEvidence, setReferralEvidence] = useState<string | null>(null);
 
   useEffect(() => {
     const urlValue = new URLSearchParams(window.location.search).get("channel");
     const urlReferral = new URLSearchParams(window.location.search).get("ref");
+
     const urlChannel = resolveContactChannel(urlValue);
     let nextChannel: ContactChannel = null;
     if (urlChannel) {
       localStorage.setItem(STORAGE_KEY, urlChannel);
       nextChannel = urlChannel;
     }
-    const timeout = window.setTimeout(() => setChannel(nextChannel), 0);
+    const timeout = window.setTimeout(() => {
+      setChannel(nextChannel);
+      setReferralEvidence(
+        urlReferral?.trim().slice(0, 64) || readCookie(CTV_REFERRAL_COOKIE),
+      );
+    }, 0);
     let cancelled = false;
     void (async () => {
       const persisted = readCookie(CTV_REFERRAL_COOKIE);
@@ -152,6 +159,7 @@ export function useContactChannel() {
   return {
     channel,
     referralCode,
+    referralEvidence,
     ownerType: contact.ownerType,
     contactUrl: contact.href,
     contactLabel: contact.label,
