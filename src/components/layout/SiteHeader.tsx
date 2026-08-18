@@ -16,7 +16,13 @@ import {
   withContactChannel,
 } from "@/hooks/useContactChannel";
 
-type HeaderIconName = "contact" | "inventory" | "policy" | "sell" | "selector";
+type HeaderIconName =
+  | "contact"
+  | "inventory"
+  | "people"
+  | "policy"
+  | "sell"
+  | "selector";
 type HeaderLink = Readonly<{
   href: string;
   label: string;
@@ -38,6 +44,13 @@ const iconPaths: Record<HeaderIconName, ReactNode> = {
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />
       <rect x="14" y="14" width="7" height="7" rx="1" />
+    </>
+  ),
+  people: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
     </>
   ),
   policy: (
@@ -95,6 +108,11 @@ export function SiteHeader() {
       href: withContactChannel("/may-dang-co", channel),
       label: "Máy đang có",
       icon: "inventory",
+    },
+    {
+      href: withContactChannel("/people", channel),
+      label: "Khách hàng",
+      icon: "people",
     },
     {
       href: withContactChannel("/chinh-sach", channel),

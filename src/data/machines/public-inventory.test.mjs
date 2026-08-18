@@ -138,13 +138,16 @@ test("public policy hub owns all five canonical destinations",()=>{
 });
 test("desktop and mobile navigation share one canonical accessible link source",()=>{
   const source=readFileSync(new URL("../../components/layout/SiteHeader.tsx",import.meta.url),"utf8");
-  for(const label of ["Chọn MacBook","Máy đang có","Chính sách","Bán máy cho MBMC"])assert.match(source,new RegExp(`label: "${label}"`));
+  for(const label of ["Chọn MacBook","Máy đang có","Khách hàng","Chính sách","Bán máy cho MBMC"])assert.match(source,new RegExp(`label: "${label}"`));
+  assert.match(source,/href: withContactChannel\("\/people", channel\),\s*label: "Khách hàng",\s*icon: "people",/);
+  assert.ok(source.indexOf('label: "Máy đang có"') < source.indexOf('label: "Khách hàng"'));
+  assert.ok(source.indexOf('label: "Khách hàng"') < source.indexOf('label: "Chính sách"'));
   assert.match(source,/label: contactLabel/);
   assert.match(source,/const links: readonly HeaderLink\[\] = \[/);
   assert.match(source,/links\.map\(\(link\) => renderLink\(link\)\)/);
   assert.match(source,/links\s*\.filter\(\(link\) => !link\.contact\)\s*\.map\(\(link\) => renderLink\(link, true\)\)/);
   assert.match(source,/ContactActionLink[^>]+className="mobile-contact-action"[^>]+compact/);
-  for(const route of ["/chon-macbook","/may-dang-co","/chinh-sach","/"])assert.match(source,new RegExp(`withContactChannel\\("${route.replace("/","\\/")}"`));
+  for(const route of ["/chon-macbook","/may-dang-co","/people","/chinh-sach","/"])assert.match(source,new RegExp(`withContactChannel\\("${route.replace("/","\\/")}"`));
   assert.doesNotMatch(source,/withContactChannel\("https:\/\//);
   assert.match(source,/aria-label=\{menuOpen \? "Đóng menu" : "Mở menu"\}/);
   assert.match(source,/aria-expanded=\{menuOpen\}/);
@@ -156,7 +159,7 @@ test("desktop and mobile navigation share one canonical accessible link source",
   assert.match(source,/!menuRef\.current\?\.contains\(event\.target as Node\)/);
   assert.match(source,/window\.matchMedia\("\(min-width: 56rem\)"\)/);
   assert.match(source,/if \(event\.matches\) closeMenu\(\)/);
-  for(const icon of ["selector","inventory","policy","sell","contact"])assert.match(source,new RegExp(`${icon}:`));
+  for(const icon of ["selector","inventory","people","policy","sell","contact"])assert.match(source,new RegExp(`${icon}:`));
   assert.match(source,/aria-hidden="true"[\s\S]*?className="mobile-nav-icon"/);
   assert.doesNotMatch(source,/😀|☰|✕|🛡|🤝|💬/);
   assert.match(source,/aria-current=\{current\}/);
