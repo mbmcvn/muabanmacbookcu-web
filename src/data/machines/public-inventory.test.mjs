@@ -139,6 +139,7 @@ test("public policy hub owns all five canonical destinations",()=>{
 test("desktop and mobile navigation share one canonical accessible link source",()=>{
   const source=readFileSync(new URL("../../components/layout/SiteHeader.tsx",import.meta.url),"utf8");
   for(const label of ["Chọn MacBook","Máy đang có","Khách hàng","Chính sách","Bán máy cho MBMC"])assert.match(source,new RegExp(`label: "${label}"`));
+  for(const [label,compactLabel] of [["Chọn MacBook","Chọn Mac"],["Máy đang có","Máy sẵn"],["Bán máy cho MBMC","Bán lại Mac"]])assert.match(source,new RegExp(`label: "${label}",\\s*compactLabel: "${compactLabel}"`));
   assert.match(source,/href: withContactChannel\("\/people", channel\),\s*label: "Khách hàng",\s*icon: "people",/);
   assert.ok(source.indexOf('label: "Máy đang có"') < source.indexOf('label: "Khách hàng"'));
   assert.ok(source.indexOf('label: "Khách hàng"') < source.indexOf('label: "Chính sách"'));
@@ -146,6 +147,8 @@ test("desktop and mobile navigation share one canonical accessible link source",
   assert.match(source,/const links: readonly HeaderLink\[\] = \[/);
   assert.match(source,/links\.map\(\(link\) => renderLink\(link\)\)/);
   assert.match(source,/links\s*\.filter\(\(link\) => !link\.contact\)\s*\.map\(\(link\) => renderLink\(link, true\)\)/);
+  assert.match(source,/const content = mobile \? \([\s\S]*?<span>\{link\.label\}<\/span>[\s\S]*?desktop-nav-label-full--compactable[\s\S]*?desktop-nav-label-compact/);
+  assert.match(source,/!mobile && link\.compactLabel \? link\.label : undefined/);
   assert.match(source,/ContactActionLink[^>]+className="mobile-contact-action"[^>]+compact/);
   for(const route of ["/chon-macbook","/may-dang-co","/people","/chinh-sach","/"])assert.match(source,new RegExp(`withContactChannel\\("${route.replace("/","\\/")}"`));
   assert.doesNotMatch(source,/withContactChannel\("https:\/\//);
@@ -167,6 +170,9 @@ test("desktop and mobile navigation share one canonical accessible link source",
   const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
   assert.match(css,/\.desktop-navigation \{ display: none;/);
   assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.desktop-navigation \{ display: flex; \}[\s\S]*?\.mobile-header-actions \{ display: none; \}/);
+  assert.match(css,/\.desktop-navigation a \{[^}]*white-space: nowrap/);
+  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.desktop-nav-label-full--compactable \{ display: none; \}[\s\S]*?\.desktop-nav-label-compact \{ display: inline; \}/);
+  assert.match(css,/@media \(min-width: 72rem\) \{[\s\S]*?\.desktop-nav-label-full \{ display: inline; \}[\s\S]*?\.desktop-nav-label-compact \{ display: none; \}/);
   assert.match(css,/\.mobile-contact-action \{[^}]*white-space: nowrap/);
   assert.match(css,/\.contact-action-icon \{ width: 1rem; height: 1rem/);
   assert.match(css,/\.mobile-header-menu a \{[^}]*min-height: 2\.9rem;[^}]*gap: \.75rem/);

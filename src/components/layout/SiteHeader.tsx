@@ -26,6 +26,7 @@ type HeaderIconName =
 type HeaderLink = Readonly<{
   href: string;
   label: string;
+  compactLabel?: string;
   icon: HeaderIconName;
   external?: boolean;
   contact?: boolean;
@@ -102,11 +103,13 @@ export function SiteHeader() {
     {
       href: withContactChannel("/chon-macbook", channel),
       label: "Chọn MacBook",
+      compactLabel: "Chọn Mac",
       icon: "selector",
     },
     {
       href: withContactChannel("/may-dang-co", channel),
       label: "Máy đang có",
+      compactLabel: "Máy sẵn",
       icon: "inventory",
     },
     {
@@ -122,6 +125,7 @@ export function SiteHeader() {
     {
       href: "https://muabanmacbookcu.com/thumua/",
       label: "Bán máy cho MBMC",
+      compactLabel: "Bán lại Mac",
       icon: "sell",
       external: true,
     },
@@ -168,14 +172,30 @@ export function SiteHeader() {
   const renderLink = (link: HeaderLink, mobile = false) => {
     const className = link.contact ? "header-contact" : undefined;
     const current = isCurrent(link.href) ? "page" : undefined;
-    const content = (
+    const content = mobile ? (
       <>
-        {mobile ? <HeaderNavIcon name={link.icon} /> : null}
+        <HeaderNavIcon name={link.icon} />
         <span>{link.label}</span>
       </>
+    ) : (
+      <>
+        <span
+          className={`desktop-nav-label-full${link.compactLabel ? " desktop-nav-label-full--compactable" : ""}`}
+        >
+          {link.label}
+        </span>
+        {link.compactLabel ? (
+          <span aria-hidden="true" className="desktop-nav-label-compact">
+            {link.compactLabel}
+          </span>
+        ) : null}
+      </>
     );
+    const accessibleLabel =
+      !mobile && link.compactLabel ? link.label : undefined;
     return link.external ? (
       <a
+        aria-label={accessibleLabel}
         className={className}
         href={link.href}
         key={link.label}
@@ -185,6 +205,7 @@ export function SiteHeader() {
       </a>
     ) : (
       <Link
+        aria-label={accessibleLabel}
         aria-current={current}
         className={className}
         href={link.href}
