@@ -619,6 +619,20 @@ test("desktop and mobile navigation share one canonical accessible link source",
       source.indexOf('label: "Chính sách"'),
   );
   assert.match(source, /label: contactLabel/);
+  assert.match(
+    source,
+    /const resolvedContactHref = contactUrl \?\? defaultContact\.href/,
+  );
+  assert.equal(source.match(/href: resolvedContactHref/g)?.length, 2);
+  assert.match(
+    source,
+    /href: resolvedContactHref,\s*label: "Bán máy cho MBMC",\s*compactLabel: "Bán lại Mac",/,
+  );
+  assert.match(
+    source,
+    /href: resolvedContactHref,\s*label: contactLabel,\s*icon: "contact",/,
+  );
+  assert.doesNotMatch(source, /https:\/\/muabanmacbookcu\.com\/thumua\//);
   assert.match(source, /const links: readonly HeaderLink\[\] = \[/);
   assert.match(source, /links\.map\(\(link\) => renderLink\(link\)\)/);
   assert.match(

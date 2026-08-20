@@ -91,6 +91,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { channel, contactLabel, contactUrl } = useContactChannel();
   const defaultContact = contactChannels[0];
+  const resolvedContactHref = contactUrl ?? defaultContact.href;
   const [menuState, setMenuState] = useState({ open: false, pathname });
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -123,14 +124,14 @@ export function SiteHeader() {
       icon: "policy",
     },
     {
-      href: "https://muabanmacbookcu.com/thumua/",
+      href: resolvedContactHref,
       label: "Bán máy cho MBMC",
       compactLabel: "Bán lại Mac",
       icon: "sell",
       external: true,
     },
     {
-      href: contactUrl ?? defaultContact.href,
+      href: resolvedContactHref,
       label: contactLabel,
       icon: "contact",
       external: true,
