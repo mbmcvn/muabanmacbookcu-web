@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
-import { projectPublicCandidates, publicDetailBySlug, publicSummaries } from "./project-public-candidates.ts";
+import {
+  projectPublicCandidates,
+  publicDetailBySlug,
+  publicSummaries,
+} from "./project-public-candidates.ts";
 import {
   buildInventoryShareUrl,
   countFacetOption,
@@ -21,1036 +25,2770 @@ import {
   toggleMultiFacet,
 } from "./public-inventory-query.ts";
 import { loadPublicInventoryState } from "./public-inventory-load-state.ts";
-import { nextOpenFilter, selectFacetValues, selectionKeepsFilterOpen } from "../../app/(sales)/may-dang-co/_components/inventory-filter-interaction.ts";
-import { formatMachineCardCondition, formatMachineCardDisplayName, formatMachineCardSpecs, getMachineCardBatteryFact } from "../../app/(sales)/may-dang-co/_components/machine-card-presentation.ts";
-import { buildMachineEvidence, publicConditionDescription } from "../../app/(sales)/may/[slug]/_components/machine-evidence-presentation.ts";
-import { clampGalleryIndex, galleryIndexAfterSwipe, resistGalleryDrag, resolveGalleryDragIndex, wrapGalleryIndex } from "../../app/(sales)/may/[slug]/_components/gallery-navigation.ts";
+import {
+  nextOpenFilter,
+  selectFacetValues,
+  selectionKeepsFilterOpen,
+} from "../../app/(sales)/may-dang-co/_components/inventory-filter-interaction.ts";
+import {
+  formatMachineCardCondition,
+  formatMachineCardDisplayName,
+  formatMachineCardSpecs,
+  getMachineCardBatteryFact,
+} from "../../app/(sales)/may-dang-co/_components/machine-card-presentation.ts";
+import {
+  buildMachineEvidence,
+  publicConditionDescription,
+} from "../../app/(sales)/may/[slug]/_components/machine-evidence-presentation.ts";
+import {
+  clampGalleryIndex,
+  galleryIndexAfterSwipe,
+  resistGalleryDrag,
+  resolveGalleryDragIndex,
+  wrapGalleryIndex,
+} from "../../app/(sales)/may/[slug]/_components/gallery-navigation.ts";
 import { classifyGalleryImageShape } from "../../app/(sales)/may/[slug]/_components/gallery-image-shape.ts";
-import { clampInspectionScale, clampInspectionTransform, inspectionPanBounds } from "../../app/(sales)/may/[slug]/_components/image-inspection-transform.ts";
-import { buildPublicSpecificationRows, specificationsForMachine } from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
-import { formatPublicMachineDisplayName, formatPublicMachineSpecs } from "../../lib/presentation/machine.ts";
+import {
+  clampInspectionScale,
+  clampInspectionTransform,
+  inspectionPanBounds,
+} from "../../app/(sales)/may/[slug]/_components/image-inspection-transform.ts";
+import {
+  buildPublicSpecificationRows,
+  specificationsForMachine,
+} from "../../app/(sales)/may/[slug]/_components/technical-specifications-presentation.ts";
+import {
+  formatPublicMachineDisplayName,
+  formatPublicMachineSpecs,
+} from "../../lib/presentation/machine.ts";
 import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { selectHomepageMachines } from "../../app/(sales)/_components/home/homepage-machine-selection.ts";
 import { buildPublicLimitations } from "../../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts";
 import { machinePolicyAnalyticsPayload } from "../../lib/analytics/machine-policy.ts";
-import { loadPublicMachinePolicySummary, mapPublicMachinePolicySummary } from "./public-machine-policy-summary.server.ts";
+import {
+  loadPublicMachinePolicySummary,
+  mapPublicMachinePolicySummary,
+} from "./public-machine-policy-summary.server.ts";
 import { PUBLIC_MACHINE_DETAIL_V1_KEYS } from "../../lib/public-projection/contracts.ts";
-import { compactContactLabel, resolveContactChannel, withContactChannel } from "../../hooks/useContactChannel.ts";
+import {
+  compactContactLabel,
+  resolveContactChannel,
+  withContactChannel,
+} from "../../hooks/useContactChannel.ts";
 
-function row(code="MBMC-A001",overrides={}){
-  const revision=3;
-  return {machine_id:code,status:"new_in_stock",deleted_at:null,model_text:"MacBook Air M2 2022 13 inch",chip:"Apple M2",ram_gb:8,ssd_gb:256,color:"Midnight",retail_price_expected:15_800_000,battery_health:92,battery_cycle:120,rank:"A",
-    machine_publications:{status:"published",slug:code.toLowerCase(),revision:4,approved_by:"private-owner",approved_at:"2026-07-20T01:00:00Z",approved_editorial_revision:revision,published_by:"private-owner",first_published_at:"2026-07-20T02:00:00Z",published_at:"2026-07-20T02:00:00Z",published_editorial_revision:revision,updated_at:"2026-07-20T02:00:00Z"},
-    machine_editorials:{revision,public_condition_summary:"Ngoại hình tốt.",expert_summary:null,suitable_for:[],not_suitable_for:[],contextual_label:null,included_items:{charger:null,cable:null,box:null,bag:null,accessories:[]},policy_applicability:[],reviewed_by:"private-owner",reviewed_at:"2026-07-20T00:30:00Z"},
-    machine_images:[{id:`${code}-cover`,public_url:`https://img.example/${code}.webp`,image_type:"cover",image_stage:"listing",visibility:"public",sort_order:0,is_cover:true}],...overrides};
+function row(code = "MBMC-A001", overrides = {}) {
+  const revision = 3;
+  return {
+    machine_id: code,
+    status: "new_in_stock",
+    deleted_at: null,
+    model_text: "MacBook Air M2 2022 13 inch",
+    chip: "Apple M2",
+    ram_gb: 8,
+    ssd_gb: 256,
+    color: "Midnight",
+    retail_price_expected: 15_800_000,
+    battery_health: 92,
+    battery_cycle: 120,
+    rank: "A",
+    public_availability: {
+      availability: "available",
+      reservation_kind: null,
+      state_valid: true,
+    },
+    machine_publications: {
+      status: "published",
+      slug: code.toLowerCase(),
+      revision: 4,
+      approved_by: "private-owner",
+      approved_at: "2026-07-20T01:00:00Z",
+      approved_editorial_revision: revision,
+      published_by: "private-owner",
+      first_published_at: "2026-07-20T02:00:00Z",
+      published_at: "2026-07-20T02:00:00Z",
+      published_editorial_revision: revision,
+      updated_at: "2026-07-20T02:00:00Z",
+    },
+    machine_editorials: {
+      revision,
+      public_condition_summary: "Ngoại hình tốt.",
+      expert_summary: null,
+      suitable_for: [],
+      not_suitable_for: [],
+      contextual_label: null,
+      included_items: {
+        charger: null,
+        cable: null,
+        box: null,
+        bag: null,
+        accessories: [],
+      },
+      policy_applicability: [],
+      reviewed_by: "private-owner",
+      reviewed_at: "2026-07-20T00:30:00Z",
+    },
+    machine_images: [
+      {
+        id: `${code}-cover`,
+        public_url: `https://img.example/${code}.webp`,
+        image_type: "cover",
+        image_stage: "listing",
+        visibility: "public",
+        sort_order: 0,
+        is_cover: true,
+      },
+    ],
+    ...overrides,
+  };
 }
 
-function reason(result,name){return !result.eligible&&result.reasons.includes(name);}
+function reason(result, name) {
+  return !result.eligible && result.reasons.includes(name);
+}
 
-test("multiple eligible rows become exact public summaries",()=>{const items=publicSummaries([row("MBMC-A002"),row("MBMC-A001")]);assert.deepEqual(items.map(x=>x.code),["MBMC-A001","MBMC-A002"]);assert.equal(items.every(x=>x.schemaVersion==="public-machine-summary.v1"),true);});
-test("sold, unpublished, and archived rows are excluded",()=>{const draft=row("MBMC-DRAFT");draft.machine_publications={...draft.machine_publications,status:"draft",approved_by:null,approved_at:null,approved_editorial_revision:null,published_by:null,first_published_at:null,published_at:null,published_editorial_revision:null};const archived=row("MBMC-ARCH");archived.machine_publications={...archived.machine_publications,status:"archived"};assert.deepEqual(publicSummaries([row("MBMC-SOLD",{status:"sold"}),draft,archived]),[]);});
-test("stale revision, missing price, and missing public cover are denied",()=>{const stale=row("MBMC-STALE");stale.machine_editorials={...stale.machine_editorials,revision:4};const noPrice=row("MBMC-NOPRICE",{retail_price_expected:null});const noImage=row("MBMC-NOIMAGE",{machine_images:[]});const [a,b,c]=projectPublicCandidates([stale,noPrice,noImage]);assert.equal(reason(a,"editorial_revision_mismatch"),true);assert.equal(reason(b,"invalid_retail_price"),true);assert.equal(reason(c,"invalid_public_cover"),true);});
-test("private images never enter summary or gallery",()=>{const candidate=row();candidate.machine_images.push({id:"private",public_url:"https://private.example/proof.webp",image_type:"proof",image_stage:"source",visibility:"staff",sort_order:-1,is_cover:false});const detail=publicDetailBySlug([candidate],"mbmc-a001");assert.ok(detail);assert.equal(JSON.stringify(detail).includes("private.example"),false);});
-test("summaries contain no operational fields or internal actor values",()=>{const summary=publicSummaries([row()])[0];const serialized=JSON.stringify(summary);for(const forbidden of ["approved_by","reviewed_by","deleted_at","machine_images","private-owner"])assert.equal(serialized.includes(forbidden),false);});
-test("search covers model, chip, RAM and SSD configuration",()=>{const items=publicSummaries([row()]);for(const query of ["MacBook Air","Apple M2","8gb ram","256gb ssd"])assert.equal(filterAndSortPublicInventory(items,query,"Tất cả","relevance").length,1,query);});
-test("price filters and sorting use DTO money deterministically",()=>{const items=publicSummaries([row("MBMC-HIGH",{retail_price_expected:19_000_000}),row("MBMC-LOW",{retail_price_expected:12_000_000}),row("MBMC-MID",{retail_price_expected:16_000_000})]);assert.deepEqual(filterAndSortPublicInventory(items,"","Dưới 15 triệu","relevance").map(x=>x.code),["MBMC-LOW"]);assert.deepEqual(filterAndSortPublicInventory(items,"","Tất cả","price-desc").map(x=>x.code),["MBMC-HIGH","MBMC-MID","MBMC-LOW"]);});
-test("detail resolves only an eligible immutable public slug",()=>{assert.equal(publicDetailBySlug([row()],"mbmc-a001")?.schemaVersion,"public-machine-detail.v1");assert.equal(publicDetailBySlug([row()],"unknown"),null);assert.equal(publicDetailBySlug([row("MBMC-SOLD",{status:"sold"})],"mbmc-sold"),null);});
-test("verification section is hidden when the public DTO is empty",()=>{const detail=publicDetailBySlug([row()],"mbmc-a001");assert.deepEqual(detail?.verifications,[]);const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineVerification.tsx",import.meta.url),"utf8");assert.match(source,/if \(items\.length === 0\) return null/);});
-test("verified public rows are allowlisted and ordered canonically",()=>{const machine=row("MBMC-VERIFY",{machine_verifications:[{verification_code:"WIFI",verified:true,verified_at:"2026-08-01T00:00:00Z",verified_by:"private-staff",public:true,internal_notes:"private"},{verification_code:"BOOT",verified:true,verified_at:"2026-08-01T00:00:00Z",verified_by:"private-staff",public:true}]});const detail=publicDetailBySlug([machine],"mbmc-verify");assert.deepEqual(detail?.verifications,[{code:"BOOT",verified:true,verifiedAt:"2026-08-01T00:00:00Z"},{code:"WIFI",verified:true,verifiedAt:"2026-08-01T00:00:00Z"}]);assert.doesNotMatch(JSON.stringify(detail?.verifications),/verified_by|internal_notes|private-staff/);});
-test("private, failed, incomplete, and unknown verification rows never render",()=>{const machine=row("MBMC-PRIVATE",{machine_verifications:[{verification_code:"DISPLAY",verified:true,verified_at:"2026-08-01T00:00:00Z",public:false},{verification_code:"KEYBOARD",verified:false,verified_at:"2026-08-01T00:00:00Z",public:true},{verification_code:"NOT_A_CODE",verified:true,verified_at:"2026-08-01T00:00:00Z",public:true}]});assert.deepEqual(publicDetailBySlug([machine],"mbmc-private")?.verifications,[]);});
-test("latest duplicate verification code wins without exposing a failed row",()=>{const machine=row("MBMC-DUPE",{machine_verifications:[{verification_code:"PORTS",verified:true,verified_at:"2026-08-01T00:00:00Z",public:true},{verification_code:"PORTS",verified:false,verified_at:"2026-08-02T00:00:00Z",public:true}]});assert.deepEqual(publicDetailBySlug([machine],"mbmc-dupe")?.verifications,[]);});
-test("verification component renders compact successful rows only",()=>{const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineVerification.tsx",import.meta.url),"utf8");assert.match(source,/items\.map/);assert.match(source,/✓/);assert.doesNotMatch(source,/Không xác minh|Thất bại|failed|verifiedAt/);const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");assert.ok(dossier.indexOf("<PublicMachineFitRecommendation")<dossier.indexOf("<MachineVerification"));assert.ok(dossier.indexOf("<MachineVerification")<dossier.indexOf("<VerifiedPublicInformation"));});
-test("detail DTO allow-list contains the verification collection without private fields",()=>{assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes("verifications"),true);for(const field of ["verifiedBy","staff","internalNotes","repairNotes","inspectionComments"])assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes(field),false);});
-const policyRpcRow={machine_public_identifier:"MBMC-A001",policy_version:"mbmc-policy-v1",summary_title:"Quyền lợi của máy này",warranty_summary_items:["Bảo hành theo bản chiếu"],care_availability_wording:"Care theo bản chiếu",warranty_policy_url:"/chinh-sach/bao-hanh",mbmc_care_policy_url:"/chinh-sach/mbmc-care",machine_id_persistence_wording:"Lưu theo Machine ID"};
-test("RPC row maps to the public policy DTO without calculating policy",()=>{
-  assert.deepEqual(mapPublicMachinePolicySummary(policyRpcRow),{policyVersion:"mbmc-policy-v1",title:"Quyền lợi của máy này",warrantyItems:["Bảo hành theo bản chiếu"],careWording:"Care theo bản chiếu",warrantyPolicyUrl:"/chinh-sach/bao-hanh",carePolicyUrl:"/chinh-sach/mbmc-care",machineIdWording:"Lưu theo Machine ID"});
-});
-test("policy RPC handles success, zero rows, errors, and malformed rows",async()=>{
-  const rpc=(data,error=null)=>({rpc:async()=>({data,error})});
-  assert.deepEqual(await loadPublicMachinePolicySummary(rpc([policyRpcRow]),"00000000-0000-0000-0000-000000000001"),mapPublicMachinePolicySummary(policyRpcRow));
-  assert.equal(await loadPublicMachinePolicySummary(rpc([]),"00000000-0000-0000-0000-000000000001"),null);
-  const originalError=console.error; console.error=()=>{};
-  try { assert.equal(await loadPublicMachinePolicySummary(rpc(null,{code:"RPC_FAIL"}),"00000000-0000-0000-0000-000000000001"),null); }
-  finally { console.error=originalError; }
-  assert.equal(await loadPublicMachinePolicySummary(rpc([{...policyRpcRow,warranty_summary_items:"invalid"}]),"00000000-0000-0000-0000-000000000001"),null);
-});
-test("editorial policy applicability remains array-only",()=>{
-  const candidate=row();
-  candidate.machine_editorials.policy_applicability=["editorial-only"];
-  const detail=publicDetailBySlug([candidate],"mbmc-a001");
-  assert.deepEqual(detail?.policyApplicability,["editorial-only"]);
-  assert.equal(detail?.policySummary,undefined);
-  candidate.machine_editorials.policy_applicability=policyRpcRow;
-  assert.deepEqual(publicDetailBySlug([candidate],"mbmc-a001")?.policyApplicability,[]);
-});
-test("missing policy projection is optional and produces no fabricated fallback",()=>{
-  const detail=publicDetailBySlug([row()],"mbmc-a001");
-  assert.ok(detail);
-  assert.equal(detail.policySummary,undefined);
-  assert.doesNotMatch(JSON.stringify(detail),/expiry|Care price|01 tháng|07 ngày/i);
-});
-test("policy analytics payload contains public context only",()=>{
-  const payload=machinePolicyAnalyticsPayload({publicMachineId:"MBMC-A001",machineSlug:"mbmc-a001",policyVersion:"v1",hasCareWording:true});
-  assert.deepEqual(Object.keys(payload),["publicMachineId","machineSlug","policyVersion","hasCareWording"]);
-  assert.doesNotMatch(JSON.stringify(payload),/phone|customer|saleId|ticket/i);
-});
-test("policy summary uses semantic mobile-safe markup and canonical projection links",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachinePolicySummary.tsx",import.meta.url),"utf8");
-  assert.match(source,/<section[^>]+aria-labelledby=/);
-  assert.match(source,/<h2 id="machine-policy-heading"/);
-  assert.match(source,/policy\.warrantyPolicyUrl/);
-  assert.match(source,/policy\.carePolicyUrl/);
-  assert.doesNotMatch(source,/01 tháng|07 ngày|\d+[.,]?\d*\s*(?:₫|VND|triệu)/i);
-});
-test("public repository owns RPC-supplied relative policy routes",()=>{
-  const repository=readFileSync(new URL("./repositories/supabase-public-machine-repository.ts",import.meta.url),"utf8");
-  assert.match(repository,/\bid,/);
-  assert.match(repository,/loadPublicMachinePolicySummary\(\s*client,\s*machineId,?\s*\)/);
-  for(const route of ["bao-hanh","mbmc-care","version/mbmc-policy-v1"]){
-    assert.equal(existsSync(new URL(`../../app/(sales)/chinh-sach/${route}/page.tsx`,import.meta.url)),true,route);
-  }
-  assert.equal(policyRpcRow.warranty_policy_url.startsWith("/"),true);
-  assert.equal(policyRpcRow.mbmc_care_policy_url.startsWith("/"),true);
-});
-test("public policy hub owns all five canonical destinations",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/page.tsx",import.meta.url),"utf8");
-  for(const route of ["/chinh-sach/bao-hanh","/chinh-sach/mbmc-care","/chinh-sach/version/mbmc-policy-v1","/chinh-sach/cong-tac-vien","/chinh-sach/dai-ly"])assert.match(source,new RegExp(`href: "${route}"`));
-  assert.match(source,/title="Chính sách MBMC"/);
-  assert.match(source,/Dành cho khách hàng/);
-  assert.match(source,/Dành cho đối tác/);
-  assert.equal(source.match(/status: "Đang hoàn thiện"/g)?.length,2);
-  const customer=source.match(/const customerPolicies:[\s\S]*?= \[([\s\S]*?)\n\];/)?.[1]??"";
-  const partner=source.match(/const partnerPolicies:[\s\S]*?= \[([\s\S]*?)\n\];/)?.[1]??"";
-  assert.equal(customer.match(/href: "\/chinh-sach\//g)?.length,3);
-  assert.equal(partner.match(/href: "\/chinh-sach\//g)?.length,2);
-  assert.match(source,/<h2 id="customer-policy-heading">Dành cho khách hàng<\/h2>/);
-  assert.match(source,/<h2 id="partner-policy-heading">Dành cho đối tác<\/h2>/);
-  assert.match(source,/ContactActionLink[^>]+label="Nhắn MBMC trên Zalo"/);
-  assert.match(source,/<Link className="policy-hub-card" href=\{policy\.href\}/);
-  assert.doesNotMatch(source,/<Link[^>]*>[\s\S]*?<a\b/);
-  assert.doesNotMatch(source,/😀|🛡|❤️|🤝|🏪|💬/);
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\.policy-hub-grid--customer \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(css,/\.policy-hub-grid--partner \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-hub-grid--customer, \.policy-hub-grid--partner \{ grid-template-columns: minmax\(0, 1fr\)/);
-  assert.match(css,/\.policy-hub-card:focus-visible/);
-});
-test("desktop and mobile navigation share one canonical accessible link source",()=>{
-  const source=readFileSync(new URL("../../components/layout/SiteHeader.tsx",import.meta.url),"utf8");
-  for(const label of ["Chọn MacBook","Máy đang có","Khách hàng","Chính sách","Bán máy cho MBMC"])assert.match(source,new RegExp(`label: "${label}"`));
-  for(const [label,compactLabel] of [["Chọn MacBook","Chọn Mac"],["Máy đang có","Máy sẵn"],["Bán máy cho MBMC","Bán lại Mac"]])assert.match(source,new RegExp(`label: "${label}",\\s*compactLabel: "${compactLabel}"`));
-  assert.match(source,/href: withContactChannel\("\/people", channel\),\s*label: "Khách hàng",\s*icon: "people",/);
-  assert.ok(source.indexOf('label: "Máy đang có"') < source.indexOf('label: "Khách hàng"'));
-  assert.ok(source.indexOf('label: "Khách hàng"') < source.indexOf('label: "Chính sách"'));
-  assert.match(source,/label: contactLabel/);
-  assert.match(source,/const links: readonly HeaderLink\[\] = \[/);
-  assert.match(source,/links\.map\(\(link\) => renderLink\(link\)\)/);
-  assert.match(source,/links\s*\.filter\(\(link\) => !link\.contact\)\s*\.map\(\(link\) => renderLink\(link, true\)\)/);
-  assert.match(source,/const content = mobile \? \([\s\S]*?<span>\{link\.label\}<\/span>[\s\S]*?desktop-nav-label-full--compactable[\s\S]*?desktop-nav-label-compact/);
-  assert.match(source,/!mobile && link\.compactLabel \? link\.label : undefined/);
-  assert.match(source,/ContactActionLink[^>]+className="mobile-contact-action"[^>]+compact/);
-  for(const route of ["/chon-macbook","/may-dang-co","/people","/chinh-sach","/"])assert.match(source,new RegExp(`withContactChannel\\("${route.replace("/","\\/")}"`));
-  assert.doesNotMatch(source,/withContactChannel\("https:\/\//);
-  assert.match(source,/aria-label=\{menuOpen \? "Đóng menu" : "Mở menu"\}/);
-  assert.match(source,/aria-expanded=\{menuOpen\}/);
-  assert.match(source,/mobile-menu-icon--open/);
-  assert.match(source,/onClick=\{mobile \? closeMenu : undefined\}/);
-  assert.match(source,/menuState\.open && menuState\.pathname === pathname/);
-  assert.match(source,/event\.key !== "Escape" \|\| !menuOpen/);
-  assert.match(source,/triggerRef\.current\?\.focus\(\)/);
-  assert.match(source,/!menuRef\.current\?\.contains\(event\.target as Node\)/);
-  assert.match(source,/window\.matchMedia\("\(min-width: 56rem\)"\)/);
-  assert.match(source,/if \(event\.matches\) closeMenu\(\)/);
-  for(const icon of ["selector","inventory","people","policy","sell","contact"])assert.match(source,new RegExp(`${icon}:`));
-  assert.match(source,/aria-hidden="true"[\s\S]*?className="mobile-nav-icon"/);
-  assert.doesNotMatch(source,/😀|☰|✕|🛡|🤝|💬/);
-  assert.match(source,/aria-current=\{current\}/);
-  assert.doesNotMatch(source,/muabanmacbookcu\.com\/chinh-sach/);
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\.desktop-navigation \{ display: none;/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.desktop-navigation \{ display: flex; \}[\s\S]*?\.mobile-header-actions \{ display: none; \}/);
-  assert.match(css,/\.desktop-navigation a \{[^}]*white-space: nowrap/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.desktop-nav-label-full--compactable \{ display: none; \}[\s\S]*?\.desktop-nav-label-compact \{ display: inline; \}/);
-  assert.match(css,/@media \(min-width: 72rem\) \{[\s\S]*?\.desktop-nav-label-full \{ display: inline; \}[\s\S]*?\.desktop-nav-label-compact \{ display: none; \}/);
-  assert.match(css,/\.mobile-contact-action \{[^}]*white-space: nowrap/);
-  assert.match(css,/\.contact-action-icon \{ width: 1rem; height: 1rem/);
-  assert.match(css,/\.mobile-header-menu a \{[^}]*min-height: 2\.9rem;[^}]*gap: \.75rem/);
-  assert.doesNotMatch(css,/\.mobile-header-menu[^}]*white-space:\s*nowrap/);
-});
-test("contact channel resolution keeps compact labels destinations and internal attribution aligned",()=>{
-  assert.equal(resolveContactChannel("messenger"),"messenger");
-  assert.equal(resolveContactChannel("zalo"),"zalo");
-  assert.equal(resolveContactChannel(null),null);
-  assert.equal(resolveContactChannel("unsupported"),null);
-  assert.equal(compactContactLabel("messenger"),"Nhắn Messenger");
-  assert.equal(compactContactLabel("zalo"),"Nhắn Zalo");
-  assert.equal(compactContactLabel(null),"Nhắn MBMC");
-  assert.equal(withContactChannel("/chinh-sach","messenger"),"/chinh-sach?channel=messenger");
-  assert.equal(withContactChannel("/may/example?view=full","zalo"),"/may/example?view=full&channel=zalo");
-  assert.equal(withContactChannel("/chinh-sach",null),"/chinh-sach");
-  const contactAction=readFileSync(new URL("../../components/contact/ContactActionLink.tsx",import.meta.url),"utf8");
-  assert.match(contactAction,/compact \? compactContactLabel/);
-  assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
-  assert.doesNotMatch(contactAction,/m\.me|zalo\.me/);
-});
-test("temporary collaboration policy routes stay neutral and link to contact and hub",()=>{
-  for(const route of ["cong-tac-vien","dai-ly"]){
-    const source=readFileSync(new URL(`../../app/(sales)/chinh-sach/${route}/page.tsx`,import.meta.url),"utf8");
-    assert.match(source,/badge="Đang hoàn thiện"/);
-    assert.match(source,/ContactActionLink/);
-    assert.match(source,/href: "\/chinh-sach"/);
-    assert.doesNotMatch(source,/\d+\s*%|hoa hồng|chiết khấu|thanh toán|hạn mức|độc quyền|phân bổ bảo hành|cam kết tồn kho/i);
-  }
-});
-test("every policy detail page links back to the policy hub",()=>{
-  for(const route of ["bao-hanh","mbmc-care","version/mbmc-policy-v1","cong-tac-vien","dai-ly"]){
-    const source=readFileSync(new URL(`../../app/(sales)/chinh-sach/${route}/page.tsx`,import.meta.url),"utf8");
-    assert.match(source,/href: "\/chinh-sach"/);
-  }
-});
-test("policy routes share one layout with wide hero metrics and footer actions",()=>{
-  const layout=readFileSync(new URL("../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(layout,/policy-breadcrumbs/);
-  assert.match(layout,/policy-version-badge/);
-  assert.match(layout,/policy-metrics/);
-  assert.match(layout,/policy-footer/);
-  assert.match(css,/\.policy-page \{ width: min\(64rem/);
-  assert.match(css,/\.policy-content \{ width: min\(100%, 46rem\)/);
-  assert.match(css,/\.policy-hero h1 \{ max-width: none/);
-  assert.doesNotMatch(css,/\.policy-hero h1[^}]*max-width:\s*1\dch/);
-  assert.match(css,/\.policy-metrics \{ display: grid; grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
-  assert.match(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-metrics \{ grid-template-columns: minmax\(0, 1fr\)/);
-  assert.match(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-page \.policy-metrics > div \{ min-width: 0; display: grid; grid-template-columns: minmax\(0, 1fr\);[^}]*padding:/);
-  assert.match(css,/\.policy-metrics dt, \.policy-metrics dd \{ display: block; min-width: 0; overflow-wrap: break-word; \}/);
-  assert.doesNotMatch(css,/@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-metrics \{[^}]*repeat\([234],/);
-});
-test("warranty page publishes every approved V1 section",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/bao-hanh/page.tsx",import.meta.url),"utf8");
-  for(const id of ["warranty-exchange","warranty-repair-first","warranty-non-fault-exchange","warranty-hardware","warranty-screen","warranty-battery","warranty-exclusions","warranty-processing","warranty-repaired-item","warranty-software","warranty-machine-id"])assert.match(source,new RegExp(`id="${id}"`));
-  for(const metric of ["01 tháng","07 ngày","30 ngày tối thiểu"])assert.match(source,new RegExp(metric));
-  assert.match(source,/khấu trừ mặc định 15%/);
-  assert.match(source,/1–7 ngày/);
-});
-test("Care page has mobile-safe comparison and frozen V1 prices without policy math",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/mbmc-care/page.tsx",import.meta.url),"utf8");
-  const layout=readFileSync(new URL("../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",import.meta.url),"utf8");
-  assert.match(source,/ResponsivePolicyTable/);
-  assert.match(layout,/role="region"[^>]*aria-label=\{label\}[^>]*tabIndex=\{0\}/);
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\.policy-table-scroll \{ width: 100%; max-width: 100%; min-width: 0;[^}]*overflow-x: auto;/);
-  assert.match(css,/\.policy-table-scroll table \{ width: 100%; min-width: 38rem;/);
-  assert.doesNotMatch(css,/\.policy-page[^}]*overflow-x:\s*(?:hidden|clip)/);
-  for(const value of ["Tổng 03 tháng","Tổng 06 tháng","600.000đ","1.200.000đ","800.000đ","1.600.000đ","1.000.000đ","2.000.000đ"])assert.match(source,new RegExp(value));
-  assert.match(source,/Máy mượn[^<]*không được bảo đảm/);
-  assert.match(source,/trong vòng 07 ngày sau bàn giao/);
-  assert.doesNotMatch(source,/reduce\(|calculate|price\s*\*|switch\s*\(/i);
-});
-test("archived V1 page is immutable and links back to current policy pages",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/chinh-sach/version/mbmc-policy-v1/page.tsx",import.meta.url),"utf8");
-  assert.match(source,/title="Chính sách MBMC V1"/);
-  assert.match(source,/badge="Bản lưu · V1"/);
-  assert.match(source,/tham chiếu lịch sử cố định/i);
-  assert.match(source,/không nhất thiết là chính sách hiện hành/i);
-  assert.match(source,/href: "\/chinh-sach\/bao-hanh"/);
-  assert.match(source,/href: "\/chinh-sach\/mbmc-care"/);
-});
-test("machine policy hierarchy remains entirely projection-driven",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachinePolicySummary.tsx",import.meta.url),"utf8");
-  assert.match(source,/\{policy\.title\}/);
-  assert.match(source,/policy\.warrantyItems\.map/);
-  assert.match(source,/\{policy\.careWording\}/);
-  assert.match(source,/\{policy\.machineIdWording\}/);
-  assert.doesNotMatch(source,/Tóm tắt chính sách trước khi mua|Quyền lợi của máy này|01 tháng|07 ngày/);
-});
-test("one malformed candidate cannot break other valid results",()=>{const malformed={get machine_id(){throw new Error("bad row")}};let failures=0;const results=projectPublicCandidates([malformed,row()],()=>failures++);assert.equal(failures,1);assert.equal(results.length,1);assert.equal(results[0].eligible,true);});
-test("production pages do not import the removed static fixture",()=>{for(const relative of ["../../app/(sales)/may-dang-co/page.tsx","../../app/(sales)/may/[slug]/page.tsx"]){const source=readFileSync(new URL(relative,import.meta.url),"utf8");assert.doesNotMatch(source,/static-machine-repository|MBMC-SPJ9|MacBook Air M2 2022 13 inch/);}});
-test("two valid published candidates render two cards and both detail slugs resolve",()=>{
-  const rows=[row("MBMC-A001"),row("MBMC-A002")];
-  assert.equal(publicSummaries(rows).length,2);
-  assert.equal(publicDetailBySlug(rows,"mbmc-a001")?.summary.code,"MBMC-A001");
-  assert.equal(publicDetailBySlug(rows,"mbmc-a002")?.summary.code,"MBMC-A002");
-});
-
-test("one rejected candidate does not hide another valid card",()=>{
-  const invalid=row("MBMC-BAD",{retail_price_expected:null});
-  assert.deepEqual(publicSummaries([invalid,row("MBMC-GOOD")]).map(item=>item.code),["MBMC-GOOD"]);
-});
-
-test("projection rejection is a successful empty inventory, not unavailable",async()=>{
-  const state=await loadPublicInventoryState(async()=>publicSummaries([row("MBMC-SOLD",{status:"sold"})]));
-  assert.deepEqual(state,{status:"ready",machines:[]});
-});
-
-test("configuration and PostgREST failures become unavailable",async()=>{
-  for(const code of ["PUBLIC_INVENTORY_CONFIG_MISSING","PGRST200"]){
-    const state=await loadPublicInventoryState(async()=>{const error=new Error("safe");error.code=code;throw error;});
-    assert.deepEqual(state,{status:"unavailable"});
-  }
-});
-
-test("candidate exclusion diagnostics contain only safe fields",()=>{
-  const diagnostics=[];
-  const results=projectPublicCandidates([row("MBMC-BAD",{retail_price_expected:null}),row("MBMC-GOOD")],diagnostic=>diagnostics.push(diagnostic));
-  assert.equal(results.some(result=>result.eligible),true);
-  assert.deepEqual(diagnostics,[{
-    stage:"ELIGIBILITY_REJECTED",
-    code:"candidate_excluded",
-    machineCode:"MBMC-BAD",
-    exclusionReason:"invalid_retail_price",
-    validationIssue:"invalid_retail_price",
-    validationPath:"machine.retailPriceExpected",
-    message:"Retail price is missing or invalid.",
-  }]);
-  const serialized=JSON.stringify(diagnostics);
-  for(const forbidden of ["approved_by","reviewed_by","machine_id","private-owner","uuid","staff"]){assert.equal(serialized.includes(forbidden),false);}
-});
-
-test("repository query selects deployed publication relationships without wildcard fields",()=>{
-  const source=readFileSync(new URL("./repositories/supabase-public-machine-repository.ts",import.meta.url),"utf8");
-  assert.match(source,/machine_publications!inner/);
-  assert.match(source,/machine_publications\.status/);
-  assert.doesNotMatch(source,/select\([^)]*\*/);
-  assert.match(source,/visibility, sort_order, is_cover/);
-  assert.match(source,/console\.error\("\[public-inventory\]", JSON\.stringify\(diagnostic\)\)/);
-});
-
-test("public inventory card prefers battery health when available",()=>{
-  assert.deepEqual(getMachineCardBatteryFact(95,126),{label:"Pin",value:"95%"});
-});
-
-test("public inventory card falls back to cycle count without battery health",()=>{
-  assert.deepEqual(getMachineCardBatteryFact(null,126),{label:"Lần sạc",value:"126"});
-});
-
-test("public inventory card hides battery information when no battery values exist",()=>{
-  assert.equal(getMachineCardBatteryFact(null,null),null);
-});
-
-test("public inventory card no longer renders an inspection row",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx",import.meta.url),"utf8");
-  assert.doesNotMatch(source,/Kiểm định|machine\.inspection/);
-});
-
-test("public inventory card removes Apple Silicon tokens from display titles",()=>{
-  const examples=[
-    ["MacBook Air M1 2020 13 inch","MacBook Air 2020 13 inch"],
-    ["MacBook Pro M1 Pro 2021 16 inch","MacBook Pro 2021 16 inch"],
-    ["MacBook Pro M1 Max 2021 16 inch","MacBook Pro 2021 16 inch"],
-    ["MacBook Air M2 2022 13 inch","MacBook Air 2022 13 inch"],
-    ["MacBook Pro M2 Pro 2023 14 inch","MacBook Pro 2023 14 inch"],
-    ["MacBook Pro M2 Max 2023 16 inch","MacBook Pro 2023 16 inch"],
-    ["MacBook Pro - Apple M3 Max - 2023 16 inch","MacBook Pro 2023 16 inch"],
-  ];
-  for(const [before,after] of examples)assert.equal(formatMachineCardDisplayName(before),after);
-});
-
-test("public inventory card removes Intel processor tokens from display titles",()=>{
-  for(const processor of ["Intel i3","Intel i5","Intel i7","Intel i9","Intel Core i7"]){
-    assert.equal(formatMachineCardDisplayName(`MacBook Pro ${processor} 2020 13 inch`),"MacBook Pro 2020 13 inch");
-  }
-});
-
-test("chip searches still use unmodified public machine data",()=>{
-  const machines=publicSummaries([
-    row("MBMC-M1PRO",{model_text:"MacBook Pro M1 Pro 2021 16 inch",chip:"M1 Pro"}),
-    row("MBMC-INTEL",{model_text:"MacBook Pro Intel i7 2020 13 inch",chip:"Intel i7"}),
-  ]);
-  assert.deepEqual(filterAndSortPublicInventory(machines,"M1 Pro","Tất cả","relevance").map(machine=>machine.code),["MBMC-M1PRO"]);
-  assert.deepEqual(filterAndSortPublicInventory(machines,"Intel i7","Tất cả","relevance").map(machine=>machine.code),["MBMC-INTEL"]);
-});
-
-test("public inventory card formats exact 1024GB multiples as compact TB",()=>{
-  const examples=[[256,"256GB"],[512,"512GB"],[1024,"1TB"],[2048,"2TB"],[4096,"4TB"],[1536,"1536GB"]];
-  for(const [gigabytes,formatted] of examples)assert.equal(formatCompactStorage(gigabytes),formatted);
-});
-
-test("public inventory card composes color on the specs line",()=>{
+test("multiple eligible rows become exact public summaries", () => {
+  const items = publicSummaries([row("MBMC-A002"), row("MBMC-A001")]);
+  assert.deepEqual(
+    items.map((x) => x.code),
+    ["MBMC-A001", "MBMC-A002"],
+  );
   assert.equal(
-    formatMachineCardSpecs({chip:"M1 Pro",ramGb:16,storageGb:1024,color:"Xám"}),
+    items.every((x) => x.schemaVersion === "public-machine-summary.v1"),
+    true,
+  );
+});
+test("sold, unpublished, and archived rows are excluded", () => {
+  const draft = row("MBMC-DRAFT");
+  draft.machine_publications = {
+    ...draft.machine_publications,
+    status: "draft",
+    approved_by: null,
+    approved_at: null,
+    approved_editorial_revision: null,
+    published_by: null,
+    first_published_at: null,
+    published_at: null,
+    published_editorial_revision: null,
+  };
+  const archived = row("MBMC-ARCH");
+  archived.machine_publications = {
+    ...archived.machine_publications,
+    status: "archived",
+  };
+  assert.deepEqual(
+    publicSummaries([row("MBMC-SOLD", { status: "sold" }), draft, archived]),
+    [],
+  );
+});
+test("stale revision, missing price, and missing public cover are denied", () => {
+  const stale = row("MBMC-STALE");
+  stale.machine_editorials = { ...stale.machine_editorials, revision: 4 };
+  const noPrice = row("MBMC-NOPRICE", { retail_price_expected: null });
+  const noImage = row("MBMC-NOIMAGE", { machine_images: [] });
+  const [a, b, c] = projectPublicCandidates([stale, noPrice, noImage]);
+  assert.equal(reason(a, "editorial_revision_mismatch"), true);
+  assert.equal(reason(b, "invalid_retail_price"), true);
+  assert.equal(reason(c, "invalid_public_cover"), true);
+});
+test("private images never enter summary or gallery", () => {
+  const candidate = row();
+  candidate.machine_images.push({
+    id: "private",
+    public_url: "https://private.example/proof.webp",
+    image_type: "proof",
+    image_stage: "source",
+    visibility: "staff",
+    sort_order: -1,
+    is_cover: false,
+  });
+  const detail = publicDetailBySlug([candidate], "mbmc-a001");
+  assert.ok(detail);
+  assert.equal(JSON.stringify(detail).includes("private.example"), false);
+});
+test("summaries contain no operational fields or internal actor values", () => {
+  const summary = publicSummaries([row()])[0];
+  const serialized = JSON.stringify(summary);
+  for (const forbidden of [
+    "approved_by",
+    "reviewed_by",
+    "deleted_at",
+    "machine_images",
+    "private-owner",
+  ])
+    assert.equal(serialized.includes(forbidden), false);
+});
+test("search covers model, chip, RAM and SSD configuration", () => {
+  const items = publicSummaries([row()]);
+  for (const query of ["MacBook Air", "Apple M2", "8gb ram", "256gb ssd"])
+    assert.equal(
+      filterAndSortPublicInventory(items, query, "Tất cả", "relevance").length,
+      1,
+      query,
+    );
+});
+test("price filters and sorting use DTO money deterministically", () => {
+  const items = publicSummaries([
+    row("MBMC-HIGH", { retail_price_expected: 19_000_000 }),
+    row("MBMC-LOW", { retail_price_expected: 12_000_000 }),
+    row("MBMC-MID", { retail_price_expected: 16_000_000 }),
+  ]);
+  assert.deepEqual(
+    filterAndSortPublicInventory(items, "", "Dưới 15 triệu", "relevance").map(
+      (x) => x.code,
+    ),
+    ["MBMC-LOW"],
+  );
+  assert.deepEqual(
+    filterAndSortPublicInventory(items, "", "Tất cả", "price-desc").map(
+      (x) => x.code,
+    ),
+    ["MBMC-HIGH", "MBMC-MID", "MBMC-LOW"],
+  );
+});
+test("detail resolves only an eligible immutable public slug", () => {
+  assert.equal(
+    publicDetailBySlug([row()], "mbmc-a001")?.schemaVersion,
+    "public-machine-detail.v1",
+  );
+  assert.equal(publicDetailBySlug([row()], "unknown"), null);
+  assert.equal(
+    publicDetailBySlug([row("MBMC-SOLD", { status: "sold" })], "mbmc-sold"),
+    null,
+  );
+});
+test("verification section is hidden when the public DTO is empty", () => {
+  const detail = publicDetailBySlug([row()], "mbmc-a001");
+  assert.deepEqual(detail?.verifications, []);
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/MachineVerification.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /if \(items\.length === 0\) return null/);
+});
+test("verified public rows are allowlisted and ordered canonically", () => {
+  const machine = row("MBMC-VERIFY", {
+    machine_verifications: [
+      {
+        verification_code: "WIFI",
+        verified: true,
+        verified_at: "2026-08-01T00:00:00Z",
+        verified_by: "private-staff",
+        public: true,
+        internal_notes: "private",
+      },
+      {
+        verification_code: "BOOT",
+        verified: true,
+        verified_at: "2026-08-01T00:00:00Z",
+        verified_by: "private-staff",
+        public: true,
+      },
+    ],
+  });
+  const detail = publicDetailBySlug([machine], "mbmc-verify");
+  assert.deepEqual(detail?.verifications, [
+    { code: "BOOT", verified: true, verifiedAt: "2026-08-01T00:00:00Z" },
+    { code: "WIFI", verified: true, verifiedAt: "2026-08-01T00:00:00Z" },
+  ]);
+  assert.doesNotMatch(
+    JSON.stringify(detail?.verifications),
+    /verified_by|internal_notes|private-staff/,
+  );
+});
+test("private, failed, incomplete, and unknown verification rows never render", () => {
+  const machine = row("MBMC-PRIVATE", {
+    machine_verifications: [
+      {
+        verification_code: "DISPLAY",
+        verified: true,
+        verified_at: "2026-08-01T00:00:00Z",
+        public: false,
+      },
+      {
+        verification_code: "KEYBOARD",
+        verified: false,
+        verified_at: "2026-08-01T00:00:00Z",
+        public: true,
+      },
+      {
+        verification_code: "NOT_A_CODE",
+        verified: true,
+        verified_at: "2026-08-01T00:00:00Z",
+        public: true,
+      },
+    ],
+  });
+  assert.deepEqual(
+    publicDetailBySlug([machine], "mbmc-private")?.verifications,
+    [],
+  );
+});
+test("latest duplicate verification code wins without exposing a failed row", () => {
+  const machine = row("MBMC-DUPE", {
+    machine_verifications: [
+      {
+        verification_code: "PORTS",
+        verified: true,
+        verified_at: "2026-08-01T00:00:00Z",
+        public: true,
+      },
+      {
+        verification_code: "PORTS",
+        verified: false,
+        verified_at: "2026-08-02T00:00:00Z",
+        public: true,
+      },
+    ],
+  });
+  assert.deepEqual(
+    publicDetailBySlug([machine], "mbmc-dupe")?.verifications,
+    [],
+  );
+});
+test("verification component renders compact successful rows only", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/MachineVerification.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /items\.map/);
+  assert.match(source, /✓/);
+  assert.doesNotMatch(source, /Không xác minh|Thất bại|failed|verifiedAt/);
+  const dossier = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.ok(
+    dossier.indexOf("<PublicMachineFitRecommendation") <
+      dossier.indexOf("<MachineVerification"),
+  );
+  assert.ok(
+    dossier.indexOf("<MachineVerification") <
+      dossier.indexOf("<VerifiedPublicInformation"),
+  );
+});
+test("detail DTO allow-list contains the verification collection without private fields", () => {
+  assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes("verifications"), true);
+  for (const field of [
+    "verifiedBy",
+    "staff",
+    "internalNotes",
+    "repairNotes",
+    "inspectionComments",
+  ])
+    assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes(field), false);
+});
+const policyRpcRow = {
+  machine_public_identifier: "MBMC-A001",
+  policy_version: "mbmc-policy-v1",
+  summary_title: "Quyền lợi của máy này",
+  warranty_summary_items: ["Bảo hành theo bản chiếu"],
+  care_availability_wording: "Care theo bản chiếu",
+  warranty_policy_url: "/chinh-sach/bao-hanh",
+  mbmc_care_policy_url: "/chinh-sach/mbmc-care",
+  machine_id_persistence_wording: "Lưu theo Machine ID",
+};
+test("RPC row maps to the public policy DTO without calculating policy", () => {
+  assert.deepEqual(mapPublicMachinePolicySummary(policyRpcRow), {
+    policyVersion: "mbmc-policy-v1",
+    title: "Quyền lợi của máy này",
+    warrantyItems: ["Bảo hành theo bản chiếu"],
+    careWording: "Care theo bản chiếu",
+    warrantyPolicyUrl: "/chinh-sach/bao-hanh",
+    carePolicyUrl: "/chinh-sach/mbmc-care",
+    machineIdWording: "Lưu theo Machine ID",
+  });
+});
+test("policy RPC handles success, zero rows, errors, and malformed rows", async () => {
+  const rpc = (data, error = null) => ({ rpc: async () => ({ data, error }) });
+  assert.deepEqual(
+    await loadPublicMachinePolicySummary(
+      rpc([policyRpcRow]),
+      "00000000-0000-0000-0000-000000000001",
+    ),
+    mapPublicMachinePolicySummary(policyRpcRow),
+  );
+  assert.equal(
+    await loadPublicMachinePolicySummary(
+      rpc([]),
+      "00000000-0000-0000-0000-000000000001",
+    ),
+    null,
+  );
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    assert.equal(
+      await loadPublicMachinePolicySummary(
+        rpc(null, { code: "RPC_FAIL" }),
+        "00000000-0000-0000-0000-000000000001",
+      ),
+      null,
+    );
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(
+    await loadPublicMachinePolicySummary(
+      rpc([{ ...policyRpcRow, warranty_summary_items: "invalid" }]),
+      "00000000-0000-0000-0000-000000000001",
+    ),
+    null,
+  );
+});
+test("editorial policy applicability remains array-only", () => {
+  const candidate = row();
+  candidate.machine_editorials.policy_applicability = ["editorial-only"];
+  const detail = publicDetailBySlug([candidate], "mbmc-a001");
+  assert.deepEqual(detail?.policyApplicability, ["editorial-only"]);
+  assert.equal(detail?.policySummary, undefined);
+  candidate.machine_editorials.policy_applicability = policyRpcRow;
+  assert.deepEqual(
+    publicDetailBySlug([candidate], "mbmc-a001")?.policyApplicability,
+    [],
+  );
+});
+test("missing policy projection is optional and produces no fabricated fallback", () => {
+  const detail = publicDetailBySlug([row()], "mbmc-a001");
+  assert.ok(detail);
+  assert.equal(detail.policySummary, undefined);
+  assert.doesNotMatch(
+    JSON.stringify(detail),
+    /expiry|Care price|01 tháng|07 ngày/i,
+  );
+});
+test("policy analytics payload contains public context only", () => {
+  const payload = machinePolicyAnalyticsPayload({
+    publicMachineId: "MBMC-A001",
+    machineSlug: "mbmc-a001",
+    policyVersion: "v1",
+    hasCareWording: true,
+  });
+  assert.deepEqual(Object.keys(payload), [
+    "publicMachineId",
+    "machineSlug",
+    "policyVersion",
+    "hasCareWording",
+  ]);
+  assert.doesNotMatch(JSON.stringify(payload), /phone|customer|saleId|ticket/i);
+});
+test("policy summary uses semantic mobile-safe markup and canonical projection links", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/MachinePolicySummary.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /<section[^>]+aria-labelledby=/);
+  assert.match(source, /<h2 id="machine-policy-heading"/);
+  assert.match(source, /policy\.warrantyPolicyUrl/);
+  assert.match(source, /policy\.carePolicyUrl/);
+  assert.doesNotMatch(
+    source,
+    /01 tháng|07 ngày|\d+[.,]?\d*\s*(?:₫|VND|triệu)/i,
+  );
+});
+test("public repository owns RPC-supplied relative policy routes", () => {
+  const repository = readFileSync(
+    new URL(
+      "./repositories/supabase-public-machine-repository.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(repository, /\bid,/);
+  assert.match(
+    repository,
+    /loadPublicMachinePolicySummary\(\s*client,\s*machineId,?\s*\)/,
+  );
+  for (const route of ["bao-hanh", "mbmc-care", "version/mbmc-policy-v1"]) {
+    assert.equal(
+      existsSync(
+        new URL(
+          `../../app/(sales)/chinh-sach/${route}/page.tsx`,
+          import.meta.url,
+        ),
+      ),
+      true,
+      route,
+    );
+  }
+  assert.equal(policyRpcRow.warranty_policy_url.startsWith("/"), true);
+  assert.equal(policyRpcRow.mbmc_care_policy_url.startsWith("/"), true);
+});
+test("public policy hub owns all five canonical destinations", () => {
+  const source = readFileSync(
+    new URL("../../app/(sales)/chinh-sach/page.tsx", import.meta.url),
+    "utf8",
+  );
+  for (const route of [
+    "/chinh-sach/bao-hanh",
+    "/chinh-sach/mbmc-care",
+    "/chinh-sach/version/mbmc-policy-v1",
+    "/chinh-sach/cong-tac-vien",
+    "/chinh-sach/dai-ly",
+  ])
+    assert.match(source, new RegExp(`href: "${route}"`));
+  assert.match(source, /title="Chính sách MBMC"/);
+  assert.match(source, /Dành cho khách hàng/);
+  assert.match(source, /Dành cho đối tác/);
+  assert.equal(source.match(/status: "Đang hoàn thiện"/g)?.length, 2);
+  const customer =
+    source.match(/const customerPolicies:[\s\S]*?= \[([\s\S]*?)\n\];/)?.[1] ??
+    "";
+  const partner =
+    source.match(/const partnerPolicies:[\s\S]*?= \[([\s\S]*?)\n\];/)?.[1] ??
+    "";
+  assert.equal(customer.match(/href: "\/chinh-sach\//g)?.length, 3);
+  assert.equal(partner.match(/href: "\/chinh-sach\//g)?.length, 2);
+  assert.match(
+    source,
+    /<h2 id="customer-policy-heading">Dành cho khách hàng<\/h2>/,
+  );
+  assert.match(
+    source,
+    /<h2 id="partner-policy-heading">Dành cho đối tác<\/h2>/,
+  );
+  assert.match(source, /ContactActionLink[^>]+label="Nhắn MBMC trên Zalo"/);
+  assert.match(
+    source,
+    /<Link className="policy-hub-card" href=\{policy\.href\}/,
+  );
+  assert.doesNotMatch(source, /<Link[^>]*>[\s\S]*?<a\b/);
+  assert.doesNotMatch(source, /😀|🛡|❤️|🤝|🏪|💬/);
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.policy-hub-grid--customer \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    css,
+    /\.policy-hub-grid--partner \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-hub-grid--customer, \.policy-hub-grid--partner \{ grid-template-columns: minmax\(0, 1fr\)/,
+  );
+  assert.match(css, /\.policy-hub-card:focus-visible/);
+});
+test("desktop and mobile navigation share one canonical accessible link source", () => {
+  const source = readFileSync(
+    new URL("../../components/layout/SiteHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  for (const label of [
+    "Chọn MacBook",
+    "Máy đang có",
+    "Khách hàng",
+    "Chính sách",
+    "Bán máy cho MBMC",
+  ])
+    assert.match(source, new RegExp(`label: "${label}"`));
+  for (const [label, compactLabel] of [
+    ["Chọn MacBook", "Chọn Mac"],
+    ["Máy đang có", "Máy sẵn"],
+    ["Bán máy cho MBMC", "Bán lại Mac"],
+  ])
+    assert.match(
+      source,
+      new RegExp(`label: "${label}",\\s*compactLabel: "${compactLabel}"`),
+    );
+  assert.match(
+    source,
+    /href: withContactChannel\("\/people", channel\),\s*label: "Khách hàng",\s*icon: "people",/,
+  );
+  assert.ok(
+    source.indexOf('label: "Máy đang có"') <
+      source.indexOf('label: "Khách hàng"'),
+  );
+  assert.ok(
+    source.indexOf('label: "Khách hàng"') <
+      source.indexOf('label: "Chính sách"'),
+  );
+  assert.match(source, /label: contactLabel/);
+  assert.match(source, /const links: readonly HeaderLink\[\] = \[/);
+  assert.match(source, /links\.map\(\(link\) => renderLink\(link\)\)/);
+  assert.match(
+    source,
+    /links\s*\.filter\(\(link\) => !link\.contact\)\s*\.map\(\(link\) => renderLink\(link, true\)\)/,
+  );
+  assert.match(
+    source,
+    /const content = mobile \? \([\s\S]*?<span>\{link\.label\}<\/span>[\s\S]*?desktop-nav-label-full--compactable[\s\S]*?desktop-nav-label-compact/,
+  );
+  assert.match(
+    source,
+    /!mobile && link\.compactLabel \? link\.label : undefined/,
+  );
+  assert.match(
+    source,
+    /ContactActionLink[^>]+className="mobile-contact-action"[^>]+compact/,
+  );
+  for (const route of [
+    "/chon-macbook",
+    "/may-dang-co",
+    "/people",
+    "/chinh-sach",
+    "/",
+  ])
+    assert.match(
+      source,
+      new RegExp(`withContactChannel\\("${route.replace("/", "\\/")}"`),
+    );
+  assert.doesNotMatch(source, /withContactChannel\("https:\/\//);
+  assert.match(source, /aria-label=\{menuOpen \? "Đóng menu" : "Mở menu"\}/);
+  assert.match(source, /aria-expanded=\{menuOpen\}/);
+  assert.match(source, /mobile-menu-icon--open/);
+  assert.match(source, /onClick=\{mobile \? closeMenu : undefined\}/);
+  assert.match(source, /menuState\.open && menuState\.pathname === pathname/);
+  assert.match(source, /event\.key !== "Escape" \|\| !menuOpen/);
+  assert.match(source, /triggerRef\.current\?\.focus\(\)/);
+  assert.match(
+    source,
+    /!menuRef\.current\?\.contains\(event\.target as Node\)/,
+  );
+  assert.match(source, /window\.matchMedia\("\(min-width: 56rem\)"\)/);
+  assert.match(source, /if \(event\.matches\) closeMenu\(\)/);
+  for (const icon of [
+    "selector",
+    "inventory",
+    "people",
+    "policy",
+    "sell",
+    "contact",
+  ])
+    assert.match(source, new RegExp(`${icon}:`));
+  assert.match(source, /aria-hidden="true"[\s\S]*?className="mobile-nav-icon"/);
+  assert.doesNotMatch(source, /😀|☰|✕|🛡|🤝|💬/);
+  assert.match(source, /aria-current=\{current\}/);
+  assert.doesNotMatch(source, /muabanmacbookcu\.com\/chinh-sach/);
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(css, /\.desktop-navigation \{ display: none;/);
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.desktop-navigation \{ display: flex; \}[\s\S]*?\.mobile-header-actions \{ display: none; \}/,
+  );
+  assert.match(css, /\.desktop-navigation a \{[^}]*white-space: nowrap/);
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.desktop-nav-label-full--compactable \{ display: none; \}[\s\S]*?\.desktop-nav-label-compact \{ display: inline; \}/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 72rem\) \{[\s\S]*?\.desktop-nav-label-full \{ display: inline; \}[\s\S]*?\.desktop-nav-label-compact \{ display: none; \}/,
+  );
+  assert.match(css, /\.mobile-contact-action \{[^}]*white-space: nowrap/);
+  assert.match(css, /\.contact-action-icon \{ width: 1rem; height: 1rem/);
+  assert.match(
+    css,
+    /\.mobile-header-menu a \{[^}]*min-height: 2\.9rem;[^}]*gap: \.75rem/,
+  );
+  assert.doesNotMatch(css, /\.mobile-header-menu[^}]*white-space:\s*nowrap/);
+});
+test("contact channel resolution keeps compact labels destinations and internal attribution aligned", () => {
+  assert.equal(resolveContactChannel("messenger"), "messenger");
+  assert.equal(resolveContactChannel("zalo"), "zalo");
+  assert.equal(resolveContactChannel(null), null);
+  assert.equal(resolveContactChannel("unsupported"), null);
+  assert.equal(compactContactLabel("messenger"), "Nhắn Messenger");
+  assert.equal(compactContactLabel("zalo"), "Nhắn Zalo");
+  assert.equal(compactContactLabel(null), "Nhắn MBMC");
+  assert.equal(
+    withContactChannel("/chinh-sach", "messenger"),
+    "/chinh-sach?channel=messenger",
+  );
+  assert.equal(
+    withContactChannel("/may/example?view=full", "zalo"),
+    "/may/example?view=full&channel=zalo",
+  );
+  assert.equal(withContactChannel("/chinh-sach", null), "/chinh-sach");
+  const contactAction = readFileSync(
+    new URL("../../components/contact/ContactActionLink.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(contactAction, /compact \? compactContactLabel/);
+  assert.match(contactAction, /href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
+  assert.doesNotMatch(contactAction, /m\.me|zalo\.me/);
+});
+test("temporary collaboration policy routes stay neutral and link to contact and hub", () => {
+  for (const route of ["cong-tac-vien", "dai-ly"]) {
+    const source = readFileSync(
+      new URL(
+        `../../app/(sales)/chinh-sach/${route}/page.tsx`,
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    assert.match(source, /badge="Đang hoàn thiện"/);
+    assert.match(source, /ContactActionLink/);
+    assert.match(source, /href: "\/chinh-sach"/);
+    assert.doesNotMatch(
+      source,
+      /\d+\s*%|hoa hồng|chiết khấu|thanh toán|hạn mức|độc quyền|phân bổ bảo hành|cam kết tồn kho/i,
+    );
+  }
+});
+test("every policy detail page links back to the policy hub", () => {
+  for (const route of [
+    "bao-hanh",
+    "mbmc-care",
+    "version/mbmc-policy-v1",
+    "cong-tac-vien",
+    "dai-ly",
+  ]) {
+    const source = readFileSync(
+      new URL(
+        `../../app/(sales)/chinh-sach/${route}/page.tsx`,
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    assert.match(source, /href: "\/chinh-sach"/);
+  }
+});
+test("policy routes share one layout with wide hero metrics and footer actions", () => {
+  const layout = readFileSync(
+    new URL(
+      "../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(layout, /policy-breadcrumbs/);
+  assert.match(layout, /policy-version-badge/);
+  assert.match(layout, /policy-metrics/);
+  assert.match(layout, /policy-footer/);
+  assert.match(css, /\.policy-page \{ width: min\(64rem/);
+  assert.match(css, /\.policy-content \{ width: min\(100%, 46rem\)/);
+  assert.match(css, /\.policy-hero h1 \{ max-width: none/);
+  assert.doesNotMatch(css, /\.policy-hero h1[^}]*max-width:\s*1\dch/);
+  assert.match(
+    css,
+    /\.policy-metrics \{ display: grid; grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-metrics \{ grid-template-columns: minmax\(0, 1fr\)/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-page \.policy-metrics > div \{ min-width: 0; display: grid; grid-template-columns: minmax\(0, 1fr\);[^}]*padding:/,
+  );
+  assert.match(
+    css,
+    /\.policy-metrics dt, \.policy-metrics dd \{ display: block; min-width: 0; overflow-wrap: break-word; \}/,
+  );
+  assert.doesNotMatch(
+    css,
+    /@media \(max-width: 47\.99rem\) \{[\s\S]*?\.policy-metrics \{[^}]*repeat\([234],/,
+  );
+});
+test("warranty page publishes every approved V1 section", () => {
+  const source = readFileSync(
+    new URL("../../app/(sales)/chinh-sach/bao-hanh/page.tsx", import.meta.url),
+    "utf8",
+  );
+  for (const id of [
+    "warranty-exchange",
+    "warranty-repair-first",
+    "warranty-non-fault-exchange",
+    "warranty-hardware",
+    "warranty-screen",
+    "warranty-battery",
+    "warranty-exclusions",
+    "warranty-processing",
+    "warranty-repaired-item",
+    "warranty-software",
+    "warranty-machine-id",
+  ])
+    assert.match(source, new RegExp(`id="${id}"`));
+  for (const metric of ["01 tháng", "07 ngày", "30 ngày tối thiểu"])
+    assert.match(source, new RegExp(metric));
+  assert.match(source, /khấu trừ mặc định 15%/);
+  assert.match(source, /1–7 ngày/);
+});
+test("Care page has mobile-safe comparison and frozen V1 prices without policy math", () => {
+  const source = readFileSync(
+    new URL("../../app/(sales)/chinh-sach/mbmc-care/page.tsx", import.meta.url),
+    "utf8",
+  );
+  const layout = readFileSync(
+    new URL(
+      "../../app/(sales)/chinh-sach/_components/PolicyPage.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /ResponsivePolicyTable/);
+  assert.match(
+    layout,
+    /role="region"[^>]*aria-label=\{label\}[^>]*tabIndex=\{0\}/,
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.policy-table-scroll \{ width: 100%; max-width: 100%; min-width: 0;[^}]*overflow-x: auto;/,
+  );
+  assert.match(
+    css,
+    /\.policy-table-scroll table \{ width: 100%; min-width: 38rem;/,
+  );
+  assert.doesNotMatch(css, /\.policy-page[^}]*overflow-x:\s*(?:hidden|clip)/);
+  for (const value of [
+    "Tổng 03 tháng",
+    "Tổng 06 tháng",
+    "600.000đ",
+    "1.200.000đ",
+    "800.000đ",
+    "1.600.000đ",
+    "1.000.000đ",
+    "2.000.000đ",
+  ])
+    assert.match(source, new RegExp(value));
+  assert.match(source, /Máy mượn[^<]*không được bảo đảm/);
+  assert.match(source, /trong vòng 07 ngày sau bàn giao/);
+  assert.doesNotMatch(source, /reduce\(|calculate|price\s*\*|switch\s*\(/i);
+});
+test("archived V1 page is immutable and links back to current policy pages", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/chinh-sach/version/mbmc-policy-v1/page.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /title="Chính sách MBMC V1"/);
+  assert.match(source, /badge="Bản lưu · V1"/);
+  assert.match(source, /tham chiếu lịch sử cố định/i);
+  assert.match(source, /không nhất thiết là chính sách hiện hành/i);
+  assert.match(source, /href: "\/chinh-sach\/bao-hanh"/);
+  assert.match(source, /href: "\/chinh-sach\/mbmc-care"/);
+});
+test("machine policy hierarchy remains entirely projection-driven", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/MachinePolicySummary.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /\{policy\.title\}/);
+  assert.match(source, /policy\.warrantyItems\.map/);
+  assert.match(source, /\{policy\.careWording\}/);
+  assert.match(source, /\{policy\.machineIdWording\}/);
+  assert.doesNotMatch(
+    source,
+    /Tóm tắt chính sách trước khi mua|Quyền lợi của máy này|01 tháng|07 ngày/,
+  );
+});
+test("one malformed candidate cannot break other valid results", () => {
+  const malformed = {
+    get machine_id() {
+      throw new Error("bad row");
+    },
+  };
+  let failures = 0;
+  const results = projectPublicCandidates([malformed, row()], () => failures++);
+  assert.equal(failures, 1);
+  assert.equal(results.length, 1);
+  assert.equal(results[0].eligible, true);
+});
+test("production pages do not import the removed static fixture", () => {
+  for (const relative of [
+    "../../app/(sales)/may-dang-co/page.tsx",
+    "../../app/(sales)/may/[slug]/page.tsx",
+  ]) {
+    const source = readFileSync(new URL(relative, import.meta.url), "utf8");
+    assert.doesNotMatch(
+      source,
+      /static-machine-repository|MBMC-SPJ9|MacBook Air M2 2022 13 inch/,
+    );
+  }
+});
+test("two valid published candidates render two cards and both detail slugs resolve", () => {
+  const rows = [row("MBMC-A001"), row("MBMC-A002")];
+  assert.equal(publicSummaries(rows).length, 2);
+  assert.equal(
+    publicDetailBySlug(rows, "mbmc-a001")?.summary.code,
+    "MBMC-A001",
+  );
+  assert.equal(
+    publicDetailBySlug(rows, "mbmc-a002")?.summary.code,
+    "MBMC-A002",
+  );
+});
+
+test("one rejected candidate does not hide another valid card", () => {
+  const invalid = row("MBMC-BAD", { retail_price_expected: null });
+  assert.deepEqual(
+    publicSummaries([invalid, row("MBMC-GOOD")]).map((item) => item.code),
+    ["MBMC-GOOD"],
+  );
+});
+
+test("projection rejection is a successful empty inventory, not unavailable", async () => {
+  const state = await loadPublicInventoryState(async () =>
+    publicSummaries([row("MBMC-SOLD", { status: "sold" })]),
+  );
+  assert.deepEqual(state, { status: "ready", machines: [] });
+});
+
+test("configuration and PostgREST failures become unavailable", async () => {
+  for (const code of ["PUBLIC_INVENTORY_CONFIG_MISSING", "PGRST200"]) {
+    const state = await loadPublicInventoryState(async () => {
+      const error = new Error("safe");
+      error.code = code;
+      throw error;
+    });
+    assert.deepEqual(state, { status: "unavailable" });
+  }
+});
+
+test("candidate exclusion diagnostics contain only safe fields", () => {
+  const diagnostics = [];
+  const results = projectPublicCandidates(
+    [row("MBMC-BAD", { retail_price_expected: null }), row("MBMC-GOOD")],
+    (diagnostic) => diagnostics.push(diagnostic),
+  );
+  assert.equal(
+    results.some((result) => result.eligible),
+    true,
+  );
+  assert.deepEqual(diagnostics, [
+    {
+      stage: "ELIGIBILITY_REJECTED",
+      code: "candidate_excluded",
+      machineCode: "MBMC-BAD",
+      exclusionReason: "invalid_retail_price",
+      validationIssue: "invalid_retail_price",
+      validationPath: "machine.retailPriceExpected",
+      message: "Retail price is missing or invalid.",
+    },
+  ]);
+  const serialized = JSON.stringify(diagnostics);
+  for (const forbidden of [
+    "approved_by",
+    "reviewed_by",
+    "machine_id",
+    "private-owner",
+    "uuid",
+    "staff",
+  ]) {
+    assert.equal(serialized.includes(forbidden), false);
+  }
+});
+
+test("repository query selects deployed publication relationships without wildcard fields", () => {
+  const source = readFileSync(
+    new URL(
+      "./repositories/supabase-public-machine-repository.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /machine_publications!inner/);
+  assert.match(source, /machine_publications\.status/);
+  assert.doesNotMatch(source, /select\([^)]*\*/);
+  assert.match(source, /visibility, sort_order, is_cover/);
+  assert.match(
+    source,
+    /console\.error\("\[public-inventory\]", JSON\.stringify\(diagnostic\)\)/,
+  );
+});
+
+test("public inventory card prefers battery health when available", () => {
+  assert.deepEqual(getMachineCardBatteryFact(95, 126), {
+    label: "Pin",
+    value: "95%",
+  });
+});
+
+test("public inventory card falls back to cycle count without battery health", () => {
+  assert.deepEqual(getMachineCardBatteryFact(null, 126), {
+    label: "Lần sạc",
+    value: "126",
+  });
+});
+
+test("public inventory card hides battery information when no battery values exist", () => {
+  assert.equal(getMachineCardBatteryFact(null, null), null);
+});
+
+test("public inventory card no longer renders an inspection row", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/MachineCard.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.doesNotMatch(source, /Kiểm định|machine\.inspection/);
+});
+
+test("public inventory card removes Apple Silicon tokens from display titles", () => {
+  const examples = [
+    ["MacBook Air M1 2020 13 inch", "MacBook Air 2020 13 inch"],
+    ["MacBook Pro M1 Pro 2021 16 inch", "MacBook Pro 2021 16 inch"],
+    ["MacBook Pro M1 Max 2021 16 inch", "MacBook Pro 2021 16 inch"],
+    ["MacBook Air M2 2022 13 inch", "MacBook Air 2022 13 inch"],
+    ["MacBook Pro M2 Pro 2023 14 inch", "MacBook Pro 2023 14 inch"],
+    ["MacBook Pro M2 Max 2023 16 inch", "MacBook Pro 2023 16 inch"],
+    ["MacBook Pro - Apple M3 Max - 2023 16 inch", "MacBook Pro 2023 16 inch"],
+  ];
+  for (const [before, after] of examples)
+    assert.equal(formatMachineCardDisplayName(before), after);
+});
+
+test("public inventory card removes Intel processor tokens from display titles", () => {
+  for (const processor of [
+    "Intel i3",
+    "Intel i5",
+    "Intel i7",
+    "Intel i9",
+    "Intel Core i7",
+  ]) {
+    assert.equal(
+      formatMachineCardDisplayName(`MacBook Pro ${processor} 2020 13 inch`),
+      "MacBook Pro 2020 13 inch",
+    );
+  }
+});
+
+test("chip searches still use unmodified public machine data", () => {
+  const machines = publicSummaries([
+    row("MBMC-M1PRO", {
+      model_text: "MacBook Pro M1 Pro 2021 16 inch",
+      chip: "M1 Pro",
+    }),
+    row("MBMC-INTEL", {
+      model_text: "MacBook Pro Intel i7 2020 13 inch",
+      chip: "Intel i7",
+    }),
+  ]);
+  assert.deepEqual(
+    filterAndSortPublicInventory(machines, "M1 Pro", "Tất cả", "relevance").map(
+      (machine) => machine.code,
+    ),
+    ["MBMC-M1PRO"],
+  );
+  assert.deepEqual(
+    filterAndSortPublicInventory(
+      machines,
+      "Intel i7",
+      "Tất cả",
+      "relevance",
+    ).map((machine) => machine.code),
+    ["MBMC-INTEL"],
+  );
+});
+
+test("public inventory card formats exact 1024GB multiples as compact TB", () => {
+  const examples = [
+    [256, "256GB"],
+    [512, "512GB"],
+    [1024, "1TB"],
+    [2048, "2TB"],
+    [4096, "4TB"],
+    [1536, "1536GB"],
+  ];
+  for (const [gigabytes, formatted] of examples)
+    assert.equal(formatCompactStorage(gigabytes), formatted);
+});
+
+test("public inventory card composes color on the specs line", () => {
+  assert.equal(
+    formatMachineCardSpecs({
+      chip: "M1 Pro",
+      ramGb: 16,
+      storageGb: 1024,
+      color: "Xám",
+    }),
     "M1 Pro · 16GB · 1TB SSD · Xám",
   );
 });
 
-test("public inventory card omits missing color without a trailing separator",()=>{
+test("public inventory card omits missing color without a trailing separator", () => {
   assert.equal(
-    formatMachineCardSpecs({chip:"Intel i5",ramGb:8,storageGb:512,color:null}),
+    formatMachineCardSpecs({
+      chip: "Intel i5",
+      ramGb: 8,
+      storageGb: 512,
+      color: null,
+    }),
     "Intel i5 · 8GB · 512GB SSD",
   );
-  const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx",import.meta.url),"utf8");
-  assert.doesNotMatch(source,/machine-color/);
-});
-
-test("raw and formatted storage searches both find the same machine",()=>{
-  const machine=publicSummaries([row("MBMC-1TB",{ssd_gb:1024,color:"Xám"})]);
-  for(const query of ["1024GB","1TB","Xám"])assert.deepEqual(
-    filterAndSortPublicInventory(machine,query,"Tất cả","relevance").map(item=>item.code),
-    ["MBMC-1TB"],
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/MachineCard.tsx",
+      import.meta.url,
+    ),
+    "utf8",
   );
+  assert.doesNotMatch(source, /machine-color/);
 });
 
-function facetedMachines(){
+test("raw and formatted storage searches both find the same machine", () => {
+  const machine = publicSummaries([
+    row("MBMC-1TB", { ssd_gb: 1024, color: "Xám" }),
+  ]);
+  for (const query of ["1024GB", "1TB", "Xám"])
+    assert.deepEqual(
+      filterAndSortPublicInventory(machine, query, "Tất cả", "relevance").map(
+        (item) => item.code,
+      ),
+      ["MBMC-1TB"],
+    );
+});
+
+function facetedMachines() {
   return publicSummaries([
-    row("MBMC-AIR-M1",{model_text:"MacBook Air M1 2020 13 inch",chip:"M1",ram_gb:8,retail_price_expected:14_000_000,color:"Xám"}),
-    row("MBMC-PRO-M1P",{model_text:"MacBook Pro M1 Pro 2021 16 inch",chip:"M1 Pro",ram_gb:16,retail_price_expected:17_000_000,color:"Xám"}),
-    row("MBMC-PRO-M2",{model_text:"MacBook Pro M2 2022 14 inch",chip:"M2",ram_gb:16,retail_price_expected:18_000_000,color:"Bạc"}),
-    row("MBMC-PRO-M2M",{model_text:"MacBook Pro M2 Max 2023 16 inch",chip:"M2 Max",ram_gb:32,retail_price_expected:22_000_000,color:"Đen"}),
-    row("MBMC-PRO-INTEL",{model_text:"MacBook Pro Intel i7 2020 13 inch",chip:"Intel Core i7",ram_gb:8,retail_price_expected:13_000_000,color:"Bạc"}),
+    row("MBMC-AIR-M1", {
+      model_text: "MacBook Air M1 2020 13 inch",
+      chip: "M1",
+      ram_gb: 8,
+      retail_price_expected: 14_000_000,
+      color: "Xám",
+    }),
+    row("MBMC-PRO-M1P", {
+      model_text: "MacBook Pro M1 Pro 2021 16 inch",
+      chip: "M1 Pro",
+      ram_gb: 16,
+      retail_price_expected: 17_000_000,
+      color: "Xám",
+    }),
+    row("MBMC-PRO-M2", {
+      model_text: "MacBook Pro M2 2022 14 inch",
+      chip: "M2",
+      ram_gb: 16,
+      retail_price_expected: 18_000_000,
+      color: "Bạc",
+    }),
+    row("MBMC-PRO-M2M", {
+      model_text: "MacBook Pro M2 Max 2023 16 inch",
+      chip: "M2 Max",
+      ram_gb: 32,
+      retail_price_expected: 22_000_000,
+      color: "Đen",
+    }),
+    row("MBMC-PRO-INTEL", {
+      model_text: "MacBook Pro Intel i7 2020 13 inch",
+      chip: "Intel Core i7",
+      ram_gb: 8,
+      retail_price_expected: 13_000_000,
+      color: "Bạc",
+    }),
   ]);
 }
 
-test("facet groups combine with AND and options within one group combine with OR",()=>{
-  const items=normalizePublicInventory(facetedMachines());
-  const facets={...emptyInventoryFacets(),family:["pro"],chip:["m1-pro-max","m2"],ram:["16"]};
-  assert.deepEqual(filterNormalizedPublicInventory(items,"",facets).map(item=>item.machine.code),["MBMC-PRO-M1P","MBMC-PRO-M2"]);
-  assert.deepEqual(filterNormalizedPublicInventory(items,"Xám",facets).map(item=>item.machine.code),["MBMC-PRO-M1P"]);
+test("facet groups combine with AND and options within one group combine with OR", () => {
+  const items = normalizePublicInventory(facetedMachines());
+  const facets = {
+    ...emptyInventoryFacets(),
+    family: ["pro"],
+    chip: ["m1-pro-max", "m2"],
+    ram: ["16"],
+  };
+  assert.deepEqual(
+    filterNormalizedPublicInventory(items, "", facets).map(
+      (item) => item.machine.code,
+    ),
+    ["MBMC-PRO-M1P", "MBMC-PRO-M2"],
+  );
+  assert.deepEqual(
+    filterNormalizedPublicInventory(items, "Xám", facets).map(
+      (item) => item.machine.code,
+    ),
+    ["MBMC-PRO-M1P"],
+  );
 });
 
-test("price is single-select with documented inclusive middle boundaries",()=>{
-  const items=normalizePublicInventory(facetedMachines());
-  const at18={...emptyInventoryFacets(),price:"15-18"};
-  assert.deepEqual(filterNormalizedPublicInventory(items,"",at18).map(item=>item.machine.code),["MBMC-PRO-M1P","MBMC-PRO-M2"]);
-  assert.equal(typeof at18.price,"string");
+test("price is single-select with documented inclusive middle boundaries", () => {
+  const items = normalizePublicInventory(facetedMachines());
+  const at18 = { ...emptyInventoryFacets(), price: "15-18" };
+  assert.deepEqual(
+    filterNormalizedPublicInventory(items, "", at18).map(
+      (item) => item.machine.code,
+    ),
+    ["MBMC-PRO-M1P", "MBMC-PRO-M2"],
+  );
+  assert.equal(typeof at18.price, "string");
 });
 
-test("chip normalization distinguishes Intel, base, Pro/Max, and modern generations",()=>{
-  assert.equal(normalizeChipFacet("Intel Core i7"),"intel");
-  assert.equal(normalizeChipFacet("M1"),"m1");
-  assert.equal(normalizeChipFacet("Apple M1 Pro"),"m1-pro-max");
-  assert.equal(normalizeChipFacet("M1 Max"),"m1-pro-max");
-  assert.equal(normalizeChipFacet("M2"),"m2");
-  assert.equal(normalizeChipFacet("M2 Pro"),"m2-pro-max");
-  assert.equal(normalizeChipFacet("M2 Max"),"m2-pro-max");
-  assert.equal(normalizeChipFacet("M3 Pro"),"m3-plus");
-  assert.equal(normalizeChipFacet("M4 Max"),"m3-plus");
+test("chip normalization distinguishes Intel, base, Pro/Max, and modern generations", () => {
+  assert.equal(normalizeChipFacet("Intel Core i7"), "intel");
+  assert.equal(normalizeChipFacet("M1"), "m1");
+  assert.equal(normalizeChipFacet("Apple M1 Pro"), "m1-pro-max");
+  assert.equal(normalizeChipFacet("M1 Max"), "m1-pro-max");
+  assert.equal(normalizeChipFacet("M2"), "m2");
+  assert.equal(normalizeChipFacet("M2 Pro"), "m2-pro-max");
+  assert.equal(normalizeChipFacet("M2 Max"), "m2-pro-max");
+  assert.equal(normalizeChipFacet("M3 Pro"), "m3-plus");
+  assert.equal(normalizeChipFacet("M4 Max"), "m3-plus");
 });
 
-test("screen and RAM normalization use the public allowlisted values",()=>{
-  for(const size of [13,14])assert.equal(normalizeScreenFacet(`MacBook Pro 2022 ${size} inch`),"compact");
-  for(const size of [15,16])assert.equal(normalizeScreenFacet(`MacBook Pro 2022 ${size} inch`),"large");
-  assert.equal(normalizeRamFacet(8),"8");
-  assert.equal(normalizeRamFacet(16),"16");
-  assert.equal(normalizeRamFacet(32),"32-plus");
-  assert.equal(normalizeRamFacet(64),"32-plus");
+test("screen and RAM normalization use the public allowlisted values", () => {
+  for (const size of [13, 14])
+    assert.equal(
+      normalizeScreenFacet(`MacBook Pro 2022 ${size} inch`),
+      "compact",
+    );
+  for (const size of [15, 16])
+    assert.equal(
+      normalizeScreenFacet(`MacBook Pro 2022 ${size} inch`),
+      "large",
+    );
+  assert.equal(normalizeRamFacet(8), "8");
+  assert.equal(normalizeRamFacet(16), "16");
+  assert.equal(normalizeRamFacet(32), "32-plus");
+  assert.equal(normalizeRamFacet(64), "32-plus");
 });
 
-test("facet counts retain other groups and exclude selections from their own group",()=>{
-  const items=normalizePublicInventory(facetedMachines());
-  const facets={...emptyInventoryFacets(),family:["pro"],chip:["m1-pro-max"],ram:["16"]};
-  assert.equal(countFacetOption(items,"",facets,"chip","m2"),1);
-  assert.equal(countFacetOption(items,"",facets,"family","air"),0);
-  assert.equal(countFacetOption(items,"Xám",facets,"chip","m2"),0);
+test("facet counts retain other groups and exclude selections from their own group", () => {
+  const items = normalizePublicInventory(facetedMachines());
+  const facets = {
+    ...emptyInventoryFacets(),
+    family: ["pro"],
+    chip: ["m1-pro-max"],
+    ram: ["16"],
+  };
+  assert.equal(countFacetOption(items, "", facets, "chip", "m2"), 1);
+  assert.equal(countFacetOption(items, "", facets, "family", "air"), 0);
+  assert.equal(countFacetOption(items, "Xám", facets, "chip", "m2"), 0);
 });
 
-test("facet options with zero count remain rendered disabled while selected options stay removable",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
-  assert.match(source,/disabled=\{disabled\}/);
-  assert.match(source,/count === 0 && !isSelected/);
-  assert.match(source,/onRemove\(item\.group, item\.value\)/);
-  assert.match(source,/aria-label=\{`Bỏ bộ lọc/);
+test("facet options with zero count remain rendered disabled while selected options stay removable", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /disabled=\{disabled\}/);
+  assert.match(source, /count === 0 && !isSelected/);
+  assert.match(source, /onRemove\(item\.group, item\.value\)/);
+  assert.match(source, /aria-label=\{`Bỏ bộ lọc/);
 });
 
-test("facet toggles and active-chip removal change only their own option",()=>{
-  let facets=toggleMultiFacet(emptyInventoryFacets(),"chip","m1");
-  facets=toggleMultiFacet(facets,"chip","m2");
-  facets={...facets,family:["pro"]};
-  assert.deepEqual(removeFacetOption(facets,"chip","m1"),{...facets,chip:["m2"]});
-  assert.deepEqual(toggleMultiFacet(facets,"chip","m2"),{...facets,chip:["m1"]});
+test("facet toggles and active-chip removal change only their own option", () => {
+  let facets = toggleMultiFacet(emptyInventoryFacets(), "chip", "m1");
+  facets = toggleMultiFacet(facets, "chip", "m2");
+  facets = { ...facets, family: ["pro"] };
+  assert.deepEqual(removeFacetOption(facets, "chip", "m1"), {
+    ...facets,
+    chip: ["m2"],
+  });
+  assert.deepEqual(toggleMultiFacet(facets, "chip", "m2"), {
+    ...facets,
+    chip: ["m1"],
+  });
 });
 
-test("clear all returns the default facet state",()=>{
-  const active={...emptyInventoryFacets(),price:"over-18",family:["pro"],chip:["m2"],ram:["16"],screen:["large"]};
-  assert.notDeepEqual(active,emptyInventoryFacets());
-  assert.deepEqual(emptyInventoryFacets(),{price:null,family:[],chip:[],ram:[],screen:[]});
+test("clear all returns the default facet state", () => {
+  const active = {
+    ...emptyInventoryFacets(),
+    price: "over-18",
+    family: ["pro"],
+    chip: ["m2"],
+    ram: ["16"],
+    screen: ["large"],
+  };
+  assert.notDeepEqual(active, emptyInventoryFacets());
+  assert.deepEqual(emptyInventoryFacets(), {
+    price: null,
+    family: [],
+    chip: [],
+    ram: [],
+    screen: [],
+  });
 });
 
-test("URL state round-trips stable values and safely drops invalid values",()=>{
-  const parsed=parseInventoryUrlState(new URLSearchParams("q=M1+Pro&family=pro,bad&chip=m1-pro-max,private&ram=16&screen=large&sort=price-desc"));
-  assert.deepEqual(parsed,{query:"M1 Pro",sort:"price-desc",facets:{price:null,family:["pro"],chip:["m1-pro-max"],ram:["16"],screen:["large"]}});
-  assert.equal(serializeInventoryUrlState(parsed),"?q=M1+Pro&family=pro&chip=m1-pro-max&ram=16&screen=large&sort=price-desc");
+test("URL state round-trips stable values and safely drops invalid values", () => {
+  const parsed = parseInventoryUrlState(
+    new URLSearchParams(
+      "q=M1+Pro&family=pro,bad&chip=m1-pro-max,private&ram=16&screen=large&sort=price-desc",
+    ),
+  );
+  assert.deepEqual(parsed, {
+    query: "M1 Pro",
+    sort: "price-desc",
+    facets: {
+      price: null,
+      family: ["pro"],
+      chip: ["m1-pro-max"],
+      ram: ["16"],
+      screen: ["large"],
+    },
+  });
+  assert.equal(
+    serializeInventoryUrlState(parsed),
+    "?q=M1+Pro&family=pro&chip=m1-pro-max&ram=16&screen=large&sort=price-desc",
+  );
 });
 
-test("result count and sorting remain correct after faceted filtering",()=>{
-  const items=normalizePublicInventory(facetedMachines());
-  const facets={...emptyInventoryFacets(),family:["pro"],ram:["16"]};
-  const filtered=filterNormalizedPublicInventory(items,"",facets);
-  const sorted=sortNormalizedPublicInventory(filtered,"price-desc");
-  assert.equal(filtered.length,2);
-  assert.deepEqual(sorted.map(item=>item.machine.code),["MBMC-PRO-M2","MBMC-PRO-M1P"]);
+test("result count and sorting remain correct after faceted filtering", () => {
+  const items = normalizePublicInventory(facetedMachines());
+  const facets = { ...emptyInventoryFacets(), family: ["pro"], ram: ["16"] };
+  const filtered = filterNormalizedPublicInventory(items, "", facets);
+  const sorted = sortNormalizedPublicInventory(filtered, "price-desc");
+  assert.equal(filtered.length, 2);
+  assert.deepEqual(
+    sorted.map((item) => item.machine.code),
+    ["MBMC-PRO-M2", "MBMC-PRO-M1P"],
+  );
 });
 
-test("filter dropdown uses one canonical state for open, switch, and toggle-close behavior",()=>{
-  assert.equal(nextOpenFilter(null,"price"),"price");
-  assert.equal(nextOpenFilter("price","chip"),"chip");
-  assert.equal(nextOpenFilter("chip","chip"),null);
+test("filter dropdown uses one canonical state for open, switch, and toggle-close behavior", () => {
+  assert.equal(nextOpenFilter(null, "price"), "price");
+  assert.equal(nextOpenFilter("price", "chip"), "chip");
+  assert.equal(nextOpenFilter("chip", "chip"), null);
 });
 
-test("price selection closes while multi-select chip selection stays open",()=>{
-  assert.equal(selectionKeepsFilterOpen("price"),false);
-  assert.equal(selectionKeepsFilterOpen("chip"),true);
-  assert.equal(selectionKeepsFilterOpen("family"),true);
-  assert.equal(selectionKeepsFilterOpen("ram"),true);
-  assert.equal(selectionKeepsFilterOpen("screen"),true);
+test("price selection closes while multi-select chip selection stays open", () => {
+  assert.equal(selectionKeepsFilterOpen("price"), false);
+  assert.equal(selectionKeepsFilterOpen("chip"), true);
+  assert.equal(selectionKeepsFilterOpen("family"), true);
+  assert.equal(selectionKeepsFilterOpen("ram"), true);
+  assert.equal(selectionKeepsFilterOpen("screen"), true);
 });
 
-test("filter dropdown renders only the canonical open panel with accessible triggers",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
-  assert.match(source,/useState<OpenFilter>\(null\)/);
-  assert.match(source,/const isOpen = openFilter === group/);
-  assert.match(source,/aria-expanded=\{isOpen\}/);
-  assert.match(source,/aria-controls=\{panelId\}/);
-  assert.match(source,/\{isOpen \? \([\s\S]*?<fieldset/);
-  assert.doesNotMatch(source,/<details|<summary/);
+test("filter dropdown renders only the canonical open panel with accessible triggers", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /useState<OpenFilter>\(null\)/);
+  assert.match(source, /const isOpen = openFilter === group/);
+  assert.match(source, /aria-expanded=\{isOpen\}/);
+  assert.match(source, /aria-controls=\{panelId\}/);
+  assert.match(source, /\{isOpen \? \([\s\S]*?<fieldset/);
+  assert.doesNotMatch(source, /<details|<summary/);
 });
 
-test("outside pointer and Escape close the active filter and Escape restores trigger focus",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
-  assert.match(source,/document\.addEventListener\("pointerdown", handlePointerDown\)/);
-  assert.match(source,/!toolbarRef\.current\?\.contains\(event\.target as Node\)/);
-  assert.match(source,/event\.key === "Escape"/);
-  assert.match(source,/closeFilter\(true\)/);
-  assert.match(source,/trigger\?\.focus\(\)/);
+test("outside pointer and Escape close the active filter and Escape restores trigger focus", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(
+    source,
+    /document\.addEventListener\("pointerdown", handlePointerDown\)/,
+  );
+  assert.match(
+    source,
+    /!toolbarRef\.current\?\.contains\(event\.target as Node\)/,
+  );
+  assert.match(source, /event\.key === "Escape"/);
+  assert.match(source, /closeFilter\(true\)/);
+  assert.match(source, /trigger\?\.focus\(\)/);
 });
 
-test("price option closes its panel and multi-select options do not",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
-  assert.match(source,/onPriceChange[\s\S]*closeFilter\(true\)/);
-  assert.match(source,/onMultiChange\(group, values\)/);
-  assert.match(source,/if \(mobile\) closeFilter\(true\)/);
+test("price option closes its panel and multi-select options do not", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /onPriceChange[\s\S]*closeFilter\(true\)/);
+  assert.match(source, /onMultiChange\(group, values\)/);
+  assert.match(source, /if \(mobile\) closeFilter\(true\)/);
 });
 
-const decisionInput=(overrides={})=>({
-  batteryHealthPercent:95,
-  cycleCount:143,
-  cosmeticGrade:"C",
-  conditionSummary:"Có vết xước nhẹ ở cạnh trái, không ảnh hưởng sử dụng.",
-  includedItems:{charger:true,cable:null,box:null,bag:null,accessories:[]},
+const decisionInput = (overrides = {}) => ({
+  batteryHealthPercent: 95,
+  cycleCount: 143,
+  cosmeticGrade: "C",
+  conditionSummary: "Có vết xước nhẹ ở cạnh trái, không ảnh hưởng sử dụng.",
+  includedItems: {
+    charger: true,
+    cable: null,
+    box: null,
+    bag: null,
+    accessories: [],
+  },
   ...overrides,
 });
 
-test("machine evidence keeps both available battery values and omits missing ones",()=>{
-  assert.deepEqual(buildMachineEvidence(decisionInput()).slice(0,2),[
-    {label:"Pin",value:"95%"},
-    {label:"Chu kỳ sạc",value:"143 lần"},
+test("machine evidence keeps both available battery values and omits missing ones", () => {
+  assert.deepEqual(buildMachineEvidence(decisionInput()).slice(0, 2), [
+    { label: "Pin", value: "95%" },
+    { label: "Chu kỳ sạc", value: "143 lần" },
   ]);
-  const missing=buildMachineEvidence(decisionInput({batteryHealthPercent:null,cycleCount:null}));
-  assert.equal(missing.some(fact=>fact.label==="Pin"||fact.label==="Chu kỳ sạc"),false);
+  const missing = buildMachineEvidence(
+    decisionInput({ batteryHealthPercent: null, cycleCount: null }),
+  );
+  assert.equal(
+    missing.some((fact) => fact.label === "Pin" || fact.label === "Chu kỳ sạc"),
+    false,
+  );
 });
 
-test("appearance grade and description are merged into machine evidence in order",()=>{
-  const facts=buildMachineEvidence(decisionInput());
-  assert.deepEqual(facts.map(fact=>fact.label),[
-    "Pin","Chu kỳ sạc","Ngoại hình","Phụ kiện đi kèm","Mô tả tình trạng công khai",
-  ]);
-  assert.deepEqual(facts[2],{label:"Ngoại hình",value:"Hạng C"});
-  assert.equal(facts[4].wide,true);
-  assert.match(facts[4].value,/vết xước nhẹ/);
+test("appearance grade and description are merged into machine evidence in order", () => {
+  const facts = buildMachineEvidence(decisionInput());
+  assert.deepEqual(
+    facts.map((fact) => fact.label),
+    [
+      "Pin",
+      "Chu kỳ sạc",
+      "Ngoại hình",
+      "Phụ kiện đi kèm",
+      "Mô tả tình trạng công khai",
+    ],
+  );
+  assert.deepEqual(facts[2], { label: "Ngoại hình", value: "Hạng C" });
+  assert.equal(facts[4].wide, true);
+  assert.match(facts[4].value, /vết xước nhẹ/);
 });
 
-test("meaningless appearance and unavailable inspection placeholders are omitted",()=>{
-  const facts=buildMachineEvidence(decisionInput({conditionSummary:"Chưa có dữ liệu."}));
-  assert.equal(facts.some(fact=>fact.label==="Chi tiết ngoại hình"),false);
-  assert.equal(facts.some(fact=>fact.label==="Kiểm định"),false);
-  const decisionSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",import.meta.url),"utf8");
-  const passportSource=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",import.meta.url),"utf8");
-  assert.doesNotMatch(decisionSource,/EvidenceAvailabilityAnchors|EvidenceAnchors/);
-  assert.doesNotMatch(decisionSource,/\["Kiểm định"|Chưa có dữ liệu kiểm định/);
-  assert.doesNotMatch(passportSource,/passport\.inspection\.status === "not_available" \? "Chưa có dữ liệu"/);
+test("meaningless appearance and unavailable inspection placeholders are omitted", () => {
+  const facts = buildMachineEvidence(
+    decisionInput({ conditionSummary: "Chưa có dữ liệu." }),
+  );
+  assert.equal(
+    facts.some((fact) => fact.label === "Chi tiết ngoại hình"),
+    false,
+  );
+  assert.equal(
+    facts.some((fact) => fact.label === "Kiểm định"),
+    false,
+  );
+  const decisionSource = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const passportSource = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.doesNotMatch(
+    decisionSource,
+    /EvidenceAvailabilityAnchors|EvidenceAnchors/,
+  );
+  assert.doesNotMatch(
+    decisionSource,
+    /\["Kiểm định"|Chưa có dữ liệu kiểm định/,
+  );
+  assert.doesNotMatch(
+    passportSource,
+    /passport\.inspection\.status === "not_available" \? "Chưa có dữ liệu"/,
+  );
 });
 
-test("standalone appearance section is retired after decision-fact merge",()=>{
-  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  const condition=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",import.meta.url),"utf8");
-  assert.doesNotMatch(view,/RealCondition/);
-  assert.doesNotMatch(condition,/Chi tiết ngoại hình|condition-copy|condition-section/);
+test("standalone appearance section is retired after decision-fact merge", () => {
+  const view = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const condition = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.doesNotMatch(view, /RealCondition/);
+  assert.doesNotMatch(
+    condition,
+    /Chi tiết ngoại hình|condition-copy|condition-section/,
+  );
 });
 
-test("machine evidence is one column on mobile and two columns above the tablet breakpoint",()=>{
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\.detail-facts \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
-  assert.match(css,/@media \(min-width: 40rem\) \{[\s\S]*?\.detail-facts \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
-  assert.doesNotMatch(css,/@media \(max-width: 480px\) \{[\s\S]*?\.detail-facts \{ grid-template-columns: 1fr 1fr/);
+test("machine evidence is one column on mobile and two columns above the tablet breakpoint", () => {
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.detail-facts \{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 40rem\) \{[\s\S]*?\.detail-facts \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/,
+  );
+  assert.doesNotMatch(
+    css,
+    /@media \(max-width: 480px\) \{[\s\S]*?\.detail-facts \{ grid-template-columns: 1fr 1fr/,
+  );
 });
 
-test("decision values wrap by word without character stacking",()=>{
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  const rule=css.match(/\.detail-facts dd \{([^}]*)\}/)?.[1]??"";
-  assert.match(rule,/overflow-wrap: break-word/);
-  assert.match(rule,/word-break: normal/);
-  assert.match(rule,/white-space: normal/);
-  assert.doesNotMatch(rule,/break-all|overflow-wrap: anywhere/);
+test("decision values wrap by word without character stacking", () => {
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  const rule = css.match(/\.detail-facts dd \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(rule, /overflow-wrap: break-word/);
+  assert.match(rule, /word-break: normal/);
+  assert.match(rule, /white-space: normal/);
+  assert.doesNotMatch(rule, /break-all|overflow-wrap: anywhere/);
 });
 
-test("mobile facet selection replaces the group while desktop retains multi-select toggling",()=>{
-  assert.deepEqual(selectFacetValues(["m1","m2"],"intel",true),["intel"]);
-  assert.deepEqual(selectFacetValues(["m1"],"m1",true),[]);
-  assert.deepEqual(selectFacetValues(["m1"],"m2",false),["m1","m2"]);
-  assert.deepEqual(selectFacetValues(["m1","m2"],"m1",false),["m2"]);
+test("mobile facet selection replaces the group while desktop retains multi-select toggling", () => {
+  assert.deepEqual(selectFacetValues(["m1", "m2"], "intel", true), ["intel"]);
+  assert.deepEqual(selectFacetValues(["m1"], "m1", true), []);
+  assert.deepEqual(selectFacetValues(["m1"], "m2", false), ["m1", "m2"]);
+  assert.deepEqual(selectFacetValues(["m1", "m2"], "m1", false), ["m2"]);
 });
 
-test("mobile filters use one canonical URL-compatible facet array state",()=>{
-  const facets={...emptyInventoryFacets(),chip:selectFacetValues(["m1","m2"],"intel",true)};
-  const state={query:"MacBook",sort:"price-asc",facets};
-  assert.equal(serializeInventoryUrlState(state),"?q=MacBook&chip=intel&sort=price-asc");
-  assert.deepEqual(parseInventoryUrlState(new URLSearchParams("chip=intel&sort=price-asc")).facets.chip,["intel"]);
+test("mobile filters use one canonical URL-compatible facet array state", () => {
+  const facets = {
+    ...emptyInventoryFacets(),
+    chip: selectFacetValues(["m1", "m2"], "intel", true),
+  };
+  const state = { query: "MacBook", sort: "price-asc", facets };
+  assert.equal(
+    serializeInventoryUrlState(state),
+    "?q=MacBook&chip=intel&sort=price-asc",
+  );
+  assert.deepEqual(
+    parseInventoryUrlState(new URLSearchParams("chip=intel&sort=price-asc"))
+      .facets.chip,
+    ["intel"],
+  );
 });
 
-test("mobile filter controls form a two-row three-column grid including sort",()=>{
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  const filters=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
-  assert.match(css,/\.facet-groups \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(filters,/\["price", "family", "chip", "ram", "screen"\]/);
-  assert.match(filters,/mobile-sort-control/);
-  assert.match(filters,/Sắp xếp/);
+test("mobile filter controls form a two-row three-column grid including sort", () => {
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  const filters = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.facet-groups \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(filters, /\["price", "family", "chip", "ram", "screen"\]/);
+  assert.match(filters, /mobile-sort-control/);
+  assert.match(filters, /Sắp xếp/);
 });
 
-test("mobile option selection closes while the shared open-filter state allows only one panel",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
-  assert.match(source,/useState<OpenFilter>\(null\)/);
-  assert.match(source,/selectFacetValues\([\s\S]*?selected,[\s\S]*?option\.value,[\s\S]*?mobile,[\s\S]*?\)[\s\S]*onMultiChange\(group, values\);[\s\S]*if \(mobile\) closeFilter\(true\)/);
-  assert.match(source,/openFilter === "sort" \? \([\s\S]*?<fieldset/);
+test("mobile option selection closes while the shared open-filter state allows only one panel", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /useState<OpenFilter>\(null\)/);
+  assert.match(
+    source,
+    /selectFacetValues\([\s\S]*?selected,[\s\S]*?option\.value,[\s\S]*?mobile,[\s\S]*?\)[\s\S]*onMultiChange\(group, values\);[\s\S]*if \(mobile\) closeFilter\(true\)/,
+  );
+  assert.match(source, /openFilter === "sort" \? \([\s\S]*?<fieldset/);
 });
 
-test("mobile cards are horizontal with image left and content right while tablet restores vertical cards",()=>{
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\.machine-card-link \{[^}]*flex-direction: row/);
-  assert.match(css,/\.machine-image \{[^}]*flex: 0 0 38%/);
-  assert.match(css,/@media \(min-width: 40rem\) \{[\s\S]*?\.machine-card-link \{[^}]*flex-direction: column/);
-  const card=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx",import.meta.url),"utf8");
-  assert.ok(card.indexOf('className="machine-image"')<card.indexOf('className="machine-card-body"'));
+test("mobile cards are horizontal with image left and content right while tablet restores vertical cards", () => {
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(css, /\.machine-card-link \{[^}]*flex-direction: row/);
+  assert.match(css, /\.machine-image \{[^}]*flex: 0 0 38%/);
+  assert.match(
+    css,
+    /@media \(min-width: 40rem\) \{[\s\S]*?\.machine-card-link \{[^}]*flex-direction: column/,
+  );
+  const card = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/MachineCard.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.ok(
+    card.indexOf('className="machine-image"') <
+      card.indexOf('className="machine-card-body"'),
+  );
 });
 
-test("mobile card keeps title specs price condition and CTA without inspection placeholders",()=>{
-  const card=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx",import.meta.url),"utf8");
-  for(const token of ["<Heading>{displayName}</Heading>","Heading = \"h2\"","{specs}","{price}","machine-card-condition","Xem máy"])assert.equal(card.includes(token),true,token);
-  assert.doesNotMatch(card,/Kiểm định|machine\.inspection/);
-  assert.match(card,/className="machine-code"/);
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\.machine-code, \.machine-card-cta-long \{ display: none; \}/);
+test("mobile card keeps title specs price condition and CTA without inspection placeholders", () => {
+  const card = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/MachineCard.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  for (const token of [
+    "<Heading>{displayName}</Heading>",
+    'Heading = "h2"',
+    "{specs}",
+    "{price}",
+    "machine-card-condition",
+    "Xem máy",
+  ])
+    assert.equal(card.includes(token), true, token);
+  assert.doesNotMatch(card, /Kiểm định|machine\.inspection/);
+  assert.match(card, /className="machine-code"/);
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.machine-code, \.machine-card-cta-long \{ display: none; \}/,
+  );
 });
 
-test("mobile compact condition preserves battery fallback and omits unavailable values",()=>{
-  assert.equal(formatMachineCardCondition({batteryHealthPercent:95,cycleCount:506,cosmeticGrade:"C"}),"Pin 95% · Ngoại hình C");
-  assert.equal(formatMachineCardCondition({batteryHealthPercent:null,cycleCount:506,cosmeticGrade:"A"}),"Lần sạc 506 · Ngoại hình A");
-  assert.equal(formatMachineCardCondition({batteryHealthPercent:null,cycleCount:null,cosmeticGrade:null}),"");
+test("mobile compact condition preserves battery fallback and omits unavailable values", () => {
+  assert.equal(
+    formatMachineCardCondition({
+      batteryHealthPercent: 95,
+      cycleCount: 506,
+      cosmeticGrade: "C",
+    }),
+    "Pin 95% · Ngoại hình C",
+  );
+  assert.equal(
+    formatMachineCardCondition({
+      batteryHealthPercent: null,
+      cycleCount: 506,
+      cosmeticGrade: "A",
+    }),
+    "Lần sạc 506 · Ngoại hình A",
+  );
+  assert.equal(
+    formatMachineCardCondition({
+      batteryHealthPercent: null,
+      cycleCount: null,
+      cosmeticGrade: null,
+    }),
+    "",
+  );
 });
 
-test("desktop sort and card grid are restored at existing breakpoints",()=>{
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.mobile-sort-control \{ display: none; \}[\s\S]*?\.inventory-toolbar label \{ display: flex; \}/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.machine-catalog \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+test("desktop sort and card grid are restored at existing breakpoints", () => {
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.mobile-sort-control \{ display: none; \}[\s\S]*?\.inventory-toolbar label \{ display: flex; \}/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.machine-catalog \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+  );
 });
 
-test("open filter rotates only the chevron while the readable label stays upright",()=>{
-  const filters=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(filters,/className="facet-trigger-label"/);
-  assert.match(filters,/className="facet-trigger-chevron" aria-hidden="true"/);
-  assert.match(css,/\.facet-trigger-label \{[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap/);
-  assert.match(css,/\.facet-trigger\[aria-expanded="true"\] \.facet-trigger-chevron \{ transform: rotate\(180deg\); \}/);
-  assert.doesNotMatch(css,/\.facet-trigger\[aria-expanded="true"\] span \{/);
-  assert.doesNotMatch(css,/\.facet-trigger-label \{[^}]*transform/);
+test("open filter rotates only the chevron while the readable label stays upright", () => {
+  const filters = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(filters, /className="facet-trigger-label"/);
+  assert.match(filters, /className="facet-trigger-chevron" aria-hidden="true"/);
+  assert.match(
+    css,
+    /\.facet-trigger-label \{[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap/,
+  );
+  assert.match(
+    css,
+    /\.facet-trigger\[aria-expanded="true"\] \.facet-trigger-chevron \{ transform: rotate\(180deg\); \}/,
+  );
+  assert.doesNotMatch(css, /\.facet-trigger\[aria-expanded="true"\] span \{/);
+  assert.doesNotMatch(css, /\.facet-trigger-label \{[^}]*transform/);
 });
 
-test("gallery navigation wraps and swipe uses one canonical image index",()=>{
-  assert.equal(wrapGalleryIndex(-1,5),4);
-  assert.equal(wrapGalleryIndex(5,5),0);
-  assert.equal(galleryIndexAfterSwipe(1,5,-60),2);
-  assert.equal(galleryIndexAfterSwipe(1,5,60),0);
-  assert.equal(galleryIndexAfterSwipe(1,5,10),1);
+test("gallery navigation wraps and swipe uses one canonical image index", () => {
+  assert.equal(wrapGalleryIndex(-1, 5), 4);
+  assert.equal(wrapGalleryIndex(5, 5), 0);
+  assert.equal(galleryIndexAfterSwipe(1, 5, -60), 2);
+  assert.equal(galleryIndexAfterSwipe(1, 5, 60), 0);
+  assert.equal(galleryIndexAfterSwipe(1, 5, 10), 1);
 });
 
-test("public gallery thumbnails arrows and primary image all control the shared viewer",()=>{
-  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
-  assert.match(gallery,/usePublicMachineMedia\(\)/);
-  assert.match(gallery,/onClick=\{\(\) => select\(imageIndex\)\}/);
-  assert.match(gallery,/onClick=\{previous\}[^>]*aria-label="Ảnh trước"/);
-  assert.match(gallery,/onClick=\{next\}[^>]*aria-label="Ảnh tiếp theo"/);
-  assert.match(gallery,/<SlidingImageTrack images=\{images\} index=\{index\} onSelect=\{select\} onOpen=\{openLightbox\}/);
-  assert.match(gallery,/aria-pressed=\{imageIndex === index\}/);
+test("public gallery thumbnails arrows and primary image all control the shared viewer", () => {
+  const gallery = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(gallery, /usePublicMachineMedia\(\)/);
+  assert.match(gallery, /onClick=\{\(\) => select\(imageIndex\)\}/);
+  assert.match(gallery, /onClick=\{previous\}[^>]*aria-label="Ảnh trước"/);
+  assert.match(gallery, /onClick=\{next\}[^>]*aria-label="Ảnh tiếp theo"/);
+  assert.match(
+    gallery,
+    /<SlidingImageTrack images=\{images\} index=\{index\} onSelect=\{select\} onOpen=\{openLightbox\}/,
+  );
+  assert.match(gallery, /aria-pressed=\{imageIndex === index\}/);
 });
 
-test("lightbox has dialog semantics Escape arrows scroll lock focus return and swipe",()=>{
-  const provider=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",import.meta.url),"utf8");
-  assert.match(provider,/role="dialog" aria-modal="true"/);
-  assert.match(provider,/event\.key === "Escape"/);
-  assert.match(provider,/event\.key === "ArrowLeft"/);
-  assert.match(provider,/event\.key === "ArrowRight"/);
-  assert.match(provider,/document\.body\.style\.overflow = "hidden"/);
-  assert.match(provider,/openerRef\.current\?\.focus\(\)/);
-  assert.match(provider,/<SlidingImageTrack images=\{images\} index=\{index\} onSelect=\{select\}/);
-  assert.match(provider,/querySelectorAll<HTMLElement>\("button:not\(:disabled\)"\)/);
+test("lightbox has dialog semantics Escape arrows scroll lock focus return and swipe", () => {
+  const provider = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(provider, /role="dialog" aria-modal="true"/);
+  assert.match(provider, /event\.key === "Escape"/);
+  assert.match(provider, /event\.key === "ArrowLeft"/);
+  assert.match(provider, /event\.key === "ArrowRight"/);
+  assert.match(provider, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(provider, /openerRef\.current\?\.focus\(\)/);
+  assert.match(
+    provider,
+    /<SlidingImageTrack images=\{images\} index=\{index\} onSelect=\{select\}/,
+  );
+  assert.match(
+    provider,
+    /querySelectorAll<HTMLElement>\("button:not\(:disabled\)"\)/,
+  );
 });
 
-test("carousel renders every image in one GPU-transformed horizontal track",()=>{
-  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(track,/className="carousel-track"/);
-  assert.match(track,/images\.map\(\(image, imageIndex\) => <div className="carousel-slide"/);
-  assert.match(track,/translate3d\(calc\(\$\{-index \* 100\}% \+ \$\{distanceX\}px\), 0, 0\)/);
-  assert.doesNotMatch(track,/const selected = images\[index\]/);
-  assert.match(css,/\.carousel-track \{[^}]*display: flex[^}]*transition: transform 400ms cubic-bezier\(\.22, 1, \.36, 1\)[^}]*will-change: transform/);
-  assert.match(css,/\.carousel-slide \{[^}]*flex: 0 0 100%[^}]*min-width: 100%/);
+test("carousel renders every image in one GPU-transformed horizontal track", () => {
+  const track = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(track, /className="carousel-track"/);
+  assert.match(
+    track,
+    /images\.map\(\(image, imageIndex\) => <div className="carousel-slide"/,
+  );
+  assert.match(
+    track,
+    /translate3d\(calc\(\$\{-index \* 100\}% \+ \$\{distanceX\}px\), 0, 0\)/,
+  );
+  assert.doesNotMatch(track, /const selected = images\[index\]/);
+  assert.match(
+    css,
+    /\.carousel-track \{[^}]*display: flex[^}]*transition: transform 400ms cubic-bezier\(\.22, 1, \.36, 1\)[^}]*will-change: transform/,
+  );
+  assert.match(
+    css,
+    /\.carousel-slide \{[^}]*flex: 0 0 100%[^}]*min-width: 100%/,
+  );
 });
 
-test("pointer drag updates transient transform with capture animation frames and boundary resistance",()=>{
-  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
-  assert.match(track,/setPointerCapture\(event\.pointerId\)/);
-  assert.match(track,/onPointerMove/);
-  assert.match(track,/requestAnimationFrame/);
-  assert.match(track,/setTrackPosition\(resistGalleryDrag\(index, images\.length, distanceX\), false\)/);
-  assert.match(track,/track\.dataset\.dragging = animate \? "false" : "true"/);
-  assert.ok(Math.abs(resistGalleryDrag(0,4,100)-28)<0.001);
-  assert.ok(Math.abs(resistGalleryDrag(3,4,-100)+28)<0.001);
-  assert.equal(resistGalleryDrag(1,4,-100),-100);
+test("pointer drag updates transient transform with capture animation frames and boundary resistance", () => {
+  const track = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(track, /setPointerCapture\(event\.pointerId\)/);
+  assert.match(track, /onPointerMove/);
+  assert.match(track, /requestAnimationFrame/);
+  assert.match(
+    track,
+    /setTrackPosition\(resistGalleryDrag\(index, images\.length, distanceX\), false\)/,
+  );
+  assert.match(track, /track\.dataset\.dragging = animate \? "false" : "true"/);
+  assert.ok(Math.abs(resistGalleryDrag(0, 4, 100) - 28) < 0.001);
+  assert.ok(Math.abs(resistGalleryDrag(3, 4, -100) + 28) < 0.001);
+  assert.equal(resistGalleryDrag(1, 4, -100), -100);
 });
 
-test("distance and velocity thresholds advance while small drags snap back and boundaries clamp",()=>{
-  const base={index:1,length:4,viewportWidth:400};
-  assert.equal(resolveGalleryDragIndex({...base,distanceX:-80,velocityX:-0.1}),2);
-  assert.equal(resolveGalleryDragIndex({...base,distanceX:-20,velocityX:-0.7}),2);
-  assert.equal(resolveGalleryDragIndex({...base,distanceX:-20,velocityX:-0.1}),1);
-  assert.equal(resolveGalleryDragIndex({index:0,length:4,viewportWidth:400,distanceX:100,velocityX:1}),0);
-  assert.equal(resolveGalleryDragIndex({index:3,length:4,viewportWidth:400,distanceX:-100,velocityX:-1}),3);
-  assert.equal(clampGalleryIndex(-1,4),0);
-  assert.equal(clampGalleryIndex(8,4),3);
+test("distance and velocity thresholds advance while small drags snap back and boundaries clamp", () => {
+  const base = { index: 1, length: 4, viewportWidth: 400 };
+  assert.equal(
+    resolveGalleryDragIndex({ ...base, distanceX: -80, velocityX: -0.1 }),
+    2,
+  );
+  assert.equal(
+    resolveGalleryDragIndex({ ...base, distanceX: -20, velocityX: -0.7 }),
+    2,
+  );
+  assert.equal(
+    resolveGalleryDragIndex({ ...base, distanceX: -20, velocityX: -0.1 }),
+    1,
+  );
+  assert.equal(
+    resolveGalleryDragIndex({
+      index: 0,
+      length: 4,
+      viewportWidth: 400,
+      distanceX: 100,
+      velocityX: 1,
+    }),
+    0,
+  );
+  assert.equal(
+    resolveGalleryDragIndex({
+      index: 3,
+      length: 4,
+      viewportWidth: 400,
+      distanceX: -100,
+      velocityX: -1,
+    }),
+    3,
+  );
+  assert.equal(clampGalleryIndex(-1, 4), 0);
+  assert.equal(clampGalleryIndex(8, 4), 3);
 });
 
-test("lightbox and hero use the same sliding component and canonical provider index",()=>{
-  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
-  const provider=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",import.meta.url),"utf8");
-  assert.match(gallery,/SlidingImageTrack/);
-  assert.match(provider,/const \[index, setIndex\] = useState\(0\)/);
-  assert.match(provider,/lightbox-image"><SlidingImageTrack images=\{images\} index=\{index\}/);
-  assert.doesNotMatch(provider,/useState\([^)]*lightboxIndex/);
+test("lightbox and hero use the same sliding component and canonical provider index", () => {
+  const gallery = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const provider = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(gallery, /SlidingImageTrack/);
+  assert.match(provider, /const \[index, setIndex\] = useState\(0\)/);
+  assert.match(
+    provider,
+    /lightbox-image"><SlidingImageTrack images=\{images\} index=\{index\}/,
+  );
+  assert.doesNotMatch(provider, /useState\([^)]*lightboxIndex/);
 });
 
-test("reduced motion removes long carousel transitions and no autoplay is introduced",()=>{
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  const provider=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",import.meta.url),"utf8");
-  assert.match(css,/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.carousel-track \{ transition-duration: \.01ms; \}/);
-  assert.doesNotMatch(provider,/setInterval|autoplay/i);
+test("reduced motion removes long carousel transitions and no autoplay is introduced", () => {
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  const provider = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineMediaProvider.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.carousel-track \{ transition-duration: \.01ms; \}/,
+  );
+  assert.doesNotMatch(provider, /setInterval|autoplay/i);
 });
 
-test("mobile gallery uses intrinsic shape to fill square photos and contain non-square photos",()=>{
-  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
-  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.equal(classifyGalleryImageShape(1000,1000),"square");
-  assert.equal(classifyGalleryImageShape(900,1000),"square");
-  assert.equal(classifyGalleryImageShape(1100,1000),"square");
-  assert.equal(classifyGalleryImageShape(1200,1000),"non-square");
-  assert.equal(classifyGalleryImageShape(800,1000),"non-square");
-  assert.match(track,/element\.naturalWidth, element\.naturalHeight/);
-  assert.match(gallery,/detail-main-image-square/);
-  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.detail-main-image-square \{ aspect-ratio: 1 \/ 1; \}/);
-  assert.match(css,/\.detail-main-image-square \.carousel-slide img \{ object-fit: cover; object-position: center; padding: 0; \}/);
-  assert.match(css,/\.detail-main-image:not\(\.detail-main-image-square\) \.carousel-slide img \{ object-fit: contain/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.detail-hero \{ grid-template-columns:/);
+test("mobile gallery uses intrinsic shape to fill square photos and contain non-square photos", () => {
+  const gallery = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const track = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.equal(classifyGalleryImageShape(1000, 1000), "square");
+  assert.equal(classifyGalleryImageShape(900, 1000), "square");
+  assert.equal(classifyGalleryImageShape(1100, 1000), "square");
+  assert.equal(classifyGalleryImageShape(1200, 1000), "non-square");
+  assert.equal(classifyGalleryImageShape(800, 1000), "non-square");
+  assert.match(track, /element\.naturalWidth, element\.naturalHeight/);
+  assert.match(gallery, /detail-main-image-square/);
+  assert.match(
+    css,
+    /@media \(max-width: 480px\) \{[\s\S]*?\.detail-main-image-square \{ aspect-ratio: 1 \/ 1; \}/,
+  );
+  assert.match(
+    css,
+    /\.detail-main-image-square \.carousel-slide img \{ object-fit: cover; object-position: center; padding: 0; \}/,
+  );
+  assert.match(
+    css,
+    /\.detail-main-image:not\(\.detail-main-image-square\) \.carousel-slide img \{ object-fit: contain/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.detail-hero \{ grid-template-columns:/,
+  );
 });
 
-test("mobile detail keeps thumbnails and compact sticky CTA but removes bottom navigation",()=>{
-  const layout=readFileSync(new URL("../../app/(sales)/layout.tsx",import.meta.url),"utf8");
-  const gallery=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",import.meta.url),"utf8");
-  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
-  const contactAction=readFileSync(new URL("../../components/contact/ContactActionLink.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(gallery,/className="detail-thumbnails"/);
-  assert.match(gallery,/onClick=\{\(\) => select\(imageIndex\)\}/);
-  assert.match(sticky,/className="public-machine-sticky"/);
-  assert.match(sticky,/summary\.displayName/);
-  assert.match(sticky,/formatCurrencyVnd\(summary\.price\)/);
-  assert.match(sticky,/<ContactActionLink \/>/);
-  assert.match(contactAction,/Nhắn MBMC xác nhận máy/);
-  assert.doesNotMatch(layout,/MobileBottomNavigation|mobile-navigation/);
-  assert.doesNotMatch(css,/\.mobile-navigation/);
-  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/);
+test("mobile detail keeps thumbnails and compact sticky CTA but removes bottom navigation", () => {
+  const layout = readFileSync(
+    new URL("../../app/(sales)/layout.tsx", import.meta.url),
+    "utf8",
+  );
+  const gallery = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const sticky = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const contactAction = readFileSync(
+    new URL("../../components/contact/ContactActionLink.tsx", import.meta.url),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(gallery, /className="detail-thumbnails"/);
+  assert.match(gallery, /onClick=\{\(\) => select\(imageIndex\)\}/);
+  assert.match(sticky, /className="public-machine-sticky"/);
+  assert.match(sticky, /summary\.displayName/);
+  assert.match(sticky, /formatCurrencyVnd\(summary\.price\)/);
+  assert.match(sticky, /<ContactActionLink \/>/);
+  assert.match(contactAction, /Nhắn MBMC xác nhận máy/);
+  assert.doesNotMatch(layout, /MobileBottomNavigation|mobile-navigation/);
+  assert.doesNotMatch(css, /\.mobile-navigation/);
+  assert.match(
+    css,
+    /@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/,
+  );
 });
 
-test("public hero inventory sticky and support surfaces share canonical naming",()=>{
-  const card=readFileSync(new URL("../../app/(sales)/may-dang-co/_components/MachineCard.tsx",import.meta.url),"utf8");
-  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
-  const detail=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
-  assert.equal(formatPublicMachineDisplayName("MacBook Pro Intel i5 2020 13 inch"),"MacBook Pro 2020 13 inch");
-  assert.equal(formatPublicMachineDisplayName("MacBook Pro M1 Pro 2021 16 inch"),"MacBook Pro 2021 16 inch");
-  assert.equal(formatPublicMachineSpecs({chip:"M1 Pro",ramGb:16,storageGb:1024,color:"Bạc"}),"M1 Pro · 16GB · 1TB SSD · Bạc");
-  assert.match(card,/formatPublicMachineDisplayName\(machine\.displayName\)/);
-  assert.match(card,/formatPublicMachineSpecs\(/);
-  assert.match(hero,/formatPublicMachineDisplayName\(summary\.displayName\)/);
-  assert.match(hero,/formatPublicMachineSpecs\(/);
-  assert.match(detail,/formatPublicMachineDisplayName\(summary\.displayName\)/);
-  assert.match(sticky,/formatPublicMachineDisplayName\(summary\.displayName\)/);
-  assert.match(sticky,/formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/);
-  assert.match(sticky,/public-machine-sticky-specs/);
-  assert.match(sticky,/public-machine-sticky-price/);
+test("public hero inventory sticky and support surfaces share canonical naming", () => {
+  const card = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/MachineCard.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const hero = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const detail = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const sticky = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.equal(
+    formatPublicMachineDisplayName("MacBook Pro Intel i5 2020 13 inch"),
+    "MacBook Pro 2020 13 inch",
+  );
+  assert.equal(
+    formatPublicMachineDisplayName("MacBook Pro M1 Pro 2021 16 inch"),
+    "MacBook Pro 2021 16 inch",
+  );
+  assert.equal(
+    formatPublicMachineSpecs({
+      chip: "M1 Pro",
+      ramGb: 16,
+      storageGb: 1024,
+      color: "Bạc",
+    }),
+    "M1 Pro · 16GB · 1TB SSD · Bạc",
+  );
+  assert.match(card, /formatPublicMachineDisplayName\(machine\.displayName\)/);
+  assert.match(card, /formatPublicMachineSpecs\(/);
+  assert.match(hero, /formatPublicMachineDisplayName\(summary\.displayName\)/);
+  assert.match(hero, /formatPublicMachineSpecs\(/);
+  assert.match(
+    detail,
+    /formatPublicMachineDisplayName\(summary\.displayName\)/,
+  );
+  assert.match(
+    sticky,
+    /formatPublicMachineDisplayName\(summary\.displayName\)/,
+  );
+  assert.match(
+    sticky,
+    /formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/,
+  );
+  assert.match(sticky, /public-machine-sticky-specs/);
+  assert.match(sticky, /public-machine-sticky-price/);
 });
 
-test("mobile sticky shows canonical identity, price, and compact contact action",()=>{
-  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
-  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  const stickyMarkup=sticky.slice(sticky.indexOf("export function PublicMachineStickyBar"));
-  assert.match(stickyMarkup,/formatPublicMachineDisplayName\(summary\.displayName\)/);
-  assert.match(stickyMarkup,/formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/);
-  assert.doesNotMatch(stickyMarkup,/formatPublicMachineSpecs\([^)]*color/);
-  assert.doesNotMatch(stickyMarkup,/<strong>\{summary\.displayName\}<\/strong>/);
-  assert.match(stickyMarkup,/<strong>\{displayName\}<\/strong>\{specs \? <span className="public-machine-sticky-specs">\{specs\}<\/span> : null\}/);
-  assert.match(stickyMarkup,/<ContactActionLink \/>/);
-  assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
-  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-areas: "identity price cta"/);
-  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*display: block;[^}]*grid-area: price/);
-  assert.match(css,/\.public-machine-sticky-price \{[^}]*font-weight: 700;[^}]*white-space: nowrap;/);
-  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-identity \{ row-gap: \.125rem; \}/);
-  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/);
+test("mobile sticky shows canonical identity, price, and compact contact action", () => {
+  const sticky = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const hero = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  const stickyMarkup = sticky.slice(
+    sticky.indexOf("export function PublicMachineStickyBar"),
+  );
+  assert.match(
+    stickyMarkup,
+    /formatPublicMachineDisplayName\(summary\.displayName\)/,
+  );
+  assert.match(
+    stickyMarkup,
+    /formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/,
+  );
+  assert.doesNotMatch(stickyMarkup, /formatPublicMachineSpecs\([^)]*color/);
+  assert.doesNotMatch(
+    stickyMarkup,
+    /<strong>\{summary\.displayName\}<\/strong>/,
+  );
+  assert.match(
+    stickyMarkup,
+    /<strong>\{displayName\}<\/strong>\{specs \? <span className="public-machine-sticky-specs">\{specs\}<\/span> : null\}/,
+  );
+  assert.match(stickyMarkup, /<ContactActionLink \/>/);
+  assert.match(
+    hero,
+    /<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-areas: "identity price cta"/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*display: block;[^}]*grid-area: price/,
+  );
+  assert.match(
+    css,
+    /\.public-machine-sticky-price \{[^}]*font-weight: 700;[^}]*white-space: nowrap;/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-identity \{ row-gap: \.125rem; \}/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 480px\) \{[\s\S]*?\.public-machine-sticky \{ min-height: 3\.65rem/,
+  );
 });
 
-test("desktop and mobile sticky layouts preserve separate identity, price, and channel CTA",()=>{
-  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
-  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
-  const contact=readFileSync(new URL("../../config/contact.ts",import.meta.url),"utf8");
-  const contactAction=readFileSync(new URL("../../components/contact/ContactActionLink.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.equal(MBMC_ZALO_URL,"https://zalo.me/0326147088");
-  assert.match(contact,/export const MBMC_ZALO_URL = "https:\/\/zalo\.me\/0326147088"/);
-  assert.match(sticky,/className="public-machine-sticky-identity"[\s\S]*?className="public-machine-sticky-price"[\s\S]*?<ContactActionLink \/>/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-columns: minmax\(16\.25rem, 1fr\) auto auto[^}]*grid-template-areas: "identity price cta"[^}]*grid-auto-flow: column/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*grid-area: price[^}]*font-size: 1\.25rem;[^}]*line-height: 1;/);
-  assert.match(css,/@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*display: block;[^}]*grid-area: price/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*grid-area: cta[^}]*grid-row: 1[^}]*width: max-content[^}]*max-width: none[^}]*white-space: nowrap/);
-  assert.doesNotMatch(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*(?:width: 100%|grid-column: 1 \/ -1|grid-column: 1 \/ span)/);
-  assert.match(hero,/<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/);
-  assert.match(hero,/<ContactActionLink[^>]*className="primary-action"[\s\S]*?\/>/);
-  assert.match(sticky,/<ContactActionLink className="primary-action" \/>/);
-  assert.match(sticky,/<ContactActionLink \/>/);
-  assert.match(contactAction,/href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
-  assert.match(contactAction,/target="_blank"/);
-  assert.match(contactAction,/rel="noopener noreferrer"/);
-  assert.match(contactAction,/ownerType === "ctv" \? contactLabel : requestedLabel[\s\S]*?compact \? compactContactLabel : "Nhắn MBMC xác nhận máy"/);
-  assert.doesNotMatch(hero,/Tin nhắn đã có sẵn|buildMachineContactHref/);
-  assert.match(hero,/Bạn có thể gửi:/);
+test("desktop and mobile sticky layouts preserve separate identity, price, and channel CTA", () => {
+  const sticky = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const hero = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const contact = readFileSync(
+    new URL("../../config/contact.ts", import.meta.url),
+    "utf8",
+  );
+  const contactAction = readFileSync(
+    new URL("../../components/contact/ContactActionLink.tsx", import.meta.url),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.equal(MBMC_ZALO_URL, "https://zalo.me/0326147088");
+  assert.match(
+    contact,
+    /export const MBMC_ZALO_URL = "https:\/\/zalo\.me\/0326147088"/,
+  );
+  assert.match(
+    sticky,
+    /className="public-machine-sticky-identity"[\s\S]*?className="public-machine-sticky-price"[\s\S]*?<ContactActionLink \/>/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky \{[^}]*grid-template-columns: minmax\(16\.25rem, 1fr\) auto auto[^}]*grid-template-areas: "identity price cta"[^}]*grid-auto-flow: column/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*grid-area: price[^}]*font-size: 1\.25rem;[^}]*line-height: 1;/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 55\.99rem\) \{[\s\S]*?\.public-machine-sticky-price \{[^}]*display: block;[^}]*grid-area: price/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*grid-area: cta[^}]*grid-row: 1[^}]*width: max-content[^}]*max-width: none[^}]*white-space: nowrap/,
+  );
+  assert.doesNotMatch(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.public-machine-sticky > a \{[^}]*(?:width: 100%|grid-column: 1 \/ -1|grid-column: 1 \/ span)/,
+  );
+  assert.match(
+    hero,
+    /<p className="detail-price">\{formatCurrencyVnd\(summary\.price\)\}<\/p>/,
+  );
+  assert.match(
+    hero,
+    /<ContactActionLink[^>]*className="primary-action"[\s\S]*?\/>/,
+  );
+  assert.match(sticky, /<ContactActionLink className="primary-action" \/>/);
+  assert.match(sticky, /<ContactActionLink \/>/);
+  assert.match(contactAction, /href=\{contactUrl \?\? MBMC_ZALO_URL\}/);
+  assert.match(contactAction, /target="_blank"/);
+  assert.match(contactAction, /rel="noopener noreferrer"/);
+  assert.match(
+    contactAction,
+    /ownerType === "ctv" \? contactLabel : requestedLabel[\s\S]*?compact \? compactContactLabel : "Nhắn MBMC xác nhận máy"/,
+  );
+  assert.doesNotMatch(hero, /Tin nhắn đã có sẵn|buildMachineContactHref/);
+  assert.match(hero, /Bạn có thể gửi:/);
 });
 
-test("detailed observation images open the same lightbox at their gallery index",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",import.meta.url),"utf8");
-  assert.match(source,/usePublicMachineMedia\(\)/);
-  assert.match(source,/startIndex \+ index/);
-  assert.match(source,/onOpen=\{openLightbox\}/);
-  assert.doesNotMatch(source,/Ảnh thực tế \{index \+ 1\}/);
+test("detailed observation images open the same lightbox at their gallery index", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /usePublicMachineMedia\(\)/);
+  assert.match(source, /startIndex \+ index/);
+  assert.match(source, /onOpen=\{openLightbox\}/);
+  assert.doesNotMatch(source, /Ảnh thực tế \{index \+ 1\}/);
 });
 
-test("decision dossier places supporting information before Passport and mobile stacks sections",()=>{
-  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PassportDossier"));
-  assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PassportDossier"));
-  assert.ok(dossier.indexOf("<PublicSpecifications")<dossier.indexOf("<PassportDossier"));
-  assert.match(css,/\.decision-dossier \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
-  assert.match(css,/@media \(min-width: 56rem\) \{[\s\S]*?\.decision-dossier \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+test("decision dossier places supporting information before Passport and mobile stacks sections", () => {
+  const dossier = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.ok(
+    dossier.indexOf("<MachineEvidenceGrid") <
+      dossier.indexOf("<PassportDossier"),
+  );
+  assert.ok(
+    dossier.indexOf("<DetailedImages") < dossier.indexOf("<PassportDossier"),
+  );
+  assert.ok(
+    dossier.indexOf("<PublicSpecifications") <
+      dossier.indexOf("<PassportDossier"),
+  );
+  assert.match(
+    css,
+    /\.decision-dossier \{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.decision-dossier \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+  );
 });
 
-test("technical reference renders only additional trusted fields and omits Hero duplication",()=>{
-  const base=publicDetailBySlug([row("MBMC-SPECS",{ssd_gb:1024})],"mbmc-specs");
+test("technical reference renders only additional trusted fields and omits Hero duplication", () => {
+  const base = publicDetailBySlug(
+    [row("MBMC-SPECS", { ssd_gb: 1024 })],
+    "mbmc-specs",
+  );
   assert.ok(base);
-  const machine={...base,technicalSpecifications:{camera:"1080p",ports:"3 × Thunderbolt",touchId:true,releaseYear:2022,internal_note:"private"}};
-  const rows=buildPublicSpecificationRows(machine);
-  assert.equal(rows.find(item=>item.label==="Camera")?.value,"1080p");
-  assert.equal(rows.find(item=>item.label==="Touch ID")?.value,"Có");
-  assert.equal(rows.some(item=>item.label==="internal_note"||item.value==="private"),false);
-  assert.equal(rows.some(item=>item.label==="Trọng lượng"),false);
-  assert.equal(rows.some(item=>["Model","Chip","RAM","Lưu trữ","Màu","Năm ra mắt"].includes(item.label)),false);
-  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
-  assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PublicSpecifications"));
-  assert.ok(dossier.indexOf("<PublicSpecifications")<dossier.indexOf("<PassportDossier"));
+  const machine = {
+    ...base,
+    technicalSpecifications: {
+      camera: "1080p",
+      ports: "3 × Thunderbolt",
+      touchId: true,
+      releaseYear: 2022,
+      internal_note: "private",
+    },
+  };
+  const rows = buildPublicSpecificationRows(machine);
+  assert.equal(rows.find((item) => item.label === "Camera")?.value, "1080p");
+  assert.equal(rows.find((item) => item.label === "Touch ID")?.value, "Có");
+  assert.equal(
+    rows.some(
+      (item) => item.label === "internal_note" || item.value === "private",
+    ),
+    false,
+  );
+  assert.equal(
+    rows.some((item) => item.label === "Trọng lượng"),
+    false,
+  );
+  assert.equal(
+    rows.some((item) =>
+      ["Model", "Chip", "RAM", "Lưu trữ", "Màu", "Năm ra mắt"].includes(
+        item.label,
+      ),
+    ),
+    false,
+  );
+  const dossier = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.ok(
+    dossier.indexOf("<MachineEvidenceGrid") <
+      dossier.indexOf("<PublicSpecifications"),
+  );
+  assert.ok(
+    dossier.indexOf("<PublicSpecifications") <
+      dossier.indexOf("<PassportDossier"),
+  );
 });
 
-test("public detail allowlists exact model key and specifications resolve without title fallback",()=>{
-  const known=publicDetailBySlug([row("MBMC-MODEL",{model_spec_key:"macbook-air-13-m2-2022"})],"mbmc-model");
+test("public detail allowlists exact model key and specifications resolve without title fallback", () => {
+  const known = publicDetailBySlug(
+    [row("MBMC-MODEL", { model_spec_key: "macbook-air-13-m2-2022" })],
+    "mbmc-model",
+  );
   assert.ok(known);
-  assert.equal(known.modelSpecKey,"macbook-air-13-m2-2022");
-  assert.equal(specificationsForMachine(known).model?.displaySize,"13,6 inch");
+  assert.equal(known.modelSpecKey, "macbook-air-13-m2-2022");
+  assert.equal(specificationsForMachine(known).model?.displaySize, "13,6 inch");
 
-  const absent=publicDetailBySlug([row("MBMC-NO-MODEL",{model_text:"MacBook Air M2 2022 13 inch",model_spec_key:null})],"mbmc-no-model");
+  const absent = publicDetailBySlug(
+    [
+      row("MBMC-NO-MODEL", {
+        model_text: "MacBook Air M2 2022 13 inch",
+        model_spec_key: null,
+      }),
+    ],
+    "mbmc-no-model",
+  );
   assert.ok(absent);
-  assert.equal(absent.modelSpecKey,null);
-  assert.equal(specificationsForMachine(absent).model,null);
-  assert.equal(specificationsForMachine(absent).machine.ram,"8 GB");
+  assert.equal(absent.modelSpecKey, null);
+  assert.equal(specificationsForMachine(absent).model, null);
+  assert.equal(specificationsForMachine(absent).machine.ram, "8 GB");
 
-  const invalid=publicDetailBySlug([row("MBMC-BAD-MODEL",{model_spec_key:"not-in-catalog"})],"mbmc-bad-model");
+  const invalid = publicDetailBySlug(
+    [row("MBMC-BAD-MODEL", { model_spec_key: "not-in-catalog" })],
+    "mbmc-bad-model",
+  );
   assert.ok(invalid);
-  assert.equal(specificationsForMachine(invalid).model,null);
+  assert.equal(specificationsForMachine(invalid).model, null);
 
-  const repository=readFileSync(new URL("./repositories/supabase-public-machine-repository.ts",import.meta.url),"utf8");
-  assert.match(repository,/model_spec_key/);
-  assert.doesNotMatch(repository,/seller|serial|internal_note/);
+  const repository = readFileSync(
+    new URL(
+      "./repositories/supabase-public-machine-repository.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(repository, /model_spec_key/);
+  assert.doesNotMatch(repository, /seller|serial|internal_note/);
 });
 
-test("final detail page order retains observation specs support and sticky CTA",()=>{
-  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  const sequence=["detail-breadcrumb","detail-hero","<DecisionDossier","<PoliciesAndSupport"];
-  for(let index=1;index<sequence.length;index++)assert.ok(view.indexOf(sequence[index-1])<view.indexOf(sequence[index]),sequence[index]);
-  assert.doesNotMatch(view,/<DetailedImages/);
-  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
-  assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PublicSpecifications"));
-  assert.ok(dossier.indexOf("<PublicSpecifications")<dossier.indexOf("<PassportDossier"));
-  const page=readFileSync(new URL("../../app/(sales)/may/[slug]/page.tsx",import.meta.url),"utf8");
-  assert.match(page,/<PublicMachineStickyBar machine=\{machine\}/);
+test("final detail page order retains observation specs support and sticky CTA", () => {
+  const view = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const sequence = [
+    "detail-breadcrumb",
+    "detail-hero",
+    "<DecisionDossier",
+    "<PoliciesAndSupport",
+  ];
+  for (let index = 1; index < sequence.length; index++)
+    assert.ok(
+      view.indexOf(sequence[index - 1]) < view.indexOf(sequence[index]),
+      sequence[index],
+    );
+  assert.doesNotMatch(view, /<DetailedImages/);
+  const dossier = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.ok(
+    dossier.indexOf("<DetailedImages") <
+      dossier.indexOf("<PublicSpecifications"),
+  );
+  assert.ok(
+    dossier.indexOf("<PublicSpecifications") <
+      dossier.indexOf("<PassportDossier"),
+  );
+  const page = readFileSync(
+    new URL("../../app/(sales)/may/[slug]/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(page, /<PublicMachineStickyBar machine=\{machine\}/);
 });
 
-test("Decision Summary is concise and precedes the fit assessment",()=>{
-  const summary=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionSummary.tsx",import.meta.url),"utf8");
-  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
-  assert.match(summary,/Có nên tiếp tục cân nhắc chiếc máy này\?/);
-  assert.match(summary,/Đây là phần đối chiếu nhanh trước khi bạn quyết định nhắn MBMC về chiếc máy này\./);
-  assert.doesNotMatch(summary,/Hãy đọc cả trường hợp phù hợp|chưa có đủ nhận định cân bằng/);
-  assert.doesNotMatch(summary,/<ul|<ol|RAM|SSD|Chip/);
-  assert.ok(dossier.indexOf("<DecisionSummary />")<dossier.indexOf("<PublicMachineFitRecommendation"));
+test("Decision Summary is concise and precedes the fit assessment", () => {
+  const summary = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionSummary.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const dossier = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(summary, /Có nên tiếp tục cân nhắc chiếc máy này\?/);
+  assert.match(
+    summary,
+    /Đây là phần đối chiếu nhanh trước khi bạn quyết định nhắn MBMC về chiếc máy này\./,
+  );
+  assert.doesNotMatch(
+    summary,
+    /Hãy đọc cả trường hợp phù hợp|chưa có đủ nhận định cân bằng/,
+  );
+  assert.doesNotMatch(summary, /<ul|<ol|RAM|SSD|Chip/);
+  assert.ok(
+    dossier.indexOf("<DecisionSummary />") <
+      dossier.indexOf("<PublicMachineFitRecommendation"),
+  );
 });
 
-test("Hero includes one lightweight decision hook before Decision Summary",()=>{
-  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  const hook=view.match(/<p className="decision-hook">([^<]+)<\/p>/g)??[];
-  assert.equal(hook.length,1);
-  assert.ok(view.indexOf('className="decision-hook"')<view.indexOf("<DecisionDossier"));
-  assert.doesNotMatch(hook[0],/<h[1-6]|detail-section|mua ngay|tốt nhất/i);
+test("Hero includes one lightweight decision hook before Decision Summary", () => {
+  const view = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const hook = view.match(/<p className="decision-hook">([^<]+)<\/p>/g) ?? [];
+  assert.equal(hook.length, 1);
+  assert.ok(
+    view.indexOf('className="decision-hook"') <
+      view.indexOf("<DecisionDossier"),
+  );
+  assert.doesNotMatch(hook[0], /<h[1-6]|detail-section|mua ngay|tốt nhất/i);
 });
 
-test("sticky contact appears only between the Hero action and final Decision Panel",()=>{
-  const sticky=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
-  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
-  assert.match(hero,/id="machine-hero-contact-action"/);
-  assert.match(sticky,/id="lien-he-mbmc"/);
-  assert.match(sticky,/useState\(false\)/);
-  assert.match(sticky,/new IntersectionObserver/);
-  assert.match(sticky,/return !heroContactVisible && !finalPanelVisible/);
-  assert.match(sticky,/setIsVisible\(shouldShowStickyContact\(visibility\)\)/);
-  assert.match(sticky,/if \(!isVisible\) return null/);
+test("sticky contact appears only between the Hero action and final Decision Panel", () => {
+  const sticky = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const hero = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(hero, /id="machine-hero-contact-action"/);
+  assert.match(sticky, /id="lien-he-mbmc"/);
+  assert.match(sticky, /useState\(false\)/);
+  assert.match(sticky, /new IntersectionObserver/);
+  assert.match(sticky, /return !heroContactVisible && !finalPanelVisible/);
+  assert.match(sticky, /setIsVisible\(shouldShowStickyContact\(visibility\)\)/);
+  assert.match(sticky, /if \(!isVisible\) return null/);
 });
 
-test("fit recommendation is separate from specifications and hides only when fully empty",()=>{
-  const fit=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineFitRecommendation.tsx",import.meta.url),"utf8");
-  const specifications=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicSpecifications.tsx",import.meta.url),"utf8");
-  assert.match(fit,/if \(!hasMachineFitRecommendation\(recommendation\)\) return null/);
-  assert.match(fit,/MBMC ĐÁNH GIÁ CẤU HÌNH/);
-  assert.match(fit,/Cấu hình này phù hợp với ai\?/);
-  assert.match(fit,/Cấu hình này phù hợp nếu bạn/);
-  assert.match(fit,/Điểm cần cân nhắc với cấu hình này/);
-  assert.doesNotMatch(specifications,/FitRecommendation|Phù hợp nếu bạn|Nên cân nhắc máy khác/);
-  assert.match(specifications,/>Đánh giá từ MBMC</);
+test("fit recommendation is separate from specifications and hides only when fully empty", () => {
+  const fit = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineFitRecommendation.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const specifications = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicSpecifications.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(
+    fit,
+    /if \(!hasMachineFitRecommendation\(recommendation\)\) return null/,
+  );
+  assert.match(fit, /MBMC ĐÁNH GIÁ CẤU HÌNH/);
+  assert.match(fit, /Cấu hình này phù hợp với ai\?/);
+  assert.match(fit, /Cấu hình này phù hợp nếu bạn/);
+  assert.match(fit, /Điểm cần cân nhắc với cấu hình này/);
+  assert.doesNotMatch(
+    specifications,
+    /FitRecommendation|Phù hợp nếu bạn|Nên cân nhắc máy khác/,
+  );
+  assert.match(specifications, />Đánh giá từ MBMC</);
 });
 
-test("verified information stays visible and limitations use a closed native disclosure",()=>{
-  const base=publicDetailBySlug([row("MBMC-LIMITS")],"mbmc-limits");
+test("verified information stays visible and limitations use a closed native disclosure", () => {
+  const base = publicDetailBySlug([row("MBMC-LIMITS")], "mbmc-limits");
   assert.ok(base);
-  assert.deepEqual(buildPublicLimitations(base),[
+  assert.deepEqual(buildPublicLimitations(base), [
     "Hồ sơ công khai hiện chưa có kết quả kiểm định.",
     "Hồ sơ công khai hiện chưa có thông tin bảo hành đã được xác định.",
     "Hồ sơ công khai hiện chưa có dữ liệu xác minh nguồn gốc.",
     "Hồ sơ công khai hiện chưa có kết luận về tình trạng sửa chữa.",
   ]);
-  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",import.meta.url),"utf8");
-  assert.match(source,/Đã xác minh trong hồ sơ công khai/);
-  assert.match(source,/<section[\s\S]*aria-labelledby="verified-information-heading"/);
-  assert.match(source,/<details[\s\S]*className="public-information-disclosure supporting-information-row"[\s\S]*id="thong-tin-can-xac-nhan-them"/);
-  assert.match(source,/<summary className="public-information-disclosure__summary">/);
-  assert.doesNotMatch(source,/<details[^>]*\sopen(?:=|\s|>)/);
-  assert.match(source,/Thông tin cần xác nhận thêm/);
-  assert.match(source,/Chưa có \{limitations\.length\} nhóm thông tin xác nhận trong hồ sơ công khai/);
-  assert.doesNotMatch(source,/Giới hạn của hồ sơ công khai/);
-  assert.match(source,/không phải kết luận kiểm định toàn diện/);
-  assert.doesNotMatch(source,/chưa từng sửa|không có bảo hành|không rõ nguồn gốc/i);
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /Đã xác minh trong hồ sơ công khai/);
+  assert.match(
+    source,
+    /<section[\s\S]*aria-labelledby="verified-information-heading"/,
+  );
+  assert.match(
+    source,
+    /<details[\s\S]*className="public-information-disclosure supporting-information-row"[\s\S]*id="thong-tin-can-xac-nhan-them"/,
+  );
+  assert.match(
+    source,
+    /<summary className="public-information-disclosure__summary">/,
+  );
+  assert.doesNotMatch(source, /<details[^>]*\sopen(?:=|\s|>)/);
+  assert.match(source, /Thông tin cần xác nhận thêm/);
+  assert.match(
+    source,
+    /Chưa có \{limitations\.length\} nhóm thông tin xác nhận trong hồ sơ công khai/,
+  );
+  assert.doesNotMatch(source, /Giới hạn của hồ sơ công khai/);
+  assert.match(source, /không phải kết luận kiểm định toàn diện/);
+  assert.doesNotMatch(
+    source,
+    /chưa từng sửa|không có bảo hành|không rõ nguồn gốc/i,
+  );
 });
 
-test("limitations disclosure derives its count, omits empty state, and renders every item",()=>{
-  const base=publicDetailBySlug([row("MBMC-DISCLOSURE")],"mbmc-disclosure");
+test("limitations disclosure derives its count, omits empty state, and renders every item", () => {
+  const base = publicDetailBySlug([row("MBMC-DISCLOSURE")], "mbmc-disclosure");
   assert.ok(base);
-  const limitations=buildPublicLimitations(base);
-  assert.equal(limitations.length,4);
-  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",import.meta.url),"utf8");
-  assert.match(source,/if \(!limitations\.length\) return null/);
-  assert.match(source,/limitations\.length/);
-  assert.match(source,/<div className="public-information-disclosure__content">[\s\S]*limitations\.map\(\(limitation\) => <li key=\{limitation\}>\{limitation\}<\/li>\)[\s\S]*<\/div>/);
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\.public-information-disclosure__content \{ position: static;/);
-  assert.doesNotMatch(css,/\.dossier-status-pair > \.public-information-status \{[^}]*height:\s*100%/);
+  const limitations = buildPublicLimitations(base);
+  assert.equal(limitations.length, 4);
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /if \(!limitations\.length\) return null/);
+  assert.match(source, /limitations\.length/);
+  assert.match(
+    source,
+    /<div className="public-information-disclosure__content">[\s\S]*limitations\.map\(\(limitation\) => <li key=\{limitation\}>\{limitation\}<\/li>\)[\s\S]*<\/div>/,
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.public-information-disclosure__content \{ position: static;/,
+  );
+  assert.doesNotMatch(
+    css,
+    /\.dossier-status-pair > \.public-information-status \{[^}]*height:\s*100%/,
+  );
 });
 
-test("unsupported fullbox wording is removed when the public included-items record has no box",()=>{
-  const withoutBox={charger:true,cable:null,box:null,bag:null,accessories:[]};
-  const withBox={...withoutBox,box:true};
-  assert.equal(publicConditionDescription("Máy fullbox",withoutBox),null);
-  assert.equal(publicConditionDescription("Full box, có xước nhẹ",withoutBox),"có xước nhẹ");
-  assert.equal(publicConditionDescription("Máy fullbox",withBox),"Máy fullbox");
+test("unsupported fullbox wording is removed when the public included-items record has no box", () => {
+  const withoutBox = {
+    charger: true,
+    cable: null,
+    box: null,
+    bag: null,
+    accessories: [],
+  };
+  const withBox = { ...withoutBox, box: true };
+  assert.equal(publicConditionDescription("Máy fullbox", withoutBox), null);
+  assert.equal(
+    publicConditionDescription("Full box, có xước nhẹ", withoutBox),
+    "có xước nhẹ",
+  );
+  assert.equal(
+    publicConditionDescription("Máy fullbox", withBox),
+    "Máy fullbox",
+  );
 });
 
-test("supporting facts and images are not labelled as complete Evidence",()=>{
-  const facts=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",import.meta.url),"utf8");
-  const images=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",import.meta.url),"utf8");
-  const hero=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",import.meta.url),"utf8");
-  assert.match(facts,/Thông tin công khai hỗ trợ/);
-  assert.match(images,/Hình ảnh công khai/);
-  assert.match(facts,/className="detail-facts condition-metrics"/);
-  assert.match(facts,/evidenceIcons/);
-  assert.match(facts,/className="condition-metric__icon"/);
-  assert.match(images,/<details className="supporting-images-disclosure supporting-information-row">/);
-  assert.match(images,/name="images" className="supporting-information-row__icon"/);
-  assert.match(images,/className="supporting-images-disclosure__action"/);
-  assert.match(images,/className="supporting-images-disclosure__content"/);
-  assert.match(images,/<ImageGrid images=\{images\}/);
-  assert.doesNotMatch(`${facts}\n${images}\n${hero}`,/Bằng chứng|Kiểm tra bằng hình ảnh|Thông tin đảm bảo|Có dữ liệu kiểm định/);
+test("supporting facts and images are not labelled as complete Evidence", () => {
+  const facts = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/MachineEvidence.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const images = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/ConditionAndImages.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const hero = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionPanel.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(facts, /Thông tin công khai hỗ trợ/);
+  assert.match(images, /Hình ảnh công khai/);
+  assert.match(facts, /className="detail-facts condition-metrics"/);
+  assert.match(facts, /evidenceIcons/);
+  assert.match(facts, /className="condition-metric__icon"/);
+  assert.match(
+    images,
+    /<details className="supporting-images-disclosure supporting-information-row">/,
+  );
+  assert.match(
+    images,
+    /name="images" className="supporting-information-row__icon"/,
+  );
+  assert.match(images, /className="supporting-images-disclosure__action"/);
+  assert.match(images, /className="supporting-images-disclosure__content"/);
+  assert.match(images, /<ImageGrid images=\{images\}/);
+  assert.doesNotMatch(
+    `${facts}\n${images}\n${hero}`,
+    /Bằng chứng|Kiểm tra bằng hình ảnh|Thông tin đảm bảo|Có dữ liệu kiểm định/,
+  );
 });
 
-test("Passport is a current identity record after supporting information without Timeline",()=>{
-  const dossier=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",import.meta.url),"utf8");
-  const passport=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",import.meta.url),"utf8");
-  assert.ok(dossier.indexOf("<MachineEvidenceGrid")<dossier.indexOf("<PassportDossier"));
-  assert.ok(dossier.indexOf("<DetailedImages")<dossier.indexOf("<PassportDossier"));
-  assert.match(passport,/Hồ sơ nhận diện công khai/);
-  assert.match(passport,/không phải lịch sử đầy đủ/);
-  assert.match(passport,/<dt>Mã máy<\/dt><dd>\{passport\.code\}<\/dd>/);
-  for(const icon of ["passport","model","status","published"])assert.match(passport,new RegExp(`name="${icon}" className="passport-fact__icon"`));
-  assert.doesNotMatch(passport,/passport\.timeline|passport\.facts|<ol/);
+test("Passport is a current identity record after supporting information without Timeline", () => {
+  const dossier = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const passport = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PassportDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.ok(
+    dossier.indexOf("<MachineEvidenceGrid") <
+      dossier.indexOf("<PassportDossier"),
+  );
+  assert.ok(
+    dossier.indexOf("<DetailedImages") < dossier.indexOf("<PassportDossier"),
+  );
+  assert.match(passport, /Hồ sơ nhận diện công khai/);
+  assert.match(passport, /không phải lịch sử đầy đủ/);
+  assert.match(passport, /<dt>Mã máy<\/dt><dd>\{passport\.code\}<\/dd>/);
+  for (const icon of ["passport", "model", "status", "published"])
+    assert.match(
+      passport,
+      new RegExp(`name="${icon}" className="passport-fact__icon"`),
+    );
+  assert.doesNotMatch(passport, /passport\.timeline|passport\.facts|<ol/);
 });
 
-test("dossier chips use consistent semantic icons without changing anchors",()=>{
-  const view=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",import.meta.url),"utf8");
-  assert.match(view,/href="#ho-so-cong-khai"><MachineDetailIcon name="trust" \/>Đã biết và chưa biết/);
-  assert.match(view,/href="#thong-tin-ho-tro"><MachineDetailIcon name="condition" \/>Tình trạng thực tế/);
-  assert.match(view,/href="#passport-cong-khai"><MachineDetailIcon name="passport" \/>Passport/);
+test("dossier chips use consistent semantic icons without changing anchors", () => {
+  const view = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(
+    view,
+    /href="#ho-so-cong-khai"><MachineDetailIcon name="trust" \/>Đã biết và chưa biết/,
+  );
+  assert.match(
+    view,
+    /href="#thong-tin-ho-tro"><MachineDetailIcon name="condition" \/>Tình trạng thực tế/,
+  );
+  assert.match(
+    view,
+    /href="#passport-cong-khai"><MachineDetailIcon name="passport" \/>Passport/,
+  );
 });
 
-test("Machine Detail mobile typography keeps supporting rows subordinate and passport compact",()=>{
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(css,/\/\* Public Machine Detail mobile typography and rhythm \*\/[\s\S]*?@media \(max-width: 63\.99rem\)/);
-  assert.match(css,/@media \(max-width: 63\.99rem\) \{[\s\S]*?\.public-detail-page \.supporting-images-disclosure > summary strong \{[^}]*font-size: 1rem;[^}]*line-height: 1\.25;/);
-  assert.match(css,/@media \(max-width: 63\.99rem\) \{[\s\S]*?\.public-detail-page \.passport-summary > div \{[^}]*padding: 1rem 0;[^}]*border-bottom: 1px solid/);
-  assert.match(css,/@media \(max-width: 480px\) \{[\s\S]*?\.public-detail-page \.dossier-navigation a \{[^}]*font-size: \.75rem;/);
+test("Machine Detail mobile typography keeps supporting rows subordinate and passport compact", () => {
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\/\* Public Machine Detail mobile typography and rhythm \*\/[\s\S]*?@media \(max-width: 63\.99rem\)/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 63\.99rem\) \{[\s\S]*?\.public-detail-page \.supporting-images-disclosure > summary strong \{[^}]*font-size: 1rem;[^}]*line-height: 1\.25;/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 63\.99rem\) \{[\s\S]*?\.public-detail-page \.passport-summary > div \{[^}]*padding: 1rem 0;[^}]*border-bottom: 1px solid/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 480px\) \{[\s\S]*?\.public-detail-page \.dossier-navigation a \{[^}]*font-size: \.75rem;/,
+  );
 });
 
-test("first Decision Dossier release omits unsupported future sections",()=>{
-  const files=["DecisionDossier.tsx","PublicMachineDetailView.tsx","SupportAndSticky.tsx","PublicSpecifications.tsx"];
-  const source=files.map(file=>readFileSync(new URL(`../../app/(sales)/may/[slug]/_components/${file}`,import.meta.url),"utf8")).join("\n");
-  assert.doesNotMatch(source,/Benefits|Trade-offs|Timeline|RelatedMachines|relatedMachines|Decision Stories|Recommendation quiz/i);
+test("first Decision Dossier release omits unsupported future sections", () => {
+  const files = [
+    "DecisionDossier.tsx",
+    "PublicMachineDetailView.tsx",
+    "SupportAndSticky.tsx",
+    "PublicSpecifications.tsx",
+  ];
+  const source = files
+    .map((file) =>
+      readFileSync(
+        new URL(
+          `../../app/(sales)/may/[slug]/_components/${file}`,
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    )
+    .join("\n");
+  assert.doesNotMatch(
+    source,
+    /Benefits|Trade-offs|Timeline|RelatedMachines|relatedMachines|Decision Stories|Recommendation quiz/i,
+  );
 });
 
-test("final Decision Panel resolves uncertainty without urgency",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",import.meta.url),"utf8");
-  assert.match(source,/Nếu bạn vẫn chưa chắc chắn/);
-  assert.match(source,/điều còn khiến bạn phân vân/);
-  assert.match(source,/<ContactActionLink className="primary-action" \/>/);
-  assert.doesNotMatch(source,/mua ngay|chốt|còn duy nhất|nhanh tay|countdown/i);
+test("final Decision Panel resolves uncertainty without urgency", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SupportAndSticky.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(source, /Nếu bạn vẫn chưa chắc chắn/);
+  assert.match(source, /điều còn khiến bạn phân vân/);
+  assert.match(source, /<ContactActionLink className="primary-action" \/>/);
+  assert.doesNotMatch(
+    source,
+    /mua ngay|chốt|còn duy nhất|nhanh tay|countdown/i,
+  );
 });
 
-test("homepage renders the first three machines in existing repository order",()=>{
-  const machines=["first","second","third","fourth"];
-  assert.deepEqual(selectHomepageMachines(machines),["first","second","third"]);
-  assert.deepEqual(selectHomepageMachines(machines.slice(0,2)),["first","second"]);
+test("homepage renders the first three machines in existing repository order", () => {
+  const machines = ["first", "second", "third", "fourth"];
+  assert.deepEqual(selectHomepageMachines(machines), [
+    "first",
+    "second",
+    "third",
+  ]);
+  assert.deepEqual(selectHomepageMachines(machines.slice(0, 2)), [
+    "first",
+    "second",
+  ]);
 });
 
-test("homepage sections retain the approved first-release order",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/_components/home/HomeView.tsx",import.meta.url),"utf8");
-  const sequence=[
+test("homepage sections retain the approved first-release order", () => {
+  const source = readFileSync(
+    new URL("../../app/(sales)/_components/home/HomeView.tsx", import.meta.url),
+    "utf8",
+  );
+  const sequence = [
     "<HomeHero",
     "<UncertaintyRecognition",
     "<DecisionProblemFraming",
@@ -1060,13 +2798,16 @@ test("homepage sections retain the approved first-release order",()=>{
     "<HomeTrustOverview",
     "<ClosingDecisionCta",
   ];
-  for(let index=1;index<sequence.length;index++){
-    assert.ok(source.indexOf(sequence[index-1])<source.indexOf(sequence[index]),sequence[index]);
+  for (let index = 1; index < sequence.length; index++) {
+    assert.ok(
+      source.indexOf(sequence[index - 1]) < source.indexOf(sequence[index]),
+      sequence[index],
+    );
   }
 });
 
-test("homepage has one page-level heading and contextual machine-card headings",()=>{
-  const files=[
+test("homepage has one page-level heading and contextual machine-card headings", () => {
+  const files = [
     "HomeHero.tsx",
     "UncertaintyRecognition.tsx",
     "DecisionProblemFraming.tsx",
@@ -1076,96 +2817,244 @@ test("homepage has one page-level heading and contextual machine-card headings",
     "HomeTrustOverview.tsx",
     "ClosingDecisionCta.tsx",
   ];
-  const source=files.map(file=>readFileSync(new URL(`../../app/(sales)/_components/home/${file}`,import.meta.url),"utf8")).join("\n");
-  assert.equal(source.match(/<h1\b/g)?.length,1);
-  assert.match(source,/headingAs="h3"/);
+  const source = files
+    .map((file) =>
+      readFileSync(
+        new URL(`../../app/(sales)/_components/home/${file}`, import.meta.url),
+        "utf8",
+      ),
+    )
+    .join("\n");
+  assert.equal(source.match(/<h1\b/g)?.length, 1);
+  assert.match(source, /headingAs="h3"/);
 });
 
-test("homepage offers human-assisted guidance without automated recommendation UI",()=>{
-  const content=readFileSync(new URL("../../app/(sales)/_components/home/home-content.ts",import.meta.url),"utf8");
-  const guidance=readFileSync(new URL("../../app/(sales)/_components/home/HumanGuidanceEntry.tsx",import.meta.url),"utf8");
-  assert.match(content,/Nhắn MBMC để chọn máy phù hợp/);
-  assert.match(content,/Một người thật/);
-  assert.match(content,/đây không phải tư vấn tự động/);
-  assert.match(guidance,/<ContactActionLink/);
-  assert.doesNotMatch(guidance,/<form|quiz|score|disabled/);
+test("homepage offers human-assisted guidance without automated recommendation UI", () => {
+  const content = readFileSync(
+    new URL(
+      "../../app/(sales)/_components/home/home-content.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const guidance = readFileSync(
+    new URL(
+      "../../app/(sales)/_components/home/HumanGuidanceEntry.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(content, /Nhắn MBMC để chọn máy phù hợp/);
+  assert.match(content, /Một người thật/);
+  assert.match(content, /đây không phải tư vấn tự động/);
+  assert.match(guidance, /<ContactActionLink/);
+  assert.doesNotMatch(guidance, /<form|quiz|score|disabled/);
 });
 
-test("homepage machine section links to full inventory and fails unavailable safely",()=>{
-  const source=readFileSync(new URL("../../app/(sales)/_components/home/AvailableMachines.tsx",import.meta.url),"utf8");
-  const page=readFileSync(new URL("../../app/(sales)/page.tsx",import.meta.url),"utf8");
-  assert.match(source,/Xem tất cả máy đang có/);
-  assert.match(source,/href="\/may-dang-co"/);
-  assert.match(source,/state\.status === "unavailable"/);
-  assert.match(source,/Danh sách máy tạm thời chưa thể hiển thị/);
-  assert.doesNotMatch(source,/không có máy[^<]*tạm thời/i);
-  assert.match(page,/loadPublicInventoryState\(getAvailableMachines\)/);
+test("homepage machine section links to full inventory and fails unavailable safely", () => {
+  const source = readFileSync(
+    new URL(
+      "../../app/(sales)/_components/home/AvailableMachines.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const page = readFileSync(
+    new URL("../../app/(sales)/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /Xem tất cả máy đang có/);
+  assert.match(source, /href="\/may-dang-co"/);
+  assert.match(source, /state\.status === "unavailable"/);
+  assert.match(source, /Danh sách máy tạm thời chưa thể hiển thị/);
+  assert.doesNotMatch(source, /không có máy[^<]*tạm thời/i);
+  assert.match(page, /loadPublicInventoryState\(getAvailableMachines\)/);
 });
 
-test("homepage Trust copy stays within substantiated public boundaries",()=>{
-  const content=readFileSync(new URL("../../app/(sales)/_components/home/home-content.ts",import.meta.url),"utf8");
-  for(const supported of [
+test("homepage Trust copy stays within substantiated public boundaries", () => {
+  const content = readFileSync(
+    new URL(
+      "../../app/(sales)/_components/home/home-content.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  for (const supported of [
     "một chiếc máy vật lý",
     "mã nhận diện riêng",
     "hợp đồng công khai",
     "Ảnh công khai và phần mô tả tình trạng phải được chấp thuận",
-  ])assert.match(content,new RegExp(supported));
-  for(const unsupported of [
+  ])
+    assert.match(content, new RegExp(supported));
+  for (const unsupported of [
     "kiểm định đầy đủ",
     "lịch sử sửa chữa đầy đủ",
     "lịch sử sở hữu đầy đủ",
     "bảo hành toàn bộ",
     "minh bạch tuyệt đối",
-  ])assert.doesNotMatch(content,new RegExp(unsupported,"i"));
+  ])
+    assert.doesNotMatch(content, new RegExp(unsupported, "i"));
 });
 
-test("first homepage release contains no Decision Stories component or placeholder",()=>{
-  const homeDirectory=new URL("../../app/(sales)/_components/home/",import.meta.url);
-  const view=readFileSync(new URL("HomeView.tsx",homeDirectory),"utf8");
-  const content=readFileSync(new URL("home-content.ts",homeDirectory),"utf8");
-  assert.equal(existsSync(new URL("DecisionStoriesPreview.tsx",homeDirectory)),false);
-  assert.doesNotMatch(`${view}\n${content}`,/Decision Stor|Chuyện người dùng|coming soon|sắp ra mắt/i);
+test("first homepage release contains no Decision Stories component or placeholder", () => {
+  const homeDirectory = new URL(
+    "../../app/(sales)/_components/home/",
+    import.meta.url,
+  );
+  const view = readFileSync(new URL("HomeView.tsx", homeDirectory), "utf8");
+  const content = readFileSync(
+    new URL("home-content.ts", homeDirectory),
+    "utf8",
+  );
+  assert.equal(
+    existsSync(new URL("DecisionStoriesPreview.tsx", homeDirectory)),
+    false,
+  );
+  assert.doesNotMatch(
+    `${view}\n${content}`,
+    /Decision Stor|Chuyện người dùng|coming soon|sắp ra mắt/i,
+  );
 });
 
-test("mobile fullscreen inspection clamps continuous zoom and portrait or landscape pan bounds",()=>{
-  assert.equal(clampInspectionScale(.7),1);
-  assert.equal(clampInspectionScale(2.26),2.26);
-  assert.equal(clampInspectionScale(5),4);
-  assert.deepEqual(inspectionPanBounds(2,{viewportWidth:390,viewportHeight:844,naturalWidth:1200,naturalHeight:1600}),{x:195,y:98});
-  assert.deepEqual(inspectionPanBounds(2,{viewportWidth:390,viewportHeight:844,naturalWidth:1600,naturalHeight:1200}),{x:195,y:0});
-  assert.deepEqual(clampInspectionTransform({scale:1,x:100,y:-100},{viewportWidth:390,viewportHeight:844,naturalWidth:1200,naturalHeight:1600}),{scale:1,x:0,y:0});
-  assert.deepEqual(clampInspectionTransform({scale:2,x:900,y:-900},{viewportWidth:390,viewportHeight:844,naturalWidth:1200,naturalHeight:1600}),{scale:2,x:195,y:-98});
+test("mobile fullscreen inspection clamps continuous zoom and portrait or landscape pan bounds", () => {
+  assert.equal(clampInspectionScale(0.7), 1);
+  assert.equal(clampInspectionScale(2.26), 2.26);
+  assert.equal(clampInspectionScale(5), 4);
+  assert.deepEqual(
+    inspectionPanBounds(2, {
+      viewportWidth: 390,
+      viewportHeight: 844,
+      naturalWidth: 1200,
+      naturalHeight: 1600,
+    }),
+    { x: 195, y: 98 },
+  );
+  assert.deepEqual(
+    inspectionPanBounds(2, {
+      viewportWidth: 390,
+      viewportHeight: 844,
+      naturalWidth: 1600,
+      naturalHeight: 1200,
+    }),
+    { x: 195, y: 0 },
+  );
+  assert.deepEqual(
+    clampInspectionTransform(
+      { scale: 1, x: 100, y: -100 },
+      {
+        viewportWidth: 390,
+        viewportHeight: 844,
+        naturalWidth: 1200,
+        naturalHeight: 1600,
+      },
+    ),
+    { scale: 1, x: 0, y: 0 },
+  );
+  assert.deepEqual(
+    clampInspectionTransform(
+      { scale: 2, x: 900, y: -900 },
+      {
+        viewportWidth: 390,
+        viewportHeight: 844,
+        naturalWidth: 1200,
+        naturalHeight: 1600,
+      },
+    ),
+    { scale: 2, x: 195, y: -98 },
+  );
 });
 
-test("fullscreen inspection keeps gesture state local and separates zoomed pan from carousel navigation",()=>{
-  const track=readFileSync(new URL("../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",import.meta.url),"utf8");
-  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
-  assert.match(track,/variant === "lightbox" && event\.pointerType === "touch"/);
-  assert.match(track,/touches\.length === 2/);
-  assert.match(track,/transformRef\.current\.scale > MIN_INSPECTION_SCALE/);
-  assert.match(track,/resetInspectionTransform\(\)/);
-  assert.match(track,/DOUBLE_TAP_INSPECTION_SCALE/);
-  assert.match(css,/\.carousel-viewport-lightbox \{ touch-action: none; overscroll-behavior: contain; \}/);
+test("fullscreen inspection keeps gesture state local and separates zoomed pan from carousel navigation", () => {
+  const track = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/SlidingImageTrack.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const css = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    track,
+    /variant === "lightbox" && event\.pointerType === "touch"/,
+  );
+  assert.match(track, /touches\.length === 2/);
+  assert.match(track, /transformRef\.current\.scale > MIN_INSPECTION_SCALE/);
+  assert.match(track, /resetInspectionTransform\(\)/);
+  assert.match(track, /DOUBLE_TAP_INSPECTION_SCALE/);
+  assert.match(
+    css,
+    /\.carousel-viewport-lightbox \{ touch-action: none; overscroll-behavior: contain; \}/,
+  );
 });
 
-test("inventory share URL preserves canonical filter order and referral owner only",()=>{
-  const state={query:"",sort:"relevance",facets:{...emptyInventoryFacets(),family:["air"],chip:["m2"],ram:["8"]}};
-  assert.equal(buildInventoryShareUrl("https://mbmc.vn",state,"2MDE"),"https://mbmc.vn/may-dang-co?family=air&chip=m2&ram=8&ref=2MDE");
-  assert.equal(buildInventoryShareUrl("https://mbmc.vn",state,null),"https://mbmc.vn/may-dang-co?family=air&chip=m2&ram=8");
-  assert.equal(inventoryShareLabel(state.facets),"Sao chép liên kết Air M2 • 8GB");
+test("inventory share URL preserves canonical filter order and referral owner only", () => {
+  const state = {
+    query: "",
+    sort: "relevance",
+    facets: {
+      ...emptyInventoryFacets(),
+      family: ["air"],
+      chip: ["m2"],
+      ram: ["8"],
+    },
+  };
+  assert.equal(
+    buildInventoryShareUrl("https://mbmc.vn", state, "2MDE"),
+    "https://mbmc.vn/may-dang-co?family=air&chip=m2&ram=8&ref=2MDE",
+  );
+  assert.equal(
+    buildInventoryShareUrl("https://mbmc.vn", state, null),
+    "https://mbmc.vn/may-dang-co?family=air&chip=m2&ram=8",
+  );
+  assert.equal(
+    inventoryShareLabel(state.facets),
+    "Sao chép liên kết Air M2 • 8GB",
+  );
 });
 
-test("inventory share URL supports no filters and canonical query merging",()=>{
-  const empty={query:"",sort:"relevance",facets:emptyInventoryFacets()};
-  assert.equal(buildInventoryShareUrl("https://mbmc.vn",empty,"2MDE"),"https://mbmc.vn/may-dang-co?ref=2MDE");
-  const searched={...empty,query:"MacBook Air",sort:"price-asc"};
-  assert.equal(buildInventoryShareUrl("https://mbmc.vn",searched,"2MDE"),"https://mbmc.vn/may-dang-co?q=MacBook+Air&sort=price-asc&ref=2MDE");
+test("inventory share URL supports no filters and canonical query merging", () => {
+  const empty = {
+    query: "",
+    sort: "relevance",
+    facets: emptyInventoryFacets(),
+  };
+  assert.equal(
+    buildInventoryShareUrl("https://mbmc.vn", empty, "2MDE"),
+    "https://mbmc.vn/may-dang-co?ref=2MDE",
+  );
+  const searched = { ...empty, query: "MacBook Air", sort: "price-asc" };
+  assert.equal(
+    buildInventoryShareUrl("https://mbmc.vn", searched, "2MDE"),
+    "https://mbmc.vn/may-dang-co?q=MacBook+Air&sort=price-asc&ref=2MDE",
+  );
 });
 
-test("inventory clipboard helper reports success and failure safely",async()=>{
-  const state={query:"",sort:"relevance",facets:{...emptyInventoryFacets(),family:["air"]}};
-  let copied="";
-  assert.equal(await copyInventoryShareUrl("https://mbmc.vn",state,"2MDE",async(value)=>{copied=value;}),true);
-  assert.equal(copied,"https://mbmc.vn/may-dang-co?family=air&ref=2MDE");
-  assert.equal(await copyInventoryShareUrl("https://mbmc.vn",state,"2MDE",async()=>{throw new Error("denied");}),false);
+test("inventory clipboard helper reports success and failure safely", async () => {
+  const state = {
+    query: "",
+    sort: "relevance",
+    facets: { ...emptyInventoryFacets(), family: ["air"] },
+  };
+  let copied = "";
+  assert.equal(
+    await copyInventoryShareUrl(
+      "https://mbmc.vn",
+      state,
+      "2MDE",
+      async (value) => {
+        copied = value;
+      },
+    ),
+    true,
+  );
+  assert.equal(copied, "https://mbmc.vn/may-dang-co?family=air&ref=2MDE");
+  assert.equal(
+    await copyInventoryShareUrl("https://mbmc.vn", state, "2MDE", async () => {
+      throw new Error("denied");
+    }),
+    false,
+  );
 });

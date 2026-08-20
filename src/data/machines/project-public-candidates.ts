@@ -12,30 +12,61 @@ import type {
   PublicImageVariants,
   PublicMachineSummaryV1,
 } from "../../lib/public-projection/contracts.ts";
-import { isVerificationCode, type MachineVerificationItem } from "../../lib/machine-verification.ts";
+import {
+  isVerificationCode,
+  type MachineVerificationItem,
+} from "../../lib/machine-verification.ts";
 
 type UnknownRow = Record<string, unknown>;
-const isRow = (value: unknown): value is UnknownRow => typeof value === "object" && value !== null && !Array.isArray(value);
-function oneRow(value: unknown): UnknownRow | null { if (isRow(value)) return value; if (Array.isArray(value) && value.length === 1 && isRow(value[0])) return value[0]; return null; }
-function text(value: unknown): string | null { return typeof value === "string" && value.trim() ? value.trim() : null; }
-function integer(value: unknown): number | null { return typeof value === "number" && Number.isSafeInteger(value) ? value : null; }
-function stringArray(value: unknown): string[] { return Array.isArray(value) ? value.map(text).filter((item): item is string => item !== null) : []; }
-function includedItems(value: unknown) { const row=isRow(value)?value:{}; return { charger:typeof row.charger==="boolean"?row.charger:null, cable:typeof row.cable==="boolean"?row.cable:null, box:typeof row.box==="boolean"?row.box:null, bag:typeof row.bag==="boolean"?row.bag:null, accessories:stringArray(row.accessories) }; }
-function family(model: string | null): "Air" | "Pro" | "Unknown" { if (/macbook\s+air/i.test(model??"")) return "Air"; if (/macbook\s+pro/i.test(model??"")) return "Pro"; return "Unknown"; }
-function reservations(value: unknown): ("manual"|"deposit")[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    if (!isRow(item) || text(item.lifecycle_status) !== "reserved") return [];
-    const kind = text(item.reservation_kind);
-    return kind === "manual" || kind === "deposit" ? [kind] : [];
-  });
+const isRow = (value: unknown): value is UnknownRow =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+function oneRow(value: unknown): UnknownRow | null {
+  if (isRow(value)) return value;
+  if (Array.isArray(value) && value.length === 1 && isRow(value[0]))
+    return value[0];
+  return null;
 }
-function reservationStateInvalid(value: unknown): boolean {
-  if (!Array.isArray(value)) return value !== undefined && value !== null;
-  return value.some((item) => {
-    if (!isRow(item) || text(item.lifecycle_status) !== "reserved") return false;
-    return !["manual", "deposit"].includes(text(item.reservation_kind) ?? "");
-  });
+function text(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+function integer(value: unknown): number | null {
+  return typeof value === "number" && Number.isSafeInteger(value)
+    ? value
+    : null;
+}
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map(text).filter((item): item is string => item !== null)
+    : [];
+}
+function includedItems(value: unknown) {
+  const row = isRow(value) ? value : {};
+  return {
+    charger: typeof row.charger === "boolean" ? row.charger : null,
+    cable: typeof row.cable === "boolean" ? row.cable : null,
+    box: typeof row.box === "boolean" ? row.box : null,
+    bag: typeof row.bag === "boolean" ? row.bag : null,
+    accessories: stringArray(row.accessories),
+  };
+}
+function family(model: string | null): "Air" | "Pro" | "Unknown" {
+  if (/macbook\s+air/i.test(model ?? "")) return "Air";
+  if (/macbook\s+pro/i.test(model ?? "")) return "Pro";
+  return "Unknown";
+}
+function publicAvailability(value: unknown): {
+  reservations: ("manual" | "deposit")[];
+  invalid: boolean;
+} {
+  if (!isRow(value) || value.state_valid !== true)
+    return { reservations: [], invalid: true };
+  const availability = text(value.availability),
+    kind = text(value.reservation_kind);
+  if (availability === "available" && kind === null)
+    return { reservations: [], invalid: false };
+  if (availability === "reserved" && (kind === "manual" || kind === "deposit"))
+    return { reservations: [kind], invalid: false };
+  return { reservations: [], invalid: true };
 }
 
 const DERIVATIVE_KEYS = ["thumb", "card", "display", "full"] as const;
@@ -60,7 +91,9 @@ function publicDerivativeUrl(value: unknown): string | null {
 }
 
 /** Sanitizes the untrusted JSON manifest into the fixed public derivative set. */
-export function parsePublicImageDerivatives(value: unknown): PublicImageVariants {
+export function parsePublicImageDerivatives(
+  value: unknown,
+): PublicImageVariants {
   if (!isRow(value)) return {};
   const variants: PublicImageVariants = {};
   for (const key of DERIVATIVE_KEYS) {
@@ -71,10 +104,16 @@ export function parsePublicImageDerivatives(value: unknown): PublicImageVariants
     const height = positiveInteger(item.height);
     if (!url || !width || !height) continue;
     const byteSizeValue = item.byte_size ?? item.byteSize;
-    const byteSize = byteSizeValue == null ? null : positiveInteger(byteSizeValue);
+    const byteSize =
+      byteSizeValue == null ? null : positiveInteger(byteSizeValue);
     if (byteSizeValue != null && byteSize === null) continue;
     const mimeTypeValue = item.mime_type ?? item.mimeType;
-    const mimeType = mimeTypeValue == null ? null : mimeTypeValue === "image/webp" ? "image/webp" : null;
+    const mimeType =
+      mimeTypeValue == null
+        ? null
+        : mimeTypeValue === "image/webp"
+          ? "image/webp"
+          : null;
     if (mimeTypeValue != null && mimeType === null) continue;
     variants[key] = { url, width, height, byteSize, mimeType };
   }
@@ -83,31 +122,112 @@ export function parsePublicImageDerivatives(value: unknown): PublicImageVariants
 
 function publicImages(value: unknown): PublicImageInput[] {
   if (!Array.isArray(value)) return [];
-  const byUrl=new Map<string,PublicImageInput>();
-  for(const item of value){
-    if(!isRow(item)) continue;
-    const id=text(item.id),url=text(item.public_url); if(!id||!url) continue;
-    const variants = text(item.processing_status) === "ready"
-      ? parsePublicImageDerivatives(item.derivatives)
-      : {};
-    const next:PublicImageInput={id,visibility:text(item.visibility)??"",imageType:text(item.image_type)??"",imageStage:text(item.image_stage)??"",publicUrl:url,sortOrder:integer(item.sort_order)??0,isCover:item.is_cover===true,...(Object.keys(variants).length ? { variants } : {})};
-    const existing=byUrl.get(url); if(!existing||(next.isCover&&!existing.isCover)) byUrl.set(url,next);
+  const byUrl = new Map<string, PublicImageInput>();
+  for (const item of value) {
+    if (!isRow(item)) continue;
+    const id = text(item.id),
+      url = text(item.public_url);
+    if (!id || !url) continue;
+    const variants =
+      text(item.processing_status) === "ready"
+        ? parsePublicImageDerivatives(item.derivatives)
+        : {};
+    const next: PublicImageInput = {
+      id,
+      visibility: text(item.visibility) ?? "",
+      imageType: text(item.image_type) ?? "",
+      imageStage: text(item.image_stage) ?? "",
+      publicUrl: url,
+      sortOrder: integer(item.sort_order) ?? 0,
+      isCover: item.is_cover === true,
+      ...(Object.keys(variants).length ? { variants } : {}),
+    };
+    const existing = byUrl.get(url);
+    if (!existing || (next.isCover && !existing.isCover)) byUrl.set(url, next);
   }
-  return [...byUrl.values()].toSorted((a,b)=>(a.sortOrder??0)-(b.sortOrder??0)||a.id.localeCompare(b.id));
+  return [...byUrl.values()].toSorted(
+    (a, b) =>
+      (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id.localeCompare(b.id),
+  );
 }
 function machineVerifications(value: unknown): MachineVerificationItem[] {
   if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => !isRow(item) || !isVerificationCode(item.verification_code) ? [] : [{ code:item.verification_code, verified:item.verified===true, verifiedAt:text(item.verified_at), public:item.public===true }]);
+  return value.flatMap((item) =>
+    !isRow(item) || !isVerificationCode(item.verification_code)
+      ? []
+      : [
+          {
+            code: item.verification_code,
+            verified: item.verified === true,
+            verifiedAt: text(item.verified_at),
+            public: item.public === true,
+          },
+        ],
+  );
 }
 
-export function normalizePublicCandidate(value: unknown): PublicMachineProjectionInput | null {
-  if(!isRow(value)) return null;
-  const publication=oneRow(value.machine_publications),editorial=oneRow(value.machine_editorials),model=text(value.model_text);
+export function normalizePublicCandidate(
+  value: unknown,
+): PublicMachineProjectionInput | null {
+  if (!isRow(value)) return null;
+  const publication = oneRow(value.machine_publications),
+    editorial = oneRow(value.machine_editorials),
+    model = text(value.model_text);
+  const availability = publicAvailability(value.public_availability);
   return {
-    code:text(value.machine_id),status:value.deleted_at===null?(text(value.status)??"unknown"):"deleted",displayName:model,modelSpecKey:text(value.model_spec_key),verifications:machineVerifications(value.machine_verifications),family:family(model),chip:text(value.chip),ramGb:integer(value.ram_gb),ssdGb:integer(value.ssd_gb),color:text(value.color),retailPriceExpected:integer(value.retail_price_expected),batteryHealthPercent:integer(value.battery_health),cycleCount:integer(value.battery_cycle),cosmeticGrade:text(value.rank),reservations:reservations(value.sales),reservationStateInvalid:reservationStateInvalid(value.sales),
-    publication:publication?{status:text(publication.status) as "draft"|"approved"|"published"|"archived",slug:text(publication.slug),revision:integer(publication.revision)??0,approvedBy:text(publication.approved_by),approvedAt:text(publication.approved_at),approvedEditorialRevision:integer(publication.approved_editorial_revision),publishedBy:text(publication.published_by),firstPublishedAt:text(publication.first_published_at),publishedAt:text(publication.published_at),publishedEditorialRevision:integer(publication.published_editorial_revision),updatedAt:text(publication.updated_at)}:null,
-    editorial:editorial?{revision:integer(editorial.revision)??0,publicConditionSummary:text(editorial.public_condition_summary),expertSummary:text(editorial.expert_summary),suitableFor:stringArray(editorial.suitable_for),notSuitableFor:stringArray(editorial.not_suitable_for),contextualLabel:text(editorial.contextual_label),includedItems:includedItems(editorial.included_items),policyApplicability:stringArray(editorial.policy_applicability),reviewedBy:text(editorial.reviewed_by),reviewedAt:text(editorial.reviewed_at)}:null,
-    images:publicImages(value.machine_images),privacyValid:true,
+    code: text(value.machine_id),
+    status:
+      value.deleted_at === null ? (text(value.status) ?? "unknown") : "deleted",
+    displayName: model,
+    modelSpecKey: text(value.model_spec_key),
+    verifications: machineVerifications(value.machine_verifications),
+    family: family(model),
+    chip: text(value.chip),
+    ramGb: integer(value.ram_gb),
+    ssdGb: integer(value.ssd_gb),
+    color: text(value.color),
+    retailPriceExpected: integer(value.retail_price_expected),
+    batteryHealthPercent: integer(value.battery_health),
+    cycleCount: integer(value.battery_cycle),
+    cosmeticGrade: text(value.rank),
+    reservations: availability.reservations,
+    reservationStateInvalid: availability.invalid,
+    publication: publication
+      ? {
+          status: text(publication.status) as
+            "draft" | "approved" | "published" | "archived",
+          slug: text(publication.slug),
+          revision: integer(publication.revision) ?? 0,
+          approvedBy: text(publication.approved_by),
+          approvedAt: text(publication.approved_at),
+          approvedEditorialRevision: integer(
+            publication.approved_editorial_revision,
+          ),
+          publishedBy: text(publication.published_by),
+          firstPublishedAt: text(publication.first_published_at),
+          publishedAt: text(publication.published_at),
+          publishedEditorialRevision: integer(
+            publication.published_editorial_revision,
+          ),
+          updatedAt: text(publication.updated_at),
+        }
+      : null,
+    editorial: editorial
+      ? {
+          revision: integer(editorial.revision) ?? 0,
+          publicConditionSummary: text(editorial.public_condition_summary),
+          expertSummary: text(editorial.expert_summary),
+          suitableFor: stringArray(editorial.suitable_for),
+          notSuitableFor: stringArray(editorial.not_suitable_for),
+          contextualLabel: text(editorial.contextual_label),
+          includedItems: includedItems(editorial.included_items),
+          policyApplicability: stringArray(editorial.policy_applicability),
+          reviewedBy: text(editorial.reviewed_by),
+          reviewedAt: text(editorial.reviewed_at),
+        }
+      : null,
+    images: publicImages(value.machine_images),
+    privacyValid: true,
   };
 }
 
@@ -129,18 +249,55 @@ const ELIGIBILITY_DIAGNOSTICS: Record<
   ProjectionDenialReason,
   Pick<PublicCandidateDiagnostic, "validationPath" | "message">
 > = {
-  publication_not_published: { validationPath: "publication.status", message: "Publication is not published." },
-  invalid_slug: { validationPath: "publication.slug", message: "Publication slug is missing or invalid." },
-  publication_audit_incomplete: { validationPath: "publication.audit", message: "Publication approval or publishing audit is incomplete." },
-  editorial_revision_mismatch: { validationPath: "publication.editorialRevision", message: "Published editorial revision does not match the current editorial." },
-  machine_status_ineligible: { validationPath: "machine.status", message: "Machine status is not eligible for public inventory." },
-  reservation_state_invalid: { validationPath: "sales.reservation", message: "Machine has an invalid public reservation state." },
-  invalid_retail_price: { validationPath: "machine.retailPriceExpected", message: "Retail price is missing or invalid." },
-  invalid_public_cover: { validationPath: "machine.images.cover", message: "Exactly one valid public cover image is required." },
-  missing_condition_summary: { validationPath: "editorial.publicConditionSummary", message: "Public condition summary is missing." },
-  editorial_review_incomplete: { validationPath: "editorial.review", message: "Editorial review audit is incomplete." },
-  configuration_incomplete: { validationPath: "machine.configuration", message: "Required public machine configuration is incomplete." },
-  privacy_invalid: { validationPath: "candidate.privacy", message: "Candidate failed the public privacy boundary." },
+  publication_not_published: {
+    validationPath: "publication.status",
+    message: "Publication is not published.",
+  },
+  invalid_slug: {
+    validationPath: "publication.slug",
+    message: "Publication slug is missing or invalid.",
+  },
+  publication_audit_incomplete: {
+    validationPath: "publication.audit",
+    message: "Publication approval or publishing audit is incomplete.",
+  },
+  editorial_revision_mismatch: {
+    validationPath: "publication.editorialRevision",
+    message:
+      "Published editorial revision does not match the current editorial.",
+  },
+  machine_status_ineligible: {
+    validationPath: "machine.status",
+    message: "Machine status is not eligible for public inventory.",
+  },
+  reservation_state_invalid: {
+    validationPath: "publicAvailability",
+    message: "Machine has an invalid public availability state.",
+  },
+  invalid_retail_price: {
+    validationPath: "machine.retailPriceExpected",
+    message: "Retail price is missing or invalid.",
+  },
+  invalid_public_cover: {
+    validationPath: "machine.images.cover",
+    message: "Exactly one valid public cover image is required.",
+  },
+  missing_condition_summary: {
+    validationPath: "editorial.publicConditionSummary",
+    message: "Public condition summary is missing.",
+  },
+  editorial_review_incomplete: {
+    validationPath: "editorial.review",
+    message: "Editorial review audit is incomplete.",
+  },
+  configuration_incomplete: {
+    validationPath: "machine.configuration",
+    message: "Required public machine configuration is incomplete.",
+  },
+  privacy_invalid: {
+    validationPath: "candidate.privacy",
+    message: "Candidate failed the public privacy boundary.",
+  },
 };
 
 function safeMachineCode(value: unknown): string | undefined {
@@ -222,10 +379,23 @@ export function projectPublicCandidates(
 }
 
 export function publicSummaries(values: unknown[]): PublicMachineSummaryV1[] {
-  return projectPublicCandidates(values).filter(result=>result.eligible).map(result=>result.summary).toSorted((a,b)=>Date.parse(b.publishedAt??"")-Date.parse(a.publishedAt??"")||a.slug.localeCompare(b.slug));
+  return projectPublicCandidates(values)
+    .filter((result) => result.eligible)
+    .map((result) => result.summary)
+    .toSorted(
+      (a, b) =>
+        Date.parse(b.publishedAt ?? "") - Date.parse(a.publishedAt ?? "") ||
+        a.slug.localeCompare(b.slug),
+    );
 }
 
-export function publicDetailBySlug(values: unknown[], slug: string): PublicMachineDetailV1|null {
-  for(const result of projectPublicCandidates(values)){if(result.eligible&&result.detail.summary.slug===slug)return result.detail;}
+export function publicDetailBySlug(
+  values: unknown[],
+  slug: string,
+): PublicMachineDetailV1 | null {
+  for (const result of projectPublicCandidates(values)) {
+    if (result.eligible && result.detail.summary.slug === slug)
+      return result.detail;
+  }
   return null;
 }

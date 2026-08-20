@@ -20,12 +20,18 @@ const PUBLIC_CANDIDATE_FIELDS = `
   battery_health,
   battery_cycle,
   rank,
-  sales (lifecycle_status, reservation_kind),
   machine_publications!inner (status, slug, revision, approved_by, approved_at, approved_editorial_revision, published_by, first_published_at, published_at, published_editorial_revision, updated_at),
   machine_editorials (revision, public_condition_summary, expert_summary, suitable_for, not_suitable_for, contextual_label, included_items, policy_applicability, reviewed_by, reviewed_at),
   machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover, processing_status, derivatives),
   machine_verifications (verification_code, verified, verified_at, public)
 `;
+
+type PublicAvailabilityRow = {
+  machine_public_identifier: string;
+  availability: string;
+  reservation_kind: string | null;
+  state_valid: boolean;
+};
 
 export class PublicInventoryDatabaseError extends Error {
   constructor(
@@ -39,11 +45,15 @@ export class PublicInventoryDatabaseError extends Error {
 
 async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
   const client = createServerSupabaseClient();
-  const { data, error } = await client
-    .from("machines")
-    .select(PUBLIC_CANDIDATE_FIELDS)
-    .eq("machine_publications.status", "published")
-    .order("machine_id", { ascending: true });
+  const [candidateResult, availabilityResult] = await Promise.all([
+    client
+      .from("machines")
+      .select(PUBLIC_CANDIDATE_FIELDS)
+      .eq("machine_publications.status", "published")
+      .order("machine_id", { ascending: true }),
+    client.rpc("get_public_machine_availability_v1"),
+  ]);
+  const error = candidateResult.error ?? availabilityResult.error;
   if (error) {
     console.error(
       "[public-inventory]",
@@ -56,7 +66,20 @@ async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
     );
     throw new PublicInventoryDatabaseError(operation, error.code ?? "unknown");
   }
-  const rows = data ?? [];
+  const availabilityByCode = new Map(
+    ((availabilityResult.data ?? []) as PublicAvailabilityRow[]).map((row) => [
+      row.machine_public_identifier,
+      {
+        availability: row.availability,
+        reservation_kind: row.reservation_kind,
+        state_valid: row.state_valid,
+      },
+    ]),
+  );
+  const rows = (candidateResult.data ?? []).map((row) => ({
+    ...row,
+    public_availability: availabilityByCode.get(row.machine_id) ?? null,
+  }));
   return {
     client,
     rows,
