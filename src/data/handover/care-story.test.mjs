@@ -24,6 +24,15 @@ test("Care DTO parses its exact public contract", () => {
   });
 });
 
+test("Care DTO accepts a story at the 5,000-character limit", () => {
+  const story = "a".repeat(5000);
+  assert.equal(parseCareStory({ ...row, story })?.story, story);
+});
+
+test("Care DTO rejects a story above the 5,000-character limit", () => {
+  assert.equal(parseCareStory({ ...row, story: "a".repeat(5001) }), null);
+});
+
 test("null Care story parses as null", () => {
   assert.equal(parseCareStory(null), null);
 });

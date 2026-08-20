@@ -49,7 +49,7 @@ export function parseCareStory(value: unknown): CareStoryDTO | null {
   const row = value as Row;
   const customerLabel = text(row.customer_label, 80);
   const title = text(row.title, 120);
-  const story = text(row.story, 3000);
+  const story = text(row.story, 5000);
   const imageUrl = image(row.image_url);
   const handoverDate = date(row.handover_date);
   const peopleHref = row.people_href === null

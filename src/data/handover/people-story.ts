@@ -82,7 +82,7 @@ export function parsePeopleDetail(value: unknown): PeopleStoryDetailDTO | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const row = value as Row;
   const base = common(row);
-  const story = text(row.story, 3000);
+  const story = text(row.story, 5000);
   const imageUrl = image(row.image_url);
   return base && story && imageUrl
     ? { schemaVersion: PEOPLE_STORY_SCHEMA_VERSION, ...base, story, imageUrl }
