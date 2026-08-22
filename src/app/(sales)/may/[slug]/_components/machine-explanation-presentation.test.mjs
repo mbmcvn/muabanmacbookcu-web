@@ -137,3 +137,48 @@ test("renderer uses semantic structure and mobile-safe wrapping", () => {
     /@media \(max-width: 639px\)[\s\S]*\.machine-explanation__blocks li[^}]*grid-template-columns: minmax\(0, 1fr\)/,
   );
 });
+
+test("ready_with_note with zero persisted notes renders no notes area", () => {
+  const presented = presentMachineExplanation(
+    explanation({ status: "ready_with_note", notes: [] }),
+  );
+  assert.deepEqual(presented?.notes, []);
+  const component = readFileSync(
+    new URL("./MachineExplanation.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(component, /presentation\.notes\.length \? \(/);
+});
+
+test("new filtered snapshot shows only the judgement-specific battery qualification", () => {
+  const presented = presentMachineExplanation(
+    explanation({
+      status: "ready_with_note",
+      notes: ["Số đo pin chưa được xác nhận bằng kiểm tra"],
+    }),
+  );
+  assert.deepEqual(presented?.notes, [
+    "Số đo pin chưa được xác nhận bằng kiểm tra",
+  ]);
+  const visible = JSON.stringify(presented);
+  for (const redundant of [
+    "Chưa có khả năng xác minh kiểm tra",
+    "Chưa có khả năng xác minh nguồn máy",
+    "Chưa có khả năng xác minh lịch sử sửa chữa",
+    "Chưa có khả năng xác minh tính nguyên bản",
+    "Chưa có khả năng xác minh linh kiện",
+  ]) {
+    assert.doesNotMatch(visible, new RegExp(redundant));
+  }
+});
+
+test("Machine Verification remains directly after Machine Explanation", () => {
+  const dossier = readFileSync(
+    new URL("./DecisionDossier.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    dossier,
+    /<MachineExplanation[\s\S]*?<MachineVerification items=\{machine\.verifications\}/,
+  );
+});

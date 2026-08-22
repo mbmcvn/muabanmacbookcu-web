@@ -3197,6 +3197,8 @@ test("Machine Explanation query selects only public content columns", () => {
       forbidden,
     );
   }
+  assert.match(source, /machine_explanation_snapshots\.engine_version/);
+  assert.match(source, /machine-explanation\.v0\.2026-08-22\.1/);
   assert.match(source, /machine_explanation_snapshots\.approved_at/);
   assert.match(source, /machine_explanation_snapshots\.superseded_at/);
 });

@@ -5,6 +5,9 @@ import type { PublicMachineRepository } from "./public-machine-repository";
 import { projectPublicCandidates } from "../project-public-candidates";
 import { loadPublicMachinePolicySummary } from "../public-machine-policy-summary.server";
 
+const CURRENT_PUBLIC_MACHINE_EXPLANATION_ENGINE =
+  "machine-explanation.v0.2026-08-22.1";
+
 const PUBLIC_CANDIDATE_FIELDS = `
   id,
   machine_id,
@@ -85,6 +88,10 @@ async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
       .from("machines")
       .select(PUBLIC_CANDIDATE_FIELDS)
       .eq("machine_publications.status", "published")
+      .eq(
+        "machine_explanation_snapshots.engine_version",
+        CURRENT_PUBLIC_MACHINE_EXPLANATION_ENGINE,
+      )
       .not("machine_explanation_snapshots.approved_at", "is", null)
       .is("machine_explanation_snapshots.superseded_at", null)
       .order("machine_id", { ascending: true }),
