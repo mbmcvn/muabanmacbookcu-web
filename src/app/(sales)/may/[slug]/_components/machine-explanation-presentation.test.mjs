@@ -150,28 +150,26 @@ test("ready_with_note with zero persisted notes renders no notes area", () => {
   assert.match(component, /presentation\.notes\.length \? \(/);
 });
 
-test("new filtered snapshot shows only the judgement-specific battery qualification", () => {
+test("recorded battery interpretation remains visible without provenance disclaimer", () => {
+  const interpretation =
+    "Mức pin ghi nhận vẫn phù hợp với một máy đã qua sử dụng.";
   const presented = presentMachineExplanation(
     explanation({
-      status: "ready_with_note",
-      notes: ["Số đo pin chưa được xác nhận bằng kiểm tra"],
+      status: "ready",
+      blocks: [{ domain: "battery", stance: "benefit", text: interpretation }],
+      notes: [],
     }),
   );
-  assert.deepEqual(presented?.notes, [
-    "Số đo pin chưa được xác nhận bằng kiểm tra",
+  assert.deepEqual(presented?.blocks, [
+    { domainLabel: "Pin", text: interpretation },
   ]);
+  assert.deepEqual(presented?.notes, []);
   const visible = JSON.stringify(presented);
-  for (const redundant of [
-    "Chưa có khả năng xác minh kiểm tra",
-    "Chưa có khả năng xác minh nguồn máy",
-    "Chưa có khả năng xác minh lịch sử sửa chữa",
-    "Chưa có khả năng xác minh tính nguyên bản",
-    "Chưa có khả năng xác minh linh kiện",
-  ]) {
-    assert.doesNotMatch(visible, new RegExp(redundant));
-  }
+  assert.doesNotMatch(
+    visible,
+    /Dữ liệu ghi nhận chưa có bằng chứng|Số đo pin chưa được xác nhận bằng kiểm tra/,
+  );
 });
-
 test("Machine Verification remains directly after Machine Explanation", () => {
   const dossier = readFileSync(
     new URL("./DecisionDossier.tsx", import.meta.url),

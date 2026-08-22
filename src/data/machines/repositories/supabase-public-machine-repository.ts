@@ -6,7 +6,7 @@ import { projectPublicCandidates } from "../project-public-candidates";
 import { loadPublicMachinePolicySummary } from "../public-machine-policy-summary.server";
 
 const CURRENT_PUBLIC_MACHINE_EXPLANATION_ENGINE =
-  "machine-explanation.v0.2026-08-22.1";
+  "machine-explanation.v0.2026-08-22.2";
 
 const PUBLIC_CANDIDATE_FIELDS = `
   id,
