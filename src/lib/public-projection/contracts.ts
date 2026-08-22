@@ -27,10 +27,7 @@ export type PublicImage = {
   variants?: PublicImageVariants;
 };
 export type PublicAvailability =
-  | "available"
-  | "reserved"
-  | "sold"
-  | "unavailable";
+  "available" | "reserved" | "sold" | "unavailable";
 export type PublicReservationKind = "manual" | "deposit";
 // Repair statuses distinguish an operational claim from absence of Evidence.
 export type PublicRepairStatus =
@@ -39,12 +36,12 @@ export type PublicRepairStatus =
   | "no_repair_evidence_found"
   | "unknown";
 export type PublicSourceVerification =
-  | "verified"
-  | "partially_verified"
-  | "not_verified"
-  | "unknown";
+  "verified" | "partially_verified" | "not_verified" | "unknown";
 export type PublicCosmeticGrade = string;
-export type { PublicMachineVerification, VerificationCode } from "../machine-verification.ts";
+export type {
+  PublicMachineVerification,
+  VerificationCode,
+} from "../machine-verification.ts";
 import type { PublicMachineVerification } from "../machine-verification.ts";
 
 export type PublicWarranty =
@@ -82,6 +79,18 @@ export type PublicIncludedItems = {
   box: boolean | null;
   bag: boolean | null;
   accessories: string[];
+};
+export type PublicMachineExplanationAudienceV0 =
+  "general" | "developer" | "creative" | "heavy" | "storage_heavy";
+export type PublicMachineExplanationV0 = {
+  audience: PublicMachineExplanationAudienceV0;
+  status: "ready" | "ready_with_note";
+  blocks: Array<{
+    domain: "memory" | "storage" | "battery" | "cosmetic";
+    stance: "benefit" | "guidance" | "caution" | "limitation";
+    text: string;
+  }>;
+  notes: string[];
 };
 export type PublicPolicySummary = {
   policyVersion: string;
@@ -153,33 +162,72 @@ export interface PublicMachineDetailV1 {
   suitableFor: string[];
   notSuitableFor: string[];
   decisionSpecifications: PublicFact[];
-  technicalSpecifications: Record<
-    string,
-    string | number | boolean | null
-  >;
+  technicalSpecifications: Record<string, string | number | boolean | null>;
   includedItems: PublicIncludedItems;
   policyApplicability: string[];
   policySummary?: PublicPolicySummary;
+  machineExplanation?: PublicMachineExplanationV0;
   passport: PublicMachinePassportV1;
   relatedMachines: PublicMachineSummaryV1[];
 }
 
 export const PUBLIC_MACHINE_SUMMARY_V1_KEYS = [
-  "schemaVersion", "code", "slug", "displayName", "family", "year",
-  "screenSizeInches", "chip", "ramGb", "ssdGb", "color", "price",
-  "availability", "reservationKind", "coverImage", "imageCount", "batteryHealthPercent",
-  "cycleCount", "cosmeticGrade", "conditionSummary", "warranty",
-  "inspection", "contextualLabel", "publishedAt", "updatedAt",
+  "schemaVersion",
+  "code",
+  "slug",
+  "displayName",
+  "family",
+  "year",
+  "screenSizeInches",
+  "chip",
+  "ramGb",
+  "ssdGb",
+  "color",
+  "price",
+  "availability",
+  "reservationKind",
+  "coverImage",
+  "imageCount",
+  "batteryHealthPercent",
+  "cycleCount",
+  "cosmeticGrade",
+  "conditionSummary",
+  "warranty",
+  "inspection",
+  "contextualLabel",
+  "publishedAt",
+  "updatedAt",
 ] as const satisfies readonly (keyof PublicMachineSummaryV1)[];
 
 export const PUBLIC_MACHINE_DETAIL_V1_KEYS = [
-  "schemaVersion", "summary", "modelSpecKey", "verifications", "gallery", "expertSummary", "suitableFor",
-  "notSuitableFor", "decisionSpecifications", "technicalSpecifications",
-  "includedItems", "policyApplicability", "policySummary", "passport", "relatedMachines",
+  "schemaVersion",
+  "summary",
+  "modelSpecKey",
+  "verifications",
+  "gallery",
+  "expertSummary",
+  "suitableFor",
+  "notSuitableFor",
+  "decisionSpecifications",
+  "technicalSpecifications",
+  "includedItems",
+  "policyApplicability",
+  "policySummary",
+  "machineExplanation",
+  "passport",
+  "relatedMachines",
 ] as const satisfies readonly (keyof PublicMachineDetailV1)[];
 
 export const PUBLIC_MACHINE_PASSPORT_V1_KEYS = [
-  "schemaVersion", "code", "slug", "publicStatus", "facts", "timeline",
-  "inspection", "sourceVerification", "repairStatus", "firstPublishedAt",
+  "schemaVersion",
+  "code",
+  "slug",
+  "publicStatus",
+  "facts",
+  "timeline",
+  "inspection",
+  "sourceVerification",
+  "repairStatus",
+  "firstPublishedAt",
   "lastPublishedAt",
 ] as const satisfies readonly (keyof PublicMachinePassportV1)[];

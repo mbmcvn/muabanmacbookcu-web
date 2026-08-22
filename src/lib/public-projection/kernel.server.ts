@@ -2,10 +2,14 @@ import type {
   PublicAvailability,
   PublicCosmeticGrade,
   PublicIncludedItems,
+  PublicMachineExplanationV0,
   PublicImageVariants,
   PublicReservationKind,
 } from "./contracts.ts";
-import type { MachineVerificationItem, PublicMachineVerification } from "../machine-verification.ts";
+import type {
+  MachineVerificationItem,
+  PublicMachineVerification,
+} from "../machine-verification.ts";
 import { publicMachineVerifications } from "../machine-verification.ts";
 
 const PUBLIC_IMAGE_TYPES = new Set([
@@ -84,6 +88,7 @@ export type PublicMachineProjectionInput = {
   reservationStateInvalid?: boolean;
   publication: PublicationInput | null;
   editorial: EditorialInput | null;
+  machineExplanation?: PublicMachineExplanationV0 | null;
   images: PublicImageInput[];
   privacyValid: boolean;
   [privateProperty: string]: unknown;
@@ -121,6 +126,7 @@ export type NormalizedPublicMachineFacts = {
   reservationStateInvalid: boolean;
   publication: PublicationInput | null;
   editorial: EditorialInput | null;
+  machineExplanation: PublicMachineExplanationV0 | null;
   images: NormalizedPublicImage[];
   privacyValid: boolean;
 };
@@ -160,6 +166,7 @@ export type PublicProjectionKernel = {
   notSuitableFor: string[];
   includedItems: PublicIncludedItems;
   policyApplicability: string[];
+  machineExplanation: PublicMachineExplanationV0 | null;
   firstPublishedAt: string | null;
   publishedAt: string;
   updatedAt: string | null;
@@ -239,6 +246,16 @@ export function normalizePublicMachineFacts(
               }
             : undefined,
           policyApplicability: [...(editorial.policyApplicability ?? [])],
+        }
+      : null,
+    machineExplanation: input.machineExplanation
+      ? {
+          audience: input.machineExplanation.audience,
+          status: input.machineExplanation.status,
+          blocks: input.machineExplanation.blocks.map((block) => ({
+            ...block,
+          })),
+          notes: [...input.machineExplanation.notes],
         }
       : null,
     images: filterPublicMachineImages(input.images),

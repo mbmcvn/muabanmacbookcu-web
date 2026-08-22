@@ -9,6 +9,7 @@ import type {
 import type { ProjectionDenialReason } from "../../lib/public-projection/eligibility.server.ts";
 import type {
   PublicMachineDetailV1,
+  PublicMachineExplanationV0,
   PublicImageVariants,
   PublicMachineSummaryV1,
 } from "../../lib/public-projection/contracts.ts";
@@ -166,6 +167,99 @@ function machineVerifications(value: unknown): MachineVerificationItem[] {
   );
 }
 
+const EXPLANATION_KEYS = new Set(["audience", "status", "blocks", "notes"]);
+const EXPLANATION_BLOCK_KEYS = new Set(["domain", "stance", "text"]);
+const EXPLANATION_AUDIENCES = new Set([
+  "general",
+  "developer",
+  "creative",
+  "heavy",
+  "storage_heavy",
+]);
+const EXPLANATION_STATUSES = new Set(["ready", "ready_with_note"]);
+const EXPLANATION_DOMAINS = new Set([
+  "memory",
+  "storage",
+  "battery",
+  "cosmetic",
+]);
+const EXPLANATION_STANCES = new Set([
+  "benefit",
+  "guidance",
+  "caution",
+  "limitation",
+]);
+const INTERNAL_EXPLANATION_VALUE =
+  /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|\b[0-9a-f]{64}\b|PRIVATE_/i;
+
+function exactKeys(value: UnknownRow, allowed: Set<string>): boolean {
+  const keys = Object.keys(value);
+  return keys.length === allowed.size && keys.every((key) => allowed.has(key));
+}
+
+function boundedExplanationText(
+  value: unknown,
+  maximum: number,
+): value is string {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= maximum &&
+    value === value.trim() &&
+    !INTERNAL_EXPLANATION_VALUE.test(value)
+  );
+}
+
+export function normalizeMachineExplanation(
+  value: unknown,
+): PublicMachineExplanationV0 | null {
+  const row = oneRow(value);
+  if (
+    !row ||
+    !exactKeys(row, EXPLANATION_KEYS) ||
+    !EXPLANATION_AUDIENCES.has(row.audience as string) ||
+    !EXPLANATION_STATUSES.has(row.status as string) ||
+    !Array.isArray(row.blocks) ||
+    row.blocks.length === 0 ||
+    row.blocks.length > 24 ||
+    !Array.isArray(row.notes) ||
+    row.notes.length > 12
+  ) {
+    return null;
+  }
+
+  const blocks: PublicMachineExplanationV0["blocks"] = [];
+  for (const value of row.blocks) {
+    if (!isRow(value) || !exactKeys(value, EXPLANATION_BLOCK_KEYS)) return null;
+    if (
+      !EXPLANATION_DOMAINS.has(value.domain as string) ||
+      !EXPLANATION_STANCES.has(value.stance as string) ||
+      !boundedExplanationText(value.text, 1200)
+    ) {
+      return null;
+    }
+    blocks.push({
+      domain:
+        value.domain as PublicMachineExplanationV0["blocks"][number]["domain"],
+      stance:
+        value.stance as PublicMachineExplanationV0["blocks"][number]["stance"],
+      text: value.text,
+    });
+  }
+
+  const notes: string[] = [];
+  for (const note of row.notes) {
+    if (!boundedExplanationText(note, 300)) return null;
+    notes.push(note);
+  }
+
+  return {
+    audience: row.audience as PublicMachineExplanationV0["audience"],
+    status: row.status as PublicMachineExplanationV0["status"],
+    blocks,
+    notes,
+  };
+}
 export function normalizePublicCandidate(
   value: unknown,
 ): PublicMachineProjectionInput | null {
@@ -226,6 +320,7 @@ export function normalizePublicCandidate(
           reviewedAt: text(editorial.reviewed_at),
         }
       : null,
+    machineExplanation: normalizeMachineExplanation(value.machine_explanation),
     images: publicImages(value.machine_images),
     privacyValid: true,
   };

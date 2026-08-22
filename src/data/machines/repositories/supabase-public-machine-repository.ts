@@ -23,7 +23,8 @@ const PUBLIC_CANDIDATE_FIELDS = `
   machine_publications!inner (status, slug, revision, approved_by, approved_at, approved_editorial_revision, published_by, first_published_at, published_at, published_editorial_revision, updated_at),
   machine_editorials (revision, public_condition_summary, expert_summary, suitable_for, not_suitable_for, contextual_label, included_items, policy_applicability, reviewed_by, reviewed_at),
   machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover, processing_status, derivatives),
-  machine_verifications (verification_code, verified, verified_at, public)
+  machine_verifications (verification_code, verified, verified_at, public),
+  machine_explanation_snapshots (target_audience, narrative_status, blocks, customer_notes)
 `;
 
 type PublicAvailabilityRow = {
@@ -43,6 +44,40 @@ export class PublicInventoryDatabaseError extends Error {
   }
 }
 
+type PublicExplanationStorageRow = {
+  target_audience?: unknown;
+  narrative_status?: unknown;
+  blocks?: unknown;
+  customer_notes?: unknown;
+};
+
+function canonicalMachineExplanation(value: unknown): unknown {
+  const snapshot = Array.isArray(value) && value.length === 1 ? value[0] : null;
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
+    return null;
+  }
+  const row = snapshot as PublicExplanationStorageRow;
+  const blocks = Array.isArray(row.blocks)
+    ? row.blocks.map((value) => {
+        if (!value || typeof value !== "object" || Array.isArray(value))
+          return value;
+        const { position: _position, ...publicBlock } = value as Record<
+          string,
+          unknown
+        >;
+        return publicBlock;
+      })
+    : row.blocks;
+  return {
+    audience: row.target_audience,
+    status:
+      row.narrative_status === "ready_with_disclosure"
+        ? "ready_with_note"
+        : row.narrative_status,
+    blocks,
+    notes: row.customer_notes,
+  };
+}
 async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
   const client = createServerSupabaseClient();
   const [candidateResult, availabilityResult] = await Promise.all([
@@ -50,6 +85,8 @@ async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
       .from("machines")
       .select(PUBLIC_CANDIDATE_FIELDS)
       .eq("machine_publications.status", "published")
+      .not("machine_explanation_snapshots.approved_at", "is", null)
+      .is("machine_explanation_snapshots.superseded_at", null)
       .order("machine_id", { ascending: true }),
     client.rpc("get_public_machine_availability_v1"),
   ]);
@@ -79,6 +116,9 @@ async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
   const rows = (candidateResult.data ?? []).map((row) => ({
     ...row,
     public_availability: availabilityByCode.get(row.machine_id) ?? null,
+    machine_explanation: canonicalMachineExplanation(
+      row.machine_explanation_snapshots,
+    ),
   }));
   return {
     client,

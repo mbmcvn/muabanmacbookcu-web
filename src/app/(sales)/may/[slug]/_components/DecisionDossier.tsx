@@ -10,12 +10,14 @@ import {
 } from "./PublicInformationStatus";
 import { DetailedImages } from "./ConditionAndImages";
 import { MachineVerification } from "./MachineVerification";
+import { MachineExplanation } from "./MachineExplanation";
 
 export function DecisionDossier({ machine }: { machine: PublicMachineDetailV1 }) {
   return <div className="decision-dossier" aria-label="Hồ sơ và tình trạng thực tế">
     <div className="dossier-stage dossier-stage-decision" id="danh-gia-phu-hop">
       <DecisionSummary />
       <PublicMachineFitRecommendation machine={machine} />
+      <MachineExplanation explanation={machine.machineExplanation} />
       <MachineVerification items={machine.verifications} />
       <div className="dossier-pair dossier-status-pair" id="ho-so-cong-khai"><VerifiedPublicInformation machine={machine} /><PublicInformationLimitations machine={machine} /></div>
       <ExpertSummary machine={machine} />

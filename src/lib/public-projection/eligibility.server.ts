@@ -150,6 +150,16 @@ export function validatePublicMachineEligibility(
             accessories: [],
           },
       policyApplicability: [...(editorial!.policyApplicability ?? [])],
+      machineExplanation: facts.machineExplanation
+        ? {
+            audience: facts.machineExplanation.audience,
+            status: facts.machineExplanation.status,
+            blocks: facts.machineExplanation.blocks.map((block) => ({
+              ...block,
+            })),
+            notes: [...facts.machineExplanation.notes],
+          }
+        : null,
       firstPublishedAt: publication!.firstPublishedAt ?? null,
       publishedAt: publication!.publishedAt!,
       updatedAt: publication!.updatedAt ?? null,

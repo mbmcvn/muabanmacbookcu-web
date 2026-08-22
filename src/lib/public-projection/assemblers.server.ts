@@ -123,6 +123,18 @@ export function assemblePublicMachineDetailV1(
       accessories: [...kernel.includedItems.accessories],
     },
     policyApplicability: [...kernel.policyApplicability],
+    ...(kernel.machineExplanation
+      ? {
+          machineExplanation: {
+            audience: kernel.machineExplanation.audience,
+            status: kernel.machineExplanation.status,
+            blocks: kernel.machineExplanation.blocks.map((block) => ({
+              ...block,
+            })),
+            notes: [...kernel.machineExplanation.notes],
+          },
+        }
+      : {}),
     passport: assemblePublicMachinePassportV1(kernel),
     relatedMachines: [],
   };

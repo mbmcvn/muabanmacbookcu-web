@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  normalizeMachineExplanation,
   projectPublicCandidates,
   publicDetailBySlug,
   publicSummaries,
@@ -3071,4 +3072,131 @@ test("inventory clipboard helper reports success and failure safely", async () =
     }),
     false,
   );
+});
+
+test("valid Machine Explanation survives normalization and projection in source order", () => {
+  const machineExplanation = {
+    audience: "developer",
+    status: "ready_with_note",
+    blocks: [
+      { domain: "storage", stance: "guidance", text: "Storage first." },
+      { domain: "memory", stance: "benefit", text: "Memory second." },
+    ],
+    notes: ["Public note."],
+  };
+  assert.deepEqual(
+    normalizeMachineExplanation(machineExplanation),
+    machineExplanation,
+  );
+  const input = row("MBMC-EXPLAIN");
+  input.machine_explanation = machineExplanation;
+  const detail = publicDetailBySlug([input], "mbmc-explain");
+  assert.deepEqual(detail?.machineExplanation, machineExplanation);
+});
+
+test("absent and null Machine Explanation preserve the previous detail shape", () => {
+  const absent = row("MBMC-NONE");
+  const withoutExplanation = publicDetailBySlug([absent], "mbmc-none");
+  assert.equal("machineExplanation" in withoutExplanation, false);
+  const nullExplanation = row("MBMC-NULL");
+  nullExplanation.machine_explanation = null;
+  const withNull = publicDetailBySlug([nullExplanation], "mbmc-null");
+  assert.equal("machineExplanation" in withNull, false);
+});
+
+test("invalid Machine Explanation is omitted without affecting parent eligibility", () => {
+  const valid = {
+    audience: "general",
+    status: "ready",
+    blocks: [{ domain: "battery", stance: "caution", text: "Public text." }],
+    notes: [],
+  };
+  const invalidValues = [
+    { ...valid, audience: "unknown" },
+    { ...valid, audience: "office" },
+    { ...valid, audience: "student" },
+    { ...valid, status: "ready_with_disclosure" },
+    { ...valid, blocks: [] },
+    {
+      ...valid,
+      blocks: [{ domain: "unknown", stance: "benefit", text: "Text." }],
+    },
+    {
+      ...valid,
+      blocks: [{ domain: "memory", stance: "unknown", text: "Text." }],
+    },
+    { ...valid, blocks: [{ domain: "memory", stance: "benefit", text: " " }] },
+    { ...valid, notes: [""] },
+    { ...valid, diagnostics: { internal: true } },
+    { ...valid, blocks: [{ ...valid.blocks[0], sourceKey: "internal" }] },
+  ];
+  for (const [index, machineExplanation] of invalidValues.entries()) {
+    const input = row(`MBMC-BAD${index}`);
+    input.machine_explanation = machineExplanation;
+    const [result] = projectPublicCandidates([input]);
+    assert.equal(result.eligible, true);
+    assert.equal("machineExplanation" in result.detail, false);
+  }
+});
+
+test("Machine Explanation DTO cannot expose snapshot metadata", () => {
+  const input = row("MBMC-PRIVATE");
+  input.machine_explanation = {
+    audience: "general",
+    status: "ready",
+    blocks: [{ domain: "cosmetic", stance: "guidance", text: "Public text." }],
+    notes: [],
+    id: "PRIVATE_SNAPSHOT_ID",
+    inputHash: "PRIVATE_HASH",
+    engineVersion: "PRIVATE_ENGINE",
+    approvedBy: "PRIVATE_ACTOR",
+    diagnostics: "PRIVATE_DIAGNOSTICS",
+    reasonCode: "PRIVATE_REASON",
+    supersededAt: "PRIVATE_SUPERSESSION",
+  };
+  const [result] = projectPublicCandidates([input]);
+  assert.equal(result.eligible, true);
+  assert.equal("machineExplanation" in result.detail, false);
+  assert.doesNotMatch(
+    JSON.stringify(result.detail),
+    /PRIVATE_|inputHash|engineVersion|approvedBy|diagnostics|reasonCode|supersededAt/,
+  );
+});
+
+test("Machine Explanation query selects only public content columns", () => {
+  const source = readFileSync(
+    new URL(
+      "./repositories/supabase-public-machine-repository.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(
+    source,
+    /machine_explanation_snapshots\s*\(target_audience, narrative_status, blocks, customer_notes\)/,
+  );
+  const selection =
+    source.match(/machine_explanation_snapshots\s*\(([^)]*)\)/)?.[1] ?? "";
+  for (const forbidden of [
+    "id",
+    "machine_id",
+    "revision",
+    "engine_version",
+    "input_hash",
+    "generated_at",
+    "approved_by",
+    "approved_at",
+    "superseded_at",
+    "diagnostics",
+    "reason_code",
+    "source_key",
+  ]) {
+    assert.equal(
+      selection.split(/\s*,\s*/).includes(forbidden),
+      false,
+      forbidden,
+    );
+  }
+  assert.match(source, /machine_explanation_snapshots\.approved_at/);
+  assert.match(source, /machine_explanation_snapshots\.superseded_at/);
 });

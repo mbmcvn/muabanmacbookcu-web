@@ -7,6 +7,8 @@ export type {
   PublicIncludedItems,
   PublicInspection,
   PublicMachineDetailV1,
+  PublicMachineExplanationAudienceV0,
+  PublicMachineExplanationV0,
   PublicMachinePassportV1,
   PublicMachineVerification,
   PublicMachineSummaryV1,
