@@ -10,6 +10,7 @@ import {
   resolveReferralContext,
   validFacebookContactUrl,
 } from "./contact-routing.ts";
+import { canonicalMachineUrl } from "./public-machine-url.ts";
 
 const zaloCtv = {
   displayName: "Thanh Tung",
@@ -231,6 +232,10 @@ test("browser resolver sends only the canonical referral-code RPC argument", () 
   );
   assert.match(source, /p_referral_code: referralCode/);
   assert.doesNotMatch(source, /p_referral_phone|referral_phone/);
+});
+
+test("machine cards use the canonical encoded detail URL", () => {
+  assert.equal(canonicalMachineUrl("mbmc demo/01"), "https://mbmc.vn/may/mbmc%20demo%2F01");
 });
 
 test("machine share URLs include the resolved referral owner but never channel", () => {

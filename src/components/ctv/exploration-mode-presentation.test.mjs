@@ -14,17 +14,21 @@ const globals = readFileSync(
   new URL("../../app/globals.css", import.meta.url),
   "utf8",
 );
+const bottomStack = readFileSync(
+  new URL("../../app/(sales)/sales-bottom-stack.css", import.meta.url),
+  "utf8",
+);
 
 test("normal visitors render no bar and receive no bottom spacing class", () => {
   assert.match(component, /if \(!active\) return null/);
-  assert.match(styles, /html\.experience-mode-active body\s*\{/);
+  assert.match(bottomStack, /html:is\(\.return-context-active, \.experience-mode-active\) body\s*\{/);
   assert.doesNotMatch(styles, /(^|\n)body\s*\{[^}]*padding-bottom/s);
 });
 
 test("experience visitors receive a fixed bottom bar and content clearance", () => {
   assert.match(styles, /\.experience-bar\s*\{[^}]*position:\s*fixed/s);
   assert.match(styles, /bottom:\s*0/);
-  assert.match(styles, /padding-bottom:\s*var\(--experience-bar-clearance\)/);
+  assert.match(bottomStack, /padding-bottom:\s*calc\(/);
   assert.match(component, /classList\.add\(ACTIVE_CLASS\)/);
   assert.match(component, /classList\.remove\(ACTIVE_CLASS\)/);
 });
@@ -43,8 +47,8 @@ test("bar layers above fixed sales CTAs but below intentional overlays", () => {
   assert.match(globals, /\.public-machine-sticky\s*\{[^}]*z-index:\s*29/s);
   assert.match(globals, /\.machine-lightbox\s*\{[^}]*z-index:\s*100/s);
   assert.match(
-    styles,
-    /experience-mode-active \.public-machine-sticky[\s\S]*bottom:\s*var\(--experience-bar-clearance\)/,
+    bottomStack,
+    /\.public-machine-sticky[\s\S]*bottom:\s*calc\(/,
   );
 });
 

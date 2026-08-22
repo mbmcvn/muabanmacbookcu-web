@@ -2,10 +2,6 @@
   --experience-bar-clearance: calc(8rem + env(safe-area-inset-bottom));
 }
 
-html.experience-mode-active body {
-  padding-bottom: var(--experience-bar-clearance);
-}
-
 .experience-bar {
   position: fixed;
   right: 0;
@@ -57,12 +53,8 @@ html.experience-mode-active body {
   text-align: right;
 }
 
-html.experience-mode-active .public-machine-sticky {
-  bottom: var(--experience-bar-clearance);
-}
-
-html.experience-mode-active .machine-sticky-action {
-  bottom: calc(3.6rem + var(--experience-bar-clearance));
+html.return-context-active .experience-bar {
+  bottom: var(--return-context-active-clearance);
 }
 
 @media (min-width: 48rem) {

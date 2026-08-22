@@ -1,0 +1,131 @@
+:root {
+  --return-context-bar-clearance: calc(4.25rem + env(safe-area-inset-bottom));
+  --return-context-active-clearance: 0rem;
+  --experience-active-clearance: 0rem;
+}
+
+html.return-context-active {
+  --return-context-active-clearance: var(--return-context-bar-clearance);
+}
+
+html.experience-mode-active {
+  --experience-active-clearance: var(--experience-bar-clearance);
+}
+
+html:is(.return-context-active, .experience-mode-active) body {
+  padding-bottom: calc(
+    var(--return-context-active-clearance) + var(--experience-active-clearance)
+  );
+}
+
+html:is(.return-context-active, .experience-mode-active) .public-machine-sticky {
+  bottom: calc(
+    var(--return-context-active-clearance) + var(--experience-active-clearance)
+  );
+}
+
+html:is(.return-context-active, .experience-mode-active) .machine-sticky-action {
+  bottom: calc(
+    3.6rem + var(--return-context-active-clearance) +
+      var(--experience-active-clearance)
+  );
+}
+
+.context-return-layer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0 max(0rem, env(safe-area-inset-right)) env(safe-area-inset-bottom)
+    max(0rem, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.context-return-bar {
+  width: 100%;
+  min-height: 4.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-top: 1px solid #ffffff2e;
+  background: #18201d;
+  color: #fff;
+  box-shadow: 0 -0.35rem 1.25rem #00000024;
+  pointer-events: auto;
+}
+
+.context-return-bar button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.context-return-action {
+  min-width: 0;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  font-weight: 700;
+}
+
+.context-return-action:hover,
+.context-return-close:hover {
+  background: #ffffff12;
+}
+
+.context-return-action svg,
+.context-return-close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.context-return-close {
+  flex: 0 0 2.75rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --return-context-bar-clearance: 4.5rem;
+  }
+
+  .context-return-layer {
+    padding-inline: 1rem;
+  }
+
+  .context-return-bar {
+    width: min(34rem, 100%);
+    min-height: 3.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ffffff2e;
+    border-radius: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .context-return-bar,
+  .context-return-bar button {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}
