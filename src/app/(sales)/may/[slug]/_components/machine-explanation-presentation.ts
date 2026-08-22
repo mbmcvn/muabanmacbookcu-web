@@ -1,15 +1,5 @@
-import type {
-  PublicMachineExplanationAudienceV0,
-  PublicMachineExplanationV0,
-} from "@/models";
-
-const AUDIENCE_LABELS: Record<PublicMachineExplanationAudienceV0, string> = {
-  general: "Phổ thông",
-  developer: "Lập trình",
-  creative: "Sáng tạo",
-  heavy: "Tác vụ nặng",
-  storage_heavy: "Lưu trữ nhiều",
-};
+import type { PublicMachineExplanationV0 } from "@/models";
+import { MACHINE_EXPLANATION_AUDIENCES } from "../../../../../lib/machine-explanation-audiences.ts";
 
 const DOMAIN_LABELS: Record<
   PublicMachineExplanationV0["blocks"][number]["domain"],
@@ -23,6 +13,7 @@ const DOMAIN_LABELS: Record<
 
 export type MachineExplanationPresentation = {
   audienceLabel: string;
+  audienceDescription: string;
   blocks: Array<{ domainLabel: string; text: string }>;
   notes: string[];
 };
@@ -31,8 +22,10 @@ export function presentMachineExplanation(
   explanation: PublicMachineExplanationV0 | undefined,
 ): MachineExplanationPresentation | null {
   if (!explanation) return null;
+  const audience = MACHINE_EXPLANATION_AUDIENCES[explanation.audience];
   return {
-    audienceLabel: AUDIENCE_LABELS[explanation.audience],
+    audienceLabel: audience.label,
+    audienceDescription: audience.description,
     blocks: explanation.blocks.map((block) => ({
       domainLabel: DOMAIN_LABELS[block.domain],
       text: block.text,

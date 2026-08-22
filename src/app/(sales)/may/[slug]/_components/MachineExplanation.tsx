@@ -18,6 +18,9 @@ export function MachineExplanation({
         <p className="eyebrow">
           Đánh giá theo nhu cầu: {presentation.audienceLabel}
         </p>
+        <p className="machine-explanation__audience-description">
+          {presentation.audienceDescription}
+        </p>
         <h2 id="machine-explanation-heading">
           MBMC giải thích về chiếc máy này
         </h2>

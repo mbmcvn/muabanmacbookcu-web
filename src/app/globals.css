@@ -844,6 +844,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .machine-explanation { max-width: 60rem; margin-top: clamp(1.4rem, 3vw, 2rem) !important; padding: clamp(1.2rem, 2.5vw, 1.75rem) 0 0 !important; border: 0 !important; border-top: 1px solid var(--border) !important; border-radius: 0 !important; background: transparent !important; }
 .machine-explanation > header { margin-bottom: .85rem; }
 .machine-explanation > header h2 { max-width: 28ch; margin: .3rem 0 0; font-size: clamp(1.4rem, 2.5vw, 1.85rem); }
+.machine-explanation__audience-description { max-width: 70ch; margin: .45rem 0 0; color: var(--muted); font-size: .95rem; line-height: 1.55; overflow-wrap: anywhere; }
 .machine-explanation__blocks { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
 .machine-explanation__blocks li { min-width: 0; display: grid; grid-template-columns: minmax(5.5rem, .25fr) minmax(0, 1fr); gap: clamp(.75rem, 2vw, 1.5rem); padding: .8rem 0; border-top: 1px solid #e3e5df; }
 .machine-explanation__blocks li:first-child { border-top: 0; }

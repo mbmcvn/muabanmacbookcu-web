@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { presentMachineExplanation } from "./machine-explanation-presentation.ts";
+import { MACHINE_EXPLANATION_AUDIENCES } from "../../../../../lib/machine-explanation-audiences.ts";
 
 function explanation(overrides = {}) {
   return {
@@ -179,4 +180,60 @@ test("Machine Verification remains directly after Machine Explanation", () => {
     dossier,
     /<MachineExplanation[\s\S]*?<MachineVerification items=\{machine\.verifications\}/,
   );
+});
+test("all audiences map to their stable customer-facing descriptions", () => {
+  const mappings = [
+    [
+      "general",
+      "Làm văn phòng, Office, học tập cơ bản, lướt web, xem YouTube, Zalo và các tác vụ hằng ngày.",
+    ],
+    [
+      "developer",
+      "IDE, trình duyệt nhiều tab, terminal, local development và các workflow lập trình phổ biến.",
+    ],
+    [
+      "creative",
+      "Canva, CapCut, chỉnh ảnh/video và các project sáng tạo ở mức vừa phải; workload nặng hơn có thể cần cấu hình cao hơn.",
+    ],
+    [
+      "heavy",
+      "Các workload kéo dài hoặc dùng nhiều tài nguyên, như dựng video nặng, project lớn và đa nhiệm nặng.",
+    ],
+    [
+      "storage_heavy",
+      "Thường xuyên giữ nhiều file, media hoặc project trực tiếp trên máy và cần nhiều dung lượng lưu trữ cục bộ.",
+    ],
+  ];
+  for (const [audience, description] of mappings) {
+    const presented = presentMachineExplanation(explanation({ audience }));
+    assert.equal(presented?.audienceDescription, description);
+    assert.equal(presented?.status, undefined);
+  }
+  assert.equal(Object.keys(MACHINE_EXPLANATION_AUDIENCES).length, 5);
+  assert.equal("office" in MACHINE_EXPLANATION_AUDIENCES, false);
+  assert.equal("student" in MACHINE_EXPLANATION_AUDIENCES, false);
+  assert.equal(
+    Object.values(MACHINE_EXPLANATION_AUDIENCES).every(
+      ({ label, description }) => label.length > 0 && description.length > 0,
+    ),
+    true,
+  );
+});
+
+test("ready with zero notes still places audience context before Machine-specific explanation", () => {
+  const presented = presentMachineExplanation(
+    explanation({ status: "ready", notes: [] }),
+  );
+  assert.equal(
+    presented?.audienceDescription,
+    MACHINE_EXPLANATION_AUDIENCES.general.description,
+  );
+  const component = readFileSync(
+    new URL("./MachineExplanation.tsx", import.meta.url),
+    "utf8",
+  );
+  const audience = component.indexOf("presentation.audienceLabel");
+  const description = component.indexOf("presentation.audienceDescription");
+  const heading = component.indexOf("MBMC giải thích về chiếc máy này");
+  assert.ok(audience >= 0 && audience < description && description < heading);
 });
