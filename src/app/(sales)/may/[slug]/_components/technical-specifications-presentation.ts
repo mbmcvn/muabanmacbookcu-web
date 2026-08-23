@@ -1,4 +1,4 @@
-import type { PublicMachineDetailV1 } from "../../../../../lib/public-projection/contracts.ts";
+import type { PublicMachineDetailV2 } from "../../../../../lib/public-projection/contracts.ts";
 import {
   buildPublicMachineSpecifications,
   type PublicMachineSpecifications,
@@ -29,11 +29,7 @@ function row(
   return {
     label,
     value:
-      typeof value === "boolean"
-        ? value
-          ? "Có"
-          : "Không"
-        : String(value),
+      typeof value === "boolean" ? (value ? "Có" : "Không") : String(value),
   };
 }
 
@@ -48,16 +44,18 @@ function rows(
 // Retained for the versioned DTO's legacy allow-listed field. New detail UI
 // uses the typed machine/model boundary below.
 export function buildPublicSpecificationRows(
-  machine: PublicMachineDetailV1,
+  machine: PublicMachineDetailV2,
 ): PublicSpecificationRow[] {
-  return Object.entries(legacyTrustedTechnicalLabels).flatMap(([key, label]) => {
-    const candidate = row(label, machine.technicalSpecifications[key]);
-    return candidate ? [candidate] : [];
-  });
+  return Object.entries(legacyTrustedTechnicalLabels).flatMap(
+    ([key, label]) => {
+      const candidate = row(label, machine.technicalSpecifications[key]);
+      return candidate ? [candidate] : [];
+    },
+  );
 }
 
 export function specificationsForMachine(
-  machine: PublicMachineDetailV1,
+  machine: PublicMachineDetailV2,
 ): PublicMachineSpecifications {
   const summary = machine.summary;
   return buildPublicMachineSpecifications({

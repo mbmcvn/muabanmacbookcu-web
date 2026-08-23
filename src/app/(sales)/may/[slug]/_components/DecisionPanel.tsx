@@ -1,6 +1,6 @@
 "use client";
 
-import type { PublicMachineDetailV1 } from "@/models";
+import type { PublicMachineDetailV2 } from "@/models";
 import { phoneContact } from "@/config/contact";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { CopyMachineLink } from "@/components/contact/CopyMachineLink";
@@ -11,7 +11,7 @@ import {
   formatPublicMachineSpecs,
 } from "@/lib/presentation";
 
-export function configuration(machine: PublicMachineDetailV1): string {
+export function configuration(machine: PublicMachineDetailV2): string {
   const summary = machine.summary;
   return formatPublicMachineSpecs({
     chip: summary.chip,
@@ -21,7 +21,7 @@ export function configuration(machine: PublicMachineDetailV1): string {
   });
 }
 
-export function DecisionPanel({ machine }: { machine: PublicMachineDetailV1 }) {
+export function DecisionPanel({ machine }: { machine: PublicMachineDetailV2 }) {
   const summary = machine.summary;
   const displayName = formatPublicMachineDisplayName(summary.displayName);
   const reserved = summary.availability === "reserved";

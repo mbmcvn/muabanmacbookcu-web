@@ -1,3 +1,4 @@
+import { publicSuitableAudiencesV0 } from "./public-suitable-audiences-v0.ts";
 import type {
   NormalizedPublicMachineFacts,
   PublicProjectionKernel,
@@ -134,6 +135,9 @@ export function validatePublicMachineEligibility(
       expertSummary: editorial!.expertSummary?.trim() || null,
       suitableFor: [...(editorial!.suitableFor ?? [])],
       notSuitableFor: [...(editorial!.notSuitableFor ?? [])],
+      suitableAudiences: publicSuitableAudiencesV0(
+        editorial!.suitableAudienceTags ?? [],
+      ),
       includedItems: editorial!.includedItems
         ? {
             charger: editorial!.includedItems.charger,

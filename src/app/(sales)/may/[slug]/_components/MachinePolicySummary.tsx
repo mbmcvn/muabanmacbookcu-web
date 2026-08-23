@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import type { PublicMachineDetailV1 } from "@/models";
+import type { PublicMachineDetailV2 } from "@/models";
 import {
   machinePolicyAnalyticsPayload,
   trackMachinePolicyEvent,
@@ -16,7 +16,7 @@ function isInternalUrl(value: string) {
 export function MachinePolicySummary({
   machine,
 }: {
-  machine: PublicMachineDetailV1;
+  machine: PublicMachineDetailV2;
 }) {
   const policy = machine.policySummary;
   const payload = machinePolicyAnalyticsPayload({

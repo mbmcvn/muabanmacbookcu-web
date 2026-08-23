@@ -24,7 +24,7 @@ const PUBLIC_CANDIDATE_FIELDS = `
   battery_cycle,
   rank,
   machine_publications!inner (status, slug, revision, approved_by, approved_at, approved_editorial_revision, published_by, first_published_at, published_at, published_editorial_revision, updated_at),
-  machine_editorials (revision, public_condition_summary, expert_summary, suitable_for, not_suitable_for, contextual_label, included_items, policy_applicability, reviewed_by, reviewed_at),
+  machine_editorials (revision, public_condition_summary, suitable_audience_tags, contextual_label, included_items, policy_applicability, reviewed_by, reviewed_at),
   machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover, processing_status, derivatives),
   machine_verifications (verification_code, verified, verified_at, public),
   machine_explanation_snapshots (target_audience, narrative_status, blocks, customer_notes)

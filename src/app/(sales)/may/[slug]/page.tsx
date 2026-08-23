@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicMachineBySlug } from "@/data/machines/get-public-machine-by-slug";
 import { resolvePublicMachineImage } from "@/lib/images/mbmc-public-image";
+import { publicMachineMetadataDescription } from "@/lib/public-machine-metadata";
 import { canonicalMachineUrl } from "@/lib/public-machine-url";
 import { PublicMachineDetailView } from "./_components/PublicMachineDetailView";
 import { PublicMachineStickyBar } from "./_components/SupportAndSticky";
@@ -19,7 +20,7 @@ export async function generateMetadata({
   const machine = await getPublicMachineBySlug(slug);
   if (!machine) notFound();
   const summary = machine.summary;
-  const description = machine.expertSummary ?? summary.conditionSummary;
+  const description = publicMachineMetadataDescription(machine);
   const socialImage = resolvePublicMachineImage(summary.coverImage, "display");
   return {
     title: `${summary.displayName} · ${summary.code}`,

@@ -1,11 +1,7 @@
-import type { PublicMachineDetailV1 } from "@/models";
-
-export function hasBalancedSuitability(machine: PublicMachineDetailV1): boolean {
-  return machine.suitableFor.length > 0 && machine.notSuitableFor.length > 0;
-}
+import type { PublicMachineDetailV2 } from "@/models";
 
 export function buildPublicLimitations(
-  machine: PublicMachineDetailV1,
+  machine: PublicMachineDetailV2,
 ): string[] {
   const limitations: string[] = [];
   if (machine.summary.inspection.status === "not_available") {

@@ -1,6 +1,6 @@
 import {
-  projectPublicMachineV1,
-  type PublicMachineProjectionV1Result,
+  projectPublicMachineV2,
+  type PublicMachineProjectionV2Result,
 } from "../../lib/public-projection/project-machine.server.ts";
 import type {
   PublicImageInput,
@@ -8,7 +8,7 @@ import type {
 } from "../../lib/public-projection/kernel.server.ts";
 import type { ProjectionDenialReason } from "../../lib/public-projection/eligibility.server.ts";
 import type {
-  PublicMachineDetailV1,
+  PublicMachineDetailV2,
   PublicMachineExplanationV0,
   PublicImageVariants,
   PublicMachineSummaryV1,
@@ -310,9 +310,7 @@ export function normalizePublicCandidate(
       ? {
           revision: integer(editorial.revision) ?? 0,
           publicConditionSummary: text(editorial.public_condition_summary),
-          expertSummary: text(editorial.expert_summary),
-          suitableFor: stringArray(editorial.suitable_for),
-          notSuitableFor: stringArray(editorial.not_suitable_for),
+          suitableAudienceTags: stringArray(editorial.suitable_audience_tags),
           contextualLabel: text(editorial.contextual_label),
           includedItems: includedItems(editorial.included_items),
           policyApplicability: stringArray(editorial.policy_applicability),
@@ -409,8 +407,8 @@ function safeMachineCode(value: unknown): string | undefined {
 export function projectPublicCandidates(
   values: unknown[],
   onDiagnostic: (diagnostic: PublicCandidateDiagnostic) => void = () => {},
-): PublicMachineProjectionV1Result[] {
-  const projected: PublicMachineProjectionV1Result[] = [];
+): PublicMachineProjectionV2Result[] {
+  const projected: PublicMachineProjectionV2Result[] = [];
   for (const value of values) {
     const machineCode = safeMachineCode(value);
     let candidate: PublicMachineProjectionInput | null;
@@ -440,7 +438,7 @@ export function projectPublicCandidates(
     }
 
     try {
-      const result = projectPublicMachineV1(candidate);
+      const result = projectPublicMachineV2(candidate);
       projected.push(result);
       if (!result.eligible) {
         for (const exclusionReason of result.reasons) {
@@ -487,7 +485,7 @@ export function publicSummaries(values: unknown[]): PublicMachineSummaryV1[] {
 export function publicDetailBySlug(
   values: unknown[],
   slug: string,
-): PublicMachineDetailV1 | null {
+): PublicMachineDetailV2 | null {
   for (const result of projectPublicCandidates(values)) {
     if (result.eligible && result.detail.summary.slug === slug)
       return result.detail;

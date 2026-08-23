@@ -71,7 +71,7 @@ import {
   loadPublicMachinePolicySummary,
   mapPublicMachinePolicySummary,
 } from "./public-machine-policy-summary.server.ts";
-import { PUBLIC_MACHINE_DETAIL_V1_KEYS } from "../../lib/public-projection/contracts.ts";
+import { PUBLIC_MACHINE_DETAIL_V2_KEYS } from "../../lib/public-projection/contracts.ts";
 import {
   compactContactLabel,
   resolveContactChannel,
@@ -114,9 +114,7 @@ function row(code = "MBMC-A001", overrides = {}) {
     machine_editorials: {
       revision,
       public_condition_summary: "Ngoại hình tốt.",
-      expert_summary: null,
-      suitable_for: [],
-      not_suitable_for: [],
+      suitable_audience_tags: [],
       contextual_label: null,
       included_items: {
         charger: null,
@@ -250,7 +248,7 @@ test("price filters and sorting use DTO money deterministically", () => {
 test("detail resolves only an eligible immutable public slug", () => {
   assert.equal(
     publicDetailBySlug([row()], "mbmc-a001")?.schemaVersion,
-    "public-machine-detail.v1",
+    "public-machine-detail.v2",
   );
   assert.equal(publicDetailBySlug([row()], "unknown"), null);
   assert.equal(
@@ -369,7 +367,7 @@ test("verification component renders compact successful rows only", () => {
     "utf8",
   );
   assert.ok(
-    dossier.indexOf("<PublicMachineFitRecommendation") <
+    dossier.indexOf("<MachineSuitableAudiences") <
       dossier.indexOf("<MachineVerification"),
   );
   assert.ok(
@@ -378,7 +376,7 @@ test("verification component renders compact successful rows only", () => {
   );
 });
 test("detail DTO allow-list contains the verification collection without private fields", () => {
-  assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes("verifications"), true);
+  assert.equal(PUBLIC_MACHINE_DETAIL_V2_KEYS.includes("verifications"), true);
   for (const field of [
     "verifiedBy",
     "staff",
@@ -386,7 +384,7 @@ test("detail DTO allow-list contains the verification collection without private
     "repairNotes",
     "inspectionComments",
   ])
-    assert.equal(PUBLIC_MACHINE_DETAIL_V1_KEYS.includes(field), false);
+    assert.equal(PUBLIC_MACHINE_DETAIL_V2_KEYS.includes(field), false);
 });
 const policyRpcRow = {
   machine_public_identifier: "MBMC-A001",
@@ -2092,7 +2090,7 @@ test("public hero inventory sticky and support surfaces share canonical naming",
   );
   assert.match(
     sticky,
-    /formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/,
+    /formatPublicMachineSpecs\(\{[\s\S]*?chip: summary\.chip,[\s\S]*?ramGb: summary\.ramGb,[\s\S]*?storageGb: summary\.ssdGb,[\s\S]*?\}\)/,
   );
   assert.match(sticky, /public-machine-sticky-specs/);
   assert.match(sticky, /public-machine-sticky-price/);
@@ -2126,7 +2124,7 @@ test("mobile sticky shows canonical identity, price, and compact contact action"
   );
   assert.match(
     stickyMarkup,
-    /formatPublicMachineSpecs\(\{ chip: summary\.chip, ramGb: summary\.ramGb, storageGb: summary\.ssdGb \}\)/,
+    /formatPublicMachineSpecs\(\{[\s\S]*?chip: summary\.chip,[\s\S]*?ramGb: summary\.ramGb,[\s\S]*?storageGb: summary\.ssdGb,[\s\S]*?\}\)/,
   );
   assert.doesNotMatch(stickyMarkup, /formatPublicMachineSpecs\([^)]*color/);
   assert.doesNotMatch(
@@ -2135,7 +2133,7 @@ test("mobile sticky shows canonical identity, price, and compact contact action"
   );
   assert.match(
     stickyMarkup,
-    /<strong>\{displayName\}<\/strong>\{specs \? <span className="public-machine-sticky-specs">\{specs\}<\/span> : null\}/,
+    /<strong>\{displayName\}<\/strong>[\s\S]*?\{specs \?[\s\S]*?<span className="public-machine-sticky-specs">[\s\S]*?\{specs\}[\s\S]*?<\/span>[\s\S]*?: null\}/,
   );
   assert.match(stickyMarkup, /<ContactActionLink \/>/);
   assert.match(
@@ -2452,7 +2450,7 @@ test("Decision Summary is concise and precedes the fit assessment", () => {
   assert.doesNotMatch(summary, /<ul|<ol|RAM|SSD|Chip/);
   assert.ok(
     dossier.indexOf("<DecisionSummary />") <
-      dossier.indexOf("<PublicMachineFitRecommendation"),
+      dossier.indexOf("<MachineSuitableAudiences"),
   );
 });
 
@@ -2497,10 +2495,17 @@ test("sticky contact appears only between the Hero action and final Decision Pan
   assert.match(sticky, /if \(!isVisible\) return null/);
 });
 
-test("fit recommendation is separate from specifications and hides only when fully empty", () => {
-  const fit = readFileSync(
+test("canonical suitable audiences are separate from specifications and omit legacy UI", () => {
+  const suitable = readFileSync(
     new URL(
-      "../../app/(sales)/may/[slug]/_components/PublicMachineFitRecommendation.tsx",
+      "../../app/(sales)/may/[slug]/_components/MachineSuitableAudiences.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const dossier = readFileSync(
+    new URL(
+      "../../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
       import.meta.url,
     ),
     "utf8",
@@ -2512,21 +2517,13 @@ test("fit recommendation is separate from specifications and hides only when ful
     ),
     "utf8",
   );
-  assert.match(
-    fit,
-    /if \(!hasMachineFitRecommendation\(recommendation\)\) return null/,
-  );
-  assert.match(fit, /MBMC ĐÁNH GIÁ CẤU HÌNH/);
-  assert.match(fit, /Cấu hình này phù hợp với ai\?/);
-  assert.match(fit, /Cấu hình này phù hợp nếu bạn/);
-  assert.match(fit, /Điểm cần cân nhắc với cấu hình này/);
+  assert.match(suitable, /Phù hợp với nhu cầu nào\?/);
+  assert.match(suitable, /presentation\.map/);
   assert.doesNotMatch(
-    specifications,
-    /FitRecommendation|Phù hợp nếu bạn|Nên cân nhắc máy khác/,
+    dossier + specifications,
+    /MachineExplanation|ExpertSummary|Đánh giá từ MBMC/,
   );
-  assert.match(specifications, />Đánh giá từ MBMC</);
 });
-
 test("verified information stays visible and limitations use a closed native disclosure", () => {
   const base = publicDetailBySlug([row("MBMC-LIMITS")], "mbmc-limits");
   assert.ok(base);
@@ -2560,7 +2557,7 @@ test("verified information stays visible and limitations use a closed native dis
   assert.match(source, /Thông tin cần xác nhận thêm/);
   assert.match(
     source,
-    /Chưa có \{limitations\.length\} nhóm thông tin xác nhận trong hồ sơ công khai/,
+    /Chưa có \{limitations\.length\} nhóm thông tin xác nhận trong hồ sơ\s+ công khai/,
   );
   assert.doesNotMatch(source, /Giới hạn của hồ sơ công khai/);
   assert.match(source, /không phải kết luận kiểm định toàn diện/);
@@ -2586,7 +2583,7 @@ test("limitations disclosure derives its count, omits empty state, and renders e
   assert.match(source, /limitations\.length/);
   assert.match(
     source,
-    /<div className="public-information-disclosure__content">[\s\S]*limitations\.map\(\(limitation\) => <li key=\{limitation\}>\{limitation\}<\/li>\)[\s\S]*<\/div>/,
+    /<div className="public-information-disclosure__content">[\s\S]*limitations\.map\(\(limitation\) => \([\s\S]*<li key=\{limitation\}>\{limitation\}<\/li>[\s\S]*\)\)[\s\S]*<\/div>/,
   );
   const css = readFileSync(
     new URL("../../app/globals.css", import.meta.url),
@@ -2689,12 +2686,15 @@ test("Passport is a current identity record after supporting information without
     dossier.indexOf("<DetailedImages") < dossier.indexOf("<PassportDossier"),
   );
   assert.match(passport, /Hồ sơ nhận diện công khai/);
-  assert.match(passport, /không phải lịch sử đầy đủ/);
-  assert.match(passport, /<dt>Mã máy<\/dt><dd>\{passport\.code\}<\/dd>/);
+  assert.match(passport, /không phải lịch sử\s+đầy đủ/);
+  assert.match(
+    passport,
+    /<dt>Mã máy<\/dt>[\s\S]*?<dd>\{passport\.code\}<\/dd>/,
+  );
   for (const icon of ["passport", "model", "status", "published"])
     assert.match(
       passport,
-      new RegExp(`name="${icon}" className="passport-fact__icon"`),
+      new RegExp(`name="${icon}"\\s+className="passport-fact__icon"`),
     );
   assert.doesNotMatch(passport, /passport\.timeline|passport\.facts|<ol/);
 });
@@ -2707,20 +2707,16 @@ test("dossier chips use consistent semantic icons without changing anchors", () 
     ),
     "utf8",
   );
-  assert.match(
-    view,
-    /href="#ho-so-cong-khai"><MachineDetailIcon name="trust" \/>Đã biết và chưa biết/,
-  );
-  assert.match(
-    view,
-    /href="#thong-tin-ho-tro"><MachineDetailIcon name="condition" \/>Tình trạng thực tế/,
-  );
-  assert.match(
-    view,
-    /href="#passport-cong-khai"><MachineDetailIcon name="passport" \/>Passport/,
-  );
+  for (const [anchor, icon, label] of [
+    ["#ho-so-cong-khai", "trust", "Đã biết và chưa biết"],
+    ["#thong-tin-ho-tro", "condition", "Tình trạng thực tế"],
+    ["#passport-cong-khai", "passport", "Passport"],
+  ]) {
+    assert.match(view, new RegExp(`href="${anchor}"`));
+    assert.match(view, new RegExp(`MachineDetailIcon name="${icon}"`));
+    assert.match(view, new RegExp(label));
+  }
 });
-
 test("Machine Detail mobile typography keeps supporting rows subordinate and passport compact", () => {
   const css = readFileSync(
     new URL("../../app/globals.css", import.meta.url),
@@ -3201,4 +3197,82 @@ test("Machine Explanation query selects only public content columns", () => {
   assert.match(source, /machine-explanation\.v0\.2026-08-22\.2/);
   assert.match(source, /machine_explanation_snapshots\.approved_at/);
   assert.match(source, /machine_explanation_snapshots\.superseded_at/);
+});
+test("canonical suitable audiences survive projection in deterministic order", () => {
+  const input = row("MBMC-AUDIENCES", {
+    machine_editorials: {
+      ...row().machine_editorials,
+      suitable_audience_tags: [
+        "storage_heavy",
+        "student",
+        "creative",
+        "office",
+        "developer",
+        "general",
+        "heavy_workload",
+      ],
+    },
+  });
+  const [result] = projectPublicCandidates([input]);
+  assert.equal(result.eligible, true);
+  assert.deepEqual(result.detail.suitableAudiences, [
+    "general",
+    "developer",
+    "creative",
+    "heavy",
+    "storage_heavy",
+  ]);
+});
+
+test("absent or empty suitable audiences omit the optional detail field", () => {
+  const [result] = projectPublicCandidates([row("MBMC-NO-AUDIENCES")]);
+  assert.equal(result.eligible, true);
+  assert.equal("suitableAudiences" in result.detail, false);
+});
+
+test("malformed suitable audience values do not affect parent eligibility", () => {
+  const input = row("MBMC-BAD-AUDIENCES", {
+    machine_editorials: {
+      ...row().machine_editorials,
+      suitable_audience_tags: ["office", "unknown", "heavy", null],
+    },
+  });
+  const [result] = projectPublicCandidates([input]);
+  assert.equal(result.eligible, true);
+  assert.deepEqual(result.detail.suitableAudiences, ["general"]);
+  const serialized = JSON.stringify(result.detail.suitableAudiences);
+  assert.doesNotMatch(serialized, /office|student|heavy_workload|unknown/);
+});
+
+test("raw legacy editorial prose cannot enter the V2 detail DTO", () => {
+  const input = row("MBMC-NO-INFERENCE", {
+    machine_editorials: {
+      ...row().machine_editorials,
+      suitable_for: ["developer creative heavy storage"],
+      expert_summary: "Ideal for every audience",
+      suitable_audience_tags: [],
+    },
+  });
+  const [result] = projectPublicCandidates([input]);
+  assert.equal(result.eligible, true);
+  assert.equal("suitableAudiences" in result.detail, false);
+  for (const field of ["expertSummary", "suitableFor", "notSuitableFor"])
+    assert.equal(field in result.detail, false);
+});
+
+test("active repository and raw parser do not load legacy prose columns", () => {
+  const repository = readFileSync(
+    new URL(
+      "./repositories/supabase-public-machine-repository.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const parser = readFileSync(
+    new URL("./project-public-candidates.ts", import.meta.url),
+    "utf8",
+  );
+  for (const legacy of ["expert_summary", "suitable_for", "not_suitable_for"])
+    assert.doesNotMatch(repository + parser, new RegExp(`\\b${legacy}\\b`));
+  assert.match(parser, /projectPublicMachineV2\(candidate\)/);
 });

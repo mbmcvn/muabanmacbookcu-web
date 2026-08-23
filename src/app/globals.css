@@ -325,16 +325,13 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 .dossier-stage-supporting .detail-facts > div { padding: clamp(1rem, 2vw, 1.35rem); border: 1px solid transparent; border-radius: .7rem; }
 .dossier-stage-passport { padding-top: clamp(2rem, 4vw, 3.5rem); padding-bottom: clamp(2.5rem, 4vw, 3.5rem); border-bottom: 0; }
 .dossier-stage-passport .passport-dossier { margin: 0; padding: clamp(1.5rem, 4vw, 3rem); border-radius: .9rem; background: #f4f4ef; }
-.machine-fit-recommendation { display: grid; gap: 1rem; max-width: 60rem; margin-top: clamp(1.2rem, 2.5vw, 1.75rem) !important; padding: clamp(1rem, 2vw, 1.35rem) 0 0 !important; border: 0 !important; border-top: 1px solid var(--border) !important; border-radius: 0 !important; background: transparent !important; }
-.machine-fit-recommendation > header { margin: 0; }
-.machine-fit-recommendation > header h2 { max-width: 28ch; margin: .3rem 0 0; font-size: clamp(1.35rem, 2.5vw, 1.8rem); }
-.machine-fit-recommendation__groups { display: grid; gap: 0; }
-.machine-fit-recommendation__group { min-width: 0; }
-.machine-fit-recommendation--split .machine-fit-recommendation__group--caution { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #d9ded8; }
-.machine-fit-recommendation__group ul { display: grid; gap: .15rem; margin: 0; padding: 0; list-style: none; }
-.machine-fit-recommendation__group li { min-width: 0; display: grid; grid-template-columns: 1.35rem minmax(0, 1fr); gap: .55rem; align-items: start; padding: .45rem 0; color: #454541; line-height: 1.5; overflow-wrap: anywhere; }
-.machine-fit-recommendation__icon { width: 1.25rem; height: 1.25rem; display: inline-grid; place-items: center; margin-top: .05rem; border-radius: 50%; background: #e7eee8; color: #435f50; font-size: .78rem; font-weight: 750; line-height: 1; }
-.machine-fit-recommendation__group--caution .machine-fit-recommendation__icon { border: 1px solid #cad5cc; background: transparent; }
+.machine-suitable-audiences { max-width: 60rem; margin-top: clamp(1.2rem, 2.5vw, 1.75rem) !important; padding: clamp(1rem, 2vw, 1.35rem) 0 0 !important; border: 0 !important; border-top: 1px solid var(--border) !important; border-radius: 0 !important; background: transparent !important; }
+.machine-suitable-audiences > header h2 { max-width: 28ch; margin: 0; font-size: clamp(1.35rem, 2.5vw, 1.8rem); }
+.machine-suitable-audiences > ul { display: grid; margin: .75rem 0 0; padding: 0; list-style: none; }
+.machine-suitable-audiences li { min-width: 0; padding: .7rem 0; border-top: 1px solid #e3e5df; }
+.machine-suitable-audiences li:first-child { border-top: 0; }
+.machine-suitable-audiences h3 { margin: 0; color: var(--foreground); font-size: 1rem; }
+.machine-suitable-audiences li p { max-width: 72ch; margin: .2rem 0 0; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
 .machine-verification { max-width: 60rem; margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .machine-verification header { margin-bottom: .75rem; }
 .machine-verification h2 { margin: .25rem 0 .3rem; font-size: clamp(1.3rem, 2.5vw, 1.75rem); line-height: 1.2; }
@@ -809,9 +806,10 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-detail-page .dossier-navigation a { min-height: 2.5rem; gap: .3rem; padding: .4rem .35rem; font-size: .75rem; line-height: 1.2; }
   .public-detail-page .dossier-navigation a svg { width: .95rem; height: .95rem; }
   .public-detail-page .dossier-stage { padding-block: 2.5rem; }
-  .machine-fit-recommendation { gap: .75rem; margin-top: 1rem !important; padding-top: .9rem !important; }
-  .machine-fit-recommendation > header h2 { font-size: 1.3rem; line-height: 1.25; }
-  .machine-fit-recommendation__group li { gap: .5rem; padding: .38rem 0; font-size: .94rem; line-height: 1.48; }
+  .machine-suitable-audiences { margin-top: 1rem !important; padding-top: .9rem !important; }
+  .machine-suitable-audiences > header h2 { font-size: 1.3rem; line-height: 1.25; }
+  .machine-suitable-audiences li { padding: .6rem 0; }
+  .machine-suitable-audiences li p { font-size: .94rem; line-height: 1.48; }
   .machine-specifications__trigger { min-height: 5.25rem; }
   .machine-specifications__heading strong { font-size: 1.15rem; }
   .machine-specifications__heading > span { font-size: .82rem; }
@@ -840,18 +838,3 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-machine-sticky-price { font-size: .76rem; }
   .public-machine-sticky a { min-height: 2.55rem; padding-inline: .6rem; font-size: .78rem; }
 }
-/* Approved Machine Explanation */
-.machine-explanation { max-width: 60rem; margin-top: clamp(1.4rem, 3vw, 2rem) !important; padding: clamp(1.2rem, 2.5vw, 1.75rem) 0 0 !important; border: 0 !important; border-top: 1px solid var(--border) !important; border-radius: 0 !important; background: transparent !important; }
-.machine-explanation > header { margin-bottom: .85rem; }
-.machine-explanation > header h2 { max-width: 28ch; margin: .3rem 0 0; font-size: clamp(1.4rem, 2.5vw, 1.85rem); }
-.machine-explanation__audience-description { max-width: 70ch; margin: .45rem 0 0; color: var(--muted); font-size: .95rem; line-height: 1.55; overflow-wrap: anywhere; }
-.machine-explanation__blocks { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
-.machine-explanation__blocks li { min-width: 0; display: grid; grid-template-columns: minmax(5.5rem, .25fr) minmax(0, 1fr); gap: clamp(.75rem, 2vw, 1.5rem); padding: .8rem 0; border-top: 1px solid #e3e5df; }
-.machine-explanation__blocks li:first-child { border-top: 0; }
-.machine-explanation__blocks p { min-width: 0; margin: 0; line-height: 1.55; overflow-wrap: anywhere; }
-.machine-explanation__domain { color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-.machine-explanation__notes { min-width: 0; margin-top: .75rem; padding: 1rem 1.1rem; border-left: 3px solid var(--accent); background: #f5f1e9; }
-.machine-explanation__notes h3 { margin: 0 0 .55rem; font-size: 1rem; }
-.machine-explanation__notes ul { display: grid; gap: .35rem; margin: 0; padding-left: 1.1rem; }
-.machine-explanation__notes li { line-height: 1.5; overflow-wrap: anywhere; }
-@media (max-width: 639px) { .machine-explanation__blocks li { grid-template-columns: minmax(0, 1fr); gap: .25rem; padding: .7rem 0; } .machine-explanation__notes { padding: .9rem; } }

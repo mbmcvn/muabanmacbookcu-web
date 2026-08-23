@@ -3,6 +3,7 @@ import type {
   PublicCosmeticGrade,
   PublicIncludedItems,
   PublicMachineExplanationV0,
+  PublicSuitableAudienceV0,
   PublicImageVariants,
   PublicReservationKind,
 } from "./contracts.ts";
@@ -47,6 +48,7 @@ export type EditorialInput = {
   contextualLabel?: string | null;
   includedItems?: PublicIncludedItems;
   policyApplicability?: string[];
+  suitableAudienceTags?: string[];
   reviewedBy: string | null;
   reviewedAt: string | null;
 };
@@ -164,6 +166,7 @@ export type PublicProjectionKernel = {
   expertSummary: string | null;
   suitableFor: string[];
   notSuitableFor: string[];
+  suitableAudiences: PublicSuitableAudienceV0[];
   includedItems: PublicIncludedItems;
   policyApplicability: string[];
   machineExplanation: PublicMachineExplanationV0 | null;
@@ -246,6 +249,7 @@ export function normalizePublicMachineFacts(
               }
             : undefined,
           policyApplicability: [...(editorial.policyApplicability ?? [])],
+          suitableAudienceTags: [...(editorial.suitableAudienceTags ?? [])],
         }
       : null,
     machineExplanation: input.machineExplanation

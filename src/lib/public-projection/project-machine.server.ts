@@ -1,10 +1,12 @@
 import type {
   PublicMachineDetailV1,
+  PublicMachineDetailV2,
   PublicMachinePassportV1,
   PublicMachineSummaryV1,
 } from "./contracts.ts";
 import {
   assemblePublicMachineDetailV1,
+  assemblePublicMachineDetailV2,
   assemblePublicMachinePassportV1,
   assemblePublicMachineSummaryV1,
 } from "./assemblers.server.ts";
@@ -34,6 +36,15 @@ export type PublicMachineProjectionV1Result =
       passport: PublicMachinePassportV1;
     };
 
+export type PublicMachineProjectionV2Result =
+  | { eligible: false; reasons: ProjectionDenialReason[] }
+  | {
+      eligible: true;
+      summary: PublicMachineSummaryV1;
+      detail: PublicMachineDetailV2;
+      passport: PublicMachinePassportV1;
+    };
+
 export function projectPublicMachineV1(
   input: PublicMachineProjectionInput,
 ): PublicMachineProjectionV1Result {
@@ -51,6 +62,22 @@ export function projectPublicMachineV1(
     eligible: true,
     summary: assemblePublicMachineSummaryV1(eligibility.kernel),
     detail: assemblePublicMachineDetailV1(eligibility.kernel),
+    passport: assemblePublicMachinePassportV1(eligibility.kernel),
+  });
+}
+
+export function projectPublicMachineV2(
+  input: PublicMachineProjectionInput,
+): PublicMachineProjectionV2Result {
+  const normalized = normalizePublicMachineFacts(input);
+  const privacy = validateProjectionPrivacy(normalized);
+  if (!privacy.valid) return { eligible: false, reasons: [privacy.reason] };
+  const eligibility = validatePublicMachineEligibility(normalized);
+  if (!eligibility.eligible) return eligibility;
+  return deepFreeze({
+    eligible: true,
+    summary: assemblePublicMachineSummaryV1(eligibility.kernel),
+    detail: assemblePublicMachineDetailV2(eligibility.kernel),
     passport: assemblePublicMachinePassportV1(eligibility.kernel),
   });
 }

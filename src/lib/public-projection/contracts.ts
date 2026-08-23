@@ -2,6 +2,8 @@ export const PUBLIC_MACHINE_SUMMARY_V1_SCHEMA =
   "public-machine-summary.v1" as const;
 export const PUBLIC_MACHINE_DETAIL_V1_SCHEMA =
   "public-machine-detail.v1" as const;
+export const PUBLIC_MACHINE_DETAIL_V2_SCHEMA =
+  "public-machine-detail.v2" as const;
 export const PUBLIC_MACHINE_PASSPORT_V1_SCHEMA =
   "public-machine-passport.v1" as const;
 
@@ -101,8 +103,8 @@ export type PublicPolicySummary = {
   carePolicyUrl: string;
   machineIdWording: string;
 };
-// Public facts are display-safe Evidence. Human judgement belongs in the
-// Recommendation fields on PublicMachineDetailV1.
+// Public facts are display-safe evidence. Canonical fit classification is
+// carried separately by suitableAudiences on PublicMachineDetailV2.
 export type PublicFact = { label: string; value: string };
 export type PublicTimelineEvent = {
   type: string;
@@ -152,6 +154,9 @@ export interface PublicMachinePassportV1 {
   lastPublishedAt: ISODateTime | null;
 }
 
+export type PublicSuitableAudienceV0 =
+  "general" | "developer" | "creative" | "heavy" | "storage_heavy";
+
 export interface PublicMachineDetailV1 {
   schemaVersion: typeof PUBLIC_MACHINE_DETAIL_V1_SCHEMA;
   summary: PublicMachineSummaryV1;
@@ -161,6 +166,25 @@ export interface PublicMachineDetailV1 {
   expertSummary: string | null;
   suitableFor: string[];
   notSuitableFor: string[];
+  suitableAudiences?: PublicSuitableAudienceV0[];
+  decisionSpecifications: PublicFact[];
+  technicalSpecifications: Record<string, string | number | boolean | null>;
+  includedItems: PublicIncludedItems;
+  policyApplicability: string[];
+  policySummary?: PublicPolicySummary;
+  machineExplanation?: PublicMachineExplanationV0;
+  passport: PublicMachinePassportV1;
+  relatedMachines: PublicMachineSummaryV1[];
+}
+
+/** Preferred current website detail contract. V1 is compatibility-only. */
+export interface PublicMachineDetailV2 {
+  schemaVersion: typeof PUBLIC_MACHINE_DETAIL_V2_SCHEMA;
+  summary: PublicMachineSummaryV1;
+  modelSpecKey: string | null;
+  verifications: PublicMachineVerification[];
+  gallery: PublicImage[];
+  suitableAudiences?: PublicSuitableAudienceV0[];
   decisionSpecifications: PublicFact[];
   technicalSpecifications: Record<string, string | number | boolean | null>;
   includedItems: PublicIncludedItems;
@@ -208,6 +232,7 @@ export const PUBLIC_MACHINE_DETAIL_V1_KEYS = [
   "expertSummary",
   "suitableFor",
   "notSuitableFor",
+  "suitableAudiences",
   "decisionSpecifications",
   "technicalSpecifications",
   "includedItems",
@@ -217,6 +242,23 @@ export const PUBLIC_MACHINE_DETAIL_V1_KEYS = [
   "passport",
   "relatedMachines",
 ] as const satisfies readonly (keyof PublicMachineDetailV1)[];
+
+export const PUBLIC_MACHINE_DETAIL_V2_KEYS = [
+  "schemaVersion",
+  "summary",
+  "modelSpecKey",
+  "verifications",
+  "gallery",
+  "suitableAudiences",
+  "decisionSpecifications",
+  "technicalSpecifications",
+  "includedItems",
+  "policyApplicability",
+  "policySummary",
+  "machineExplanation",
+  "passport",
+  "relatedMachines",
+] as const satisfies readonly (keyof PublicMachineDetailV2)[];
 
 export const PUBLIC_MACHINE_PASSPORT_V1_KEYS = [
   "schemaVersion",

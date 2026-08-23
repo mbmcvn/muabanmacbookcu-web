@@ -1,10 +1,12 @@
 import {
   PUBLIC_MACHINE_DETAIL_V1_SCHEMA,
+  PUBLIC_MACHINE_DETAIL_V2_SCHEMA,
   PUBLIC_MACHINE_PASSPORT_V1_SCHEMA,
   PUBLIC_MACHINE_SUMMARY_V1_SCHEMA,
   type PublicImage,
   type PublicInspection,
   type PublicMachineDetailV1,
+  type PublicMachineDetailV2,
   type PublicMachinePassportV1,
   type PublicMachineSummaryV1,
   type PublicWarranty,
@@ -99,20 +101,19 @@ export function assemblePublicMachinePassportV1(
   };
 }
 
-export function assemblePublicMachineDetailV1(
+function assemblePublicMachineDetailCurrent(
   kernel: PublicProjectionKernel,
-): PublicMachineDetailV1 {
+): Omit<PublicMachineDetailV2, "schemaVersion"> {
   return {
-    schemaVersion: PUBLIC_MACHINE_DETAIL_V1_SCHEMA,
     summary: assemblePublicMachineSummaryV1(kernel),
     modelSpecKey: kernel.modelSpecKey,
     verifications: kernel.verifications.map((item) => ({ ...item })),
     gallery: kernel.images.map((image, index) =>
       assembleImage(image, kernel.displayName, index + 1),
     ),
-    expertSummary: kernel.expertSummary,
-    suitableFor: [...kernel.suitableFor],
-    notSuitableFor: [...kernel.notSuitableFor],
+    ...(kernel.suitableAudiences.length > 0
+      ? { suitableAudiences: [...kernel.suitableAudiences] }
+      : {}),
     decisionSpecifications: [],
     technicalSpecifications: {},
     includedItems: {
@@ -137,5 +138,42 @@ export function assemblePublicMachineDetailV1(
       : {}),
     passport: assemblePublicMachinePassportV1(kernel),
     relatedMachines: [],
+  };
+}
+
+export function assemblePublicMachineDetailV1(
+  kernel: PublicProjectionKernel,
+): PublicMachineDetailV1 {
+  const current = assemblePublicMachineDetailCurrent(kernel);
+  return {
+    schemaVersion: PUBLIC_MACHINE_DETAIL_V1_SCHEMA,
+    summary: current.summary,
+    modelSpecKey: current.modelSpecKey,
+    verifications: current.verifications,
+    gallery: current.gallery,
+    expertSummary: kernel.expertSummary,
+    suitableFor: [...kernel.suitableFor],
+    notSuitableFor: [...kernel.notSuitableFor],
+    ...(current.suitableAudiences
+      ? { suitableAudiences: current.suitableAudiences }
+      : {}),
+    decisionSpecifications: current.decisionSpecifications,
+    technicalSpecifications: current.technicalSpecifications,
+    includedItems: current.includedItems,
+    policyApplicability: current.policyApplicability,
+    ...(current.machineExplanation
+      ? { machineExplanation: current.machineExplanation }
+      : {}),
+    passport: current.passport,
+    relatedMachines: current.relatedMachines,
+  };
+}
+
+export function assemblePublicMachineDetailV2(
+  kernel: PublicProjectionKernel,
+): PublicMachineDetailV2 {
+  return {
+    schemaVersion: PUBLIC_MACHINE_DETAIL_V2_SCHEMA,
+    ...assemblePublicMachineDetailCurrent(kernel),
   };
 }
