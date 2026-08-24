@@ -114,7 +114,10 @@ export function withContactChannel(
 
 export function useContactChannel() {
   const [channel, setChannel] = useState<ContactChannel>(null);
-  const [owner, setOwner] = useState<CtvContactOwner | null>(cachedOwner);
+  // Server prerender cannot observe the browser module's referral cache. Start
+  // both environments from the same organic state, then resolve cached or URL
+  // referral context after hydration.
+  const [owner, setOwner] = useState<CtvContactOwner | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralEvidence, setReferralEvidence] = useState<string | null>(null);
 

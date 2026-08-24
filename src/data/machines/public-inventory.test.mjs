@@ -1028,7 +1028,21 @@ test("repository query selects deployed publication relationships without wildca
   assert.match(source, /visibility, sort_order, is_cover/);
   assert.match(
     source,
-    /console\.error\("\[public-inventory\]", JSON\.stringify\(diagnostic\)\)/,
+    /diagnostic\.stage === "ELIGIBILITY_REJECTED"/,
+  );
+  assert.match(source, /diagnostic\.stage === "PRIVACY_REJECTED"/);
+  assert.match(source, /process\.env\.NODE_ENV === "development"/);
+  assert.match(
+    source,
+    /console\.warn\("\[public-inventory\]", diagnosticPayload\)/,
+  );
+  assert.match(
+    source,
+    /console\.error\("\[public-inventory\]", diagnosticPayload\)/,
+  );
+  assert.doesNotMatch(
+    source,
+    /projectPublicCandidates\(rows, \(diagnostic\) =>\s*console\.error/,
   );
 });
 

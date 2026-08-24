@@ -2,7 +2,10 @@ import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { PublicMachineRepository } from "./public-machine-repository";
-import { projectPublicCandidates } from "../project-public-candidates";
+import {
+  projectPublicCandidates,
+  type PublicCandidateDiagnostic,
+} from "../project-public-candidates";
 import { loadPublicMachinePolicySummary } from "../public-machine-policy-summary.server";
 
 const CURRENT_PUBLIC_MACHINE_EXPLANATION_ENGINE =
@@ -61,13 +64,11 @@ function canonicalMachineExplanation(value: unknown): unknown {
   }
   const row = snapshot as PublicExplanationStorageRow;
   const blocks = Array.isArray(row.blocks)
-    ? row.blocks.map((value) => {
+      ? row.blocks.map((value) => {
         if (!value || typeof value !== "object" || Array.isArray(value))
           return value;
-        const { position: _position, ...publicBlock } = value as Record<
-          string,
-          unknown
-        >;
+        const publicBlock = { ...(value as Record<string, unknown>) };
+        delete publicBlock.position;
         return publicBlock;
       })
     : row.blocks;
@@ -81,6 +82,23 @@ function canonicalMachineExplanation(value: unknown): unknown {
     notes: row.customer_notes,
   };
 }
+
+function reportPublicCandidateDiagnostic(
+  diagnostic: PublicCandidateDiagnostic,
+): void {
+  const diagnosticPayload = JSON.stringify(diagnostic);
+  if (
+    diagnostic.stage === "ELIGIBILITY_REJECTED" ||
+    diagnostic.stage === "PRIVACY_REJECTED"
+  ) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[public-inventory]", diagnosticPayload);
+    }
+    return;
+  }
+  console.error("[public-inventory]", diagnosticPayload);
+}
+
 async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
   const client = createServerSupabaseClient();
   const [candidateResult, availabilityResult] = await Promise.all([
@@ -130,9 +148,7 @@ async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
   return {
     client,
     rows,
-    projections: projectPublicCandidates(rows, (diagnostic) =>
-      console.error("[public-inventory]", JSON.stringify(diagnostic)),
-    ),
+    projections: projectPublicCandidates(rows, reportPublicCandidateDiagnostic),
   };
 }
 

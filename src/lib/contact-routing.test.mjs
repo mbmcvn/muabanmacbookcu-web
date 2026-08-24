@@ -234,6 +234,19 @@ test("browser resolver sends only the canonical referral-code RPC argument", () 
   assert.doesNotMatch(source, /p_referral_phone|referral_phone/);
 });
 
+test("contact owner hydration starts from the same organic state on server and client", () => {
+  const source = readFileSync(
+    new URL("../hooks/useContactChannel.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    source,
+    /const \[owner, setOwner\] = useState<CtvContactOwner \| null>\(null\)/,
+  );
+  assert.doesNotMatch(source, /useState<CtvContactOwner \| null>\(cachedOwner\)/);
+  assert.match(source, /if \(cachedReferralCode === referralCode\) return cachedOwner/);
+});
+
 test("machine cards use the canonical encoded detail URL", () => {
   assert.equal(canonicalMachineUrl("mbmc demo/01"), "https://mbmc.vn/may/mbmc%20demo%2F01");
 });

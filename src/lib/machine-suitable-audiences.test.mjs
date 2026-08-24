@@ -4,42 +4,24 @@ import test from "node:test";
 import { presentSuitableAudiences } from "../app/(sales)/may/[slug]/_components/machine-suitable-audiences-presentation.ts";
 
 const expected = [
-  [
-    "general",
-    "Phổ thông",
-    "Làm văn phòng, Office, học tập cơ bản, lướt web, xem YouTube, Zalo và các tác vụ hằng ngày.",
-  ],
-  [
-    "developer",
-    "Lập trình",
-    "IDE, trình duyệt nhiều tab, terminal, local development và các workflow lập trình phổ biến.",
-  ],
-  [
-    "creative",
-    "Sáng tạo",
-    "Canva, CapCut, chỉnh ảnh/video và các project sáng tạo ở mức vừa phải; workload nặng hơn có thể cần cấu hình cao hơn.",
-  ],
-  [
-    "heavy",
-    "Tác vụ nặng",
-    "Các workload kéo dài hoặc dùng nhiều tài nguyên, như dựng video nặng, project lớn và đa nhiệm nặng.",
-  ],
-  [
-    "storage_heavy",
-    "Lưu trữ nhiều",
-    "Thường xuyên giữ nhiều file, media hoặc project trực tiếp trên máy và cần nhiều dung lượng lưu trữ cục bộ.",
-  ],
+  ["general", "Phổ thông – Văn phòng", 3],
+  ["developer", "Lập trình – Developer", 3],
+  ["creative", "Sáng tạo – Nội dung", 3],
+  ["heavy", "Tác vụ nặng", 3],
+  ["storage_heavy", "Lưu trữ nhiều", 3],
 ];
 
-test("all five canonical audiences map to approved labels and descriptions", () => {
+test("all five canonical audiences have complete card presentation metadata", () => {
+  const cards = presentSuitableAudiences(expected.map(([code]) => code));
+  assert.equal(cards.length, 5);
   assert.deepEqual(
-    presentSuitableAudiences(expected.map(([code]) => code)),
-    expected.map(([code, label, description]) => ({
-      code,
-      label,
-      description,
-    })),
+    cards.map(({ code, title, checklist }) => [code, title, checklist.length]),
+    expected,
   );
+  for (const card of cards) {
+    assert.ok(card.intro.length > 0);
+    assert.ok(card.footer.length > 0);
+  }
 });
 
 test("one, three, and five audiences render once in supplied order", () => {
@@ -88,6 +70,72 @@ test("audience presentation has no hardware, legacy prose, or explanation input"
     source + presenter,
     /ramGb|ssdGb|suitableFor|notSuitableFor|machineExplanation|Không phù hợp/,
   );
+});
+
+test("every rendered audience uses the same neutral fit badge", () => {
+  const component = readFileSync(
+    new URL(
+      "../app/(sales)/may/[slug]/_components/MachineSuitableAudiences.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(
+    component,
+    /presentation\.map[\s\S]*?suitable-audience-card__badge">Phù hợp<\/span>/,
+  );
+  assert.doesNotMatch(component, /Rất phù hợp/);
+});
+
+test("suitability section keeps its heading, supporting copy, and shared responsive DOM", () => {
+  const component = readFileSync(
+    new URL(
+      "../app/(sales)/may/[slug]/_components/MachineSuitableAudiences.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(component, /Phù hợp với nhu cầu nào\?/);
+  assert.match(component, /Dựa trên cấu hình của máy và các tác vụ phổ biến/);
+  assert.equal((component.match(/suitable-audience-grid/g) ?? []).length, 1);
+});
+
+test("suitability grid follows the existing one, two, and three column breakpoints", () => {
+  const css = readFileSync(
+    new URL("../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.suitable-audience-grid \{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 40rem\) \{[\s\S]*?\.suitable-audience-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 56rem\) \{[\s\S]*?\.suitable-audience-grid \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+  );
+});
+
+test("conditional dossier navigation keeps the existing suitability anchor", () => {
+  const view = readFileSync(
+    new URL(
+      "../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const dossier = readFileSync(
+    new URL(
+      "../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(view, /hasSuitableAudiences \? \([\s\S]*?href="#danh-gia-phu-hop"/);
+  assert.match(dossier, /id="danh-gia-phu-hop"/);
 });
 
 test("visible Decision Dossier omits legacy prose and detailed explanation", () => {
