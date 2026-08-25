@@ -21,7 +21,29 @@ test("all five canonical audiences have complete card presentation metadata", ()
   for (const card of cards) {
     assert.ok(card.intro.length > 0);
     assert.ok(card.footer.length > 0);
+    assert.match(card.imageSrc, /^\/images\/suitability\/.+\.png$/);
+    assert.ok(card.imageAlt.length > 0);
   }
+  assert.equal(new Set(cards.map(({ imageSrc }) => imageSrc)).size, 5);
+});
+
+test("suitability cards render their mapped illustration through Next Image", () => {
+  const component = readFileSync(
+    new URL(
+      "../app/(sales)/may/[slug]/_components/MachineSuitableAudiences.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(component, /import Image from "next\/image"/);
+  assert.match(component, /src=\{audience\.imageSrc\}/);
+  assert.match(component, /alt=\{audience\.imageAlt\}/);
+  const imageMarkup = component.match(/<Image[\s\S]*?\/>/)?.[0] ?? "";
+  assert.doesNotMatch(imageMarkup, /\sfill(?:=|\s)/);
+  assert.doesNotMatch(
+    component,
+    /SuitableAudienceIcon|suitable-audience-card__icon/,
+  );
 });
 
 test("one, three, and five audiences render once in supplied order", () => {
@@ -117,6 +139,12 @@ test("suitability grid follows the existing one, two, and three column breakpoin
     css,
     /@media \(min-width: 56rem\) \{[\s\S]*?\.suitable-audience-grid \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
   );
+  assert.doesNotMatch(css, /\.suitable-audience-card__visual \{[^}]*(?:height|min-height|overflow):/);
+  assert.match(css, /\.suitable-audience-card__visual img \{[^}]*width: 100%[^}]*height: auto/);
+  assert.match(css, /\.suitable-audience-card__visual img \{[^}]*object-fit: contain/);
+  assert.doesNotMatch(css, /\.suitable-audience-card__visual img \{[^}]*object-fit: cover/);
+  assert.doesNotMatch(css, /\.suitable-audience-card \{[^}]*overflow: hidden/);
+  assert.doesNotMatch(css, /@media[^{]*\{[\s\S]*?\.suitable-audience-card__visual \{[^}]*height:/);
 });
 
 test("conditional dossier navigation keeps the existing suitability anchor", () => {
@@ -134,7 +162,10 @@ test("conditional dossier navigation keeps the existing suitability anchor", () 
     ),
     "utf8",
   );
-  assert.match(view, /hasSuitableAudiences \? \([\s\S]*?href="#danh-gia-phu-hop"/);
+  assert.match(
+    view,
+    /hasSuitableAudiences \? \([\s\S]*?href="#danh-gia-phu-hop"/,
+  );
   assert.match(dossier, /id="danh-gia-phu-hop"/);
 });
 
