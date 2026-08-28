@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CareStoryBlock } from "@/components/handover/CareStoryBlock";
@@ -9,6 +11,7 @@ import {
   resolvePublicCareState,
 } from "@/data/care/care-repository.server";
 import { getCareStory } from "@/data/handover/get-care-story.server";
+import { MBMC_CONTACTS } from "@/lib/contact-routing";
 import { VerificationForm } from "./VerificationForm";
 import { ActivationForm } from "./ActivationForm";
 import styles from "./care.module.css";
@@ -77,7 +80,7 @@ export default async function CarePage({ params, searchParams }: PageProps) {
 
   return (
     <main className={styles.page}>
-      <div className={styles.shell}>
+      <div className={`${styles.shell} ${styles.authenticatedShell}`}>
         <section className={styles.card}>
           <span className={styles.verified}>Machine Identity Verified</span>
           <p className={styles.eyebrow}>MBMC Care</p>
@@ -85,13 +88,29 @@ export default async function CarePage({ params, searchParams }: PageProps) {
           <p className={styles.intro}>
             Thiết bị này có hồ sơ định danh trong hệ thống MBMC Care.
           </p>
-          <dl className={styles.facts}>
-            <Info label="Machine ID" value={passport.machineCode} />
-            <Info label="Model" value={passport.model} />
-            <Info label="Cấu hình" value={configuration} />
-            <Info label="Màu sắc" value={passport.color} />
-            <Info label="Tình trạng" value={passport.condition} />
-          </dl>
+          <div
+            className={`${styles.passportGrid} ${passport.publicImage ? "" : styles.passportGridWithoutImage}`}
+          >
+            {passport.publicImage && (
+              <figure className={styles.machineFigure}>
+                <Image
+                  src={passport.publicImage.url}
+                  alt={passport.publicImage.alt}
+                  width={passport.publicImage.width ?? 1200}
+                  height={passport.publicImage.height ?? 900}
+                  sizes="(max-width: 48rem) 100vw, 32rem"
+                />
+                <figcaption>Ảnh công khai thời điểm chưa bán</figcaption>
+              </figure>
+            )}
+            <dl className={`${styles.facts} ${styles.passportFacts}`}>
+              <Info label="Machine ID" value={passport.machineCode} />
+              <Info label="Model" value={passport.model} />
+              <Info label="Cấu hình" value={configuration} />
+              <Info label="Màu sắc" value={passport.color} />
+              <Info label="Tình trạng" value={passport.condition} />
+            </dl>
+          </div>
           <p
             className={`${styles.state} ${passport.ownershipState === "activated" ? styles.active : styles.pending}`}
           >
@@ -103,24 +122,10 @@ export default async function CarePage({ params, searchParams }: PageProps) {
           </p>
         </section>
 
-        <CareActions machineCode={passport.machineCode} />
-
         <StatusMessages
           activation={status.activation}
           support={status.support}
         />
-
-        <CareStoryBlock story={careStory} />
-
-        <section className={styles.card}>
-          <p className={styles.eyebrow}>Phạm vi áp dụng</p>
-          <h2>Chính sách bảo hành</h2>
-          <p>
-            Bảo hành áp dụng cho lỗi chức năng phần cứng. Không áp dụng cho hao
-            mòn ngoại hình, trầy xước, móp cấn, vào nước, rơi vỡ hoặc lỗi do
-            người dùng.
-          </p>
-        </section>
 
         {passport.ownershipState === "not_sold" && (
           <section className={styles.card}>
@@ -161,20 +166,145 @@ export default async function CarePage({ params, searchParams }: PageProps) {
         )}
 
         {passport.ownershipState === "activated" && (
-          <>
-            <section className={styles.card}>
-              <p className={styles.eyebrow}>Bảo hành điện tử</p>
-              <h2>Thông tin bảo hành</h2>
-              <dl className={styles.facts}>
-                <Info label="Trạng thái" value="Đã kích hoạt" />
-                <Info
-                  label="Ngày kích hoạt"
-                  value={formatDate(passport.activatedAt)}
-                />
-              </dl>
-            </section>
-          </>
+          <section className={styles.card}>
+            <div className={styles.cardHeadingRow}>
+              <div>
+                <p className={styles.eyebrow}>Bảo hành điện tử</p>
+                <h2>Bảo hành của máy</h2>
+              </div>
+              <span
+                className={`${styles.warrantyBadge} ${passport.warranty.status === "active" ? styles.active : passport.warranty.status === "expired" ? styles.expired : styles.pending}`}
+              >
+                {passport.warranty.status === "active"
+                  ? "Còn bảo hành"
+                  : passport.warranty.status === "expired"
+                    ? "Đã hết bảo hành"
+                    : "Chưa ghi nhận hạn bảo hành"}
+              </span>
+            </div>
+            <div className={styles.warrantyGrid}>
+              <div>
+                <dl className={styles.facts}>
+                  <Info
+                    label="Trạng thái"
+                    value={
+                      passport.warranty.status === "active"
+                        ? "Còn bảo hành"
+                        : passport.warranty.status === "expired"
+                          ? "Đã hết bảo hành"
+                          : "Cần MBMC xác nhận"
+                    }
+                  />
+                  <Info
+                    label="Ngày kích hoạt"
+                    value={formatDate(passport.activatedAt)}
+                  />
+                  <Info
+                    label="Hạn bảo hành"
+                    value={formatDateTime(passport.warranty.expiresAt)}
+                  />
+                </dl>
+                {passport.warranty.availability ===
+                  "historical_snapshot_missing" && (
+                  <p className={styles.warrantyNote}>
+                    Máy đã kích hoạt bảo hành điện tử, nhưng hồ sơ cũ chưa ghi
+                    nhận ngày hết hạn. MBMC sẽ đối chiếu khi bạn cần hỗ trợ.
+                  </p>
+                )}
+              </div>
+              <div className={styles.careOfferPanel}>
+                {passport.careOptions.length > 0 ? (
+                  <>
+                    <h3>Gói Care gợi ý</h3>
+                    <ul
+                      className={styles.careOptions}
+                      aria-label="Các gói Care khả dụng"
+                    >
+                      {passport.careOptions.map((option) => (
+                        <li key={option.code}>
+                          <strong>Care {option.totalCoverageMonths}</strong>
+                          <span>Tổng {option.totalCoverageMonths} tháng</span>
+                          <b>{formatMoney(option.price)}</b>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <div className={styles.emptyOffer}>
+                    <p className={styles.offerEyebrow}>Gia hạn bảo vệ</p>
+                    <h3>Care cho chiếc Mac này</h3>
+                    <p>
+                      Tiếp tục bảo vệ máy sau thời gian bảo hành tiêu chuẩn.
+                    </p>
+                  </div>
+                )}
+                <Link
+                  className={styles.link}
+                  href={passport.policy?.careUrl ?? "/chinh-sach/mbmc-care"}
+                >
+                  Xem các gói Care
+                </Link>
+              </div>
+            </div>
+          </section>
         )}
+
+        <section className={styles.card}>
+          <p className={styles.eyebrow}>Phạm vi áp dụng</p>
+          <h2>Chính sách bảo hành</h2>
+          <p>
+            Bảo hành áp dụng cho lỗi chức năng phần cứng theo chính sách được
+            xác nhận cho Machine ID này.
+          </p>
+          {passport.policy?.summaryItems.length ? (
+            <ul
+              className={styles.policyHighlights}
+              aria-label="Tóm tắt phạm vi bảo hành"
+            >
+              {passport.policy.summaryItems.slice(0, 3).map((item) => (
+                <li key={item}>
+                  <span aria-hidden="true">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <details className={styles.disclosure}>
+            <summary>Xem phạm vi chi tiết</summary>
+            <section
+              className={`${styles.policyPreview} ${styles.coveredPolicy}`}
+            >
+              <h3>
+                <span aria-hidden="true">✓</span> Được bảo hành
+              </h3>
+              {passport.policy?.summaryItems.length ? (
+                <ul>
+                  {passport.policy.summaryItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Phạm vi cụ thể được đối chiếu theo Machine ID.</p>
+              )}
+            </section>
+          </details>
+          <Link
+            className={styles.textLink}
+            href={passport.policy?.warrantyUrl ?? "/chinh-sach/bao-hanh"}
+          >
+            Xem chính sách bảo hành đầy đủ →
+          </Link>
+        </section>
+
+        <CareActions
+          machineCode={passport.machineCode}
+          model={passport.model}
+          unlocked
+        />
+
+        <CareStoryBlock story={careStory} />
+
+        <ServiceHub />
 
         {passport.events.length > 0 && (
           <section className={styles.card}>
@@ -195,18 +325,61 @@ export default async function CarePage({ params, searchParams }: PageProps) {
   );
 }
 
-function Info({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
+function Info({ label, value }: { label: string; value?: ReactNode }) {
   return (
     <div>
       <dt>{label}</dt>
       <dd>{value || "—"}</dd>
     </div>
+  );
+}
+
+function ServiceHub() {
+  const services = [
+    [
+      "Phụ kiện phù hợp",
+      "Sạc, cáp, túi chống sốc và phụ kiện tương thích với máy của bạn.",
+      "⌁",
+      "Hỏi phụ kiện →",
+    ],
+    [
+      "Cài đặt & phần mềm",
+      "Cài lại macOS, phần mềm cơ bản hoặc hỗ trợ thiết lập máy.",
+      "⌘",
+      "Nhờ cài đặt →",
+    ],
+    [
+      "Ghé MBMC",
+      "Muốn kiểm tra máy, hỏi gì đó về Mac hoặc đơn giản là qua ngồi chơi.",
+      "⌖",
+      "Đặt lịch ghé →",
+    ],
+  ] as const;
+  return (
+    <section className={styles.card}>
+      <p className={styles.eyebrow}>Dành cho chiếc Mac này</p>
+      <h2>Có thể bạn sẽ cần</h2>
+      <div className={styles.serviceGrid}>
+        {services.map(([title, copy, icon, cta]) => (
+          <article key={title} className={styles.serviceItem}>
+            <span className={styles.serviceIcon} aria-hidden="true">
+              {icon}
+            </span>
+            <div>
+              <h3>{title}</h3>
+              <p>{copy}</p>
+            </div>
+            <a
+              href={MBMC_CONTACTS.zalo.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {cta}
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -290,4 +463,12 @@ function formatDateTime(value: string | null) {
   return value
     ? new Date(value).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
     : "—";
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value);
 }

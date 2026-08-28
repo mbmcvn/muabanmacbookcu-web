@@ -1,6 +1,9 @@
 import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { canonicalPublicImages } from "@/data/machines/project-public-candidates";
+import { loadPublicMachinePolicySummary } from "@/data/machines/public-machine-policy-summary.server";
+import { filterPublicMachineImages } from "@/lib/public-projection/kernel.server";
 import {
   activateCarePassportWithStore,
   type CareActivationStore,
@@ -9,6 +12,7 @@ import {
   mapPublicCareEvent,
   normalizeMachineCode,
   PUBLIC_CARE_EVENT_TYPES,
+  resolveWarrantyStatus,
   type PublicCarePassport,
 } from "./care-contract";
 import type { CareAccessContext } from "./care-session";
@@ -18,7 +22,7 @@ import {
 } from "./care-ownership";
 
 const PUBLIC_MACHINE_FIELDS =
-  "id, machine_id, status, model_text, chip, ram_gb, ssd_gb, color, public_condition_note";
+  "id, machine_id, status, model_text, chip, ram_gb, ssd_gb, color, public_condition_note, machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover, processing_status, derivatives)";
 const PUBLIC_EVENT_FIELDS = "id, event_type, created_at";
 
 export async function getPublicCarePassport(
@@ -60,8 +64,9 @@ export async function getPublicCarePassport(
   const sale = ownership.sale;
   const owner = ownership.owner;
 
-  const { data: eventRows, error: eventsError } = sale
-    ? await client
+  const [eventResult, coverageResult, policy, careOfferResult] =
+    await Promise.all([
+      client
         .from("machine_events")
         .select(PUBLIC_EVENT_FIELDS)
         .eq("machine_id", machine.machine_id)
@@ -69,10 +74,25 @@ export async function getPublicCarePassport(
         .eq("visibility", "public")
         .eq("hidden", false)
         .gte("created_at", sale.created_at)
-        .order("created_at", { ascending: false })
-    : { data: [], error: null };
+        .order("created_at", { ascending: false }),
+      client
+        .from("sale_coverages")
+        .select("default_warranty_end_at, care_coverage_end_at, status")
+        .eq("sale_id", sale.id)
+        .maybeSingle(),
+      loadPublicMachinePolicySummary(client, machine.id),
+      client.rpc("resolve_public_machine_care_offer", {
+        p_machine_code: machine.machine_id,
+        p_as_of: new Date().toISOString(),
+      }),
+    ]);
+  const { data: eventRows, error: eventsError } = eventResult;
   if (eventsError) {
     logCareError("CARE_EVENTS_QUERY_FAILED", eventsError.code);
+    throw new Error("Care Passport is temporarily unavailable.");
+  }
+  if (coverageResult.error) {
+    logCareError("CARE_COVERAGE_QUERY_FAILED", coverageResult.error.code);
     throw new Error("Care Passport is temporarily unavailable.");
   }
 
@@ -82,6 +102,15 @@ export async function getPublicCarePassport(
       return event ? [event] : [];
     }),
   );
+  const publicImages = filterPublicMachineImages(
+    canonicalPublicImages(machine.machine_images),
+  );
+  const representativeImage =
+    publicImages.find((image) => image.isCover) ?? publicImages[0] ?? null;
+  const coverage = coverageResult.data;
+  const expiresAt = coverage
+    ? (coverage.care_coverage_end_at ?? coverage.default_warranty_end_at)
+    : null;
 
   return Object.freeze({
     machineCode: machine.machine_id,
@@ -95,7 +124,63 @@ export async function getPublicCarePassport(
     condition: machine.public_condition_note,
     ownershipState: "activated",
     activatedAt: owner.activated_at,
+    warranty: Object.freeze({
+      expiresAt,
+      status:
+        coverage?.status === "cancelled"
+          ? "expired"
+          : resolveWarrantyStatus(expiresAt),
+      availability: coverage ? "available" : "historical_snapshot_missing",
+    }),
+    publicImage: representativeImage
+      ? Object.freeze({
+          url:
+            representativeImage.variants?.display?.url ??
+            representativeImage.url,
+          alt: `Ảnh bàn giao của ${machine.model_text ?? machine.machine_id}`,
+          width:
+            representativeImage.variants?.display?.width ??
+            representativeImage.width,
+          height:
+            representativeImage.variants?.display?.height ??
+            representativeImage.height,
+        })
+      : null,
+    policy: policy
+      ? Object.freeze({
+          summaryItems: Object.freeze([...policy.warrantyItems]),
+          warrantyUrl: policy.warrantyPolicyUrl,
+          careUrl: policy.carePolicyUrl,
+        })
+      : null,
+    careOptions: Object.freeze(mapPublicCareOptions(careOfferResult.data)),
     events,
+  });
+}
+
+function mapPublicCareOptions(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  const options = (value as { available_products?: unknown })
+    .available_products;
+  if (!Array.isArray(options)) return [];
+  return options.flatMap((option) => {
+    if (!option || typeof option !== "object" || Array.isArray(option))
+      return [];
+    const row = option as Record<string, unknown>;
+    return typeof row.product_code === "string" &&
+      (row.product_code === "care_3" || row.product_code === "care_6") &&
+      Number.isSafeInteger(row.total_coverage_months) &&
+      typeof row.price === "number" &&
+      Number.isSafeInteger(row.price) &&
+      row.price > 0
+      ? [
+          Object.freeze({
+            code: row.product_code,
+            totalCoverageMonths: row.total_coverage_months as number,
+            price: row.price,
+          }),
+        ]
+      : [];
   });
 }
 

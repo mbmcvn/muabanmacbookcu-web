@@ -121,7 +121,7 @@ export function parsePublicImageDerivatives(
   return variants;
 }
 
-function publicImages(value: unknown): PublicImageInput[] {
+export function canonicalPublicImages(value: unknown): PublicImageInput[] {
   if (!Array.isArray(value)) return [];
   const byUrl = new Map<string, PublicImageInput>();
   for (const item of value) {
@@ -319,7 +319,7 @@ export function normalizePublicCandidate(
         }
       : null,
     machineExplanation: normalizeMachineExplanation(value.machine_explanation),
-    images: publicImages(value.machine_images),
+    images: canonicalPublicImages(value.machine_images),
     privacyValid: true,
   };
 }

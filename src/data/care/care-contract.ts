@@ -44,8 +44,40 @@ export type PublicCarePassport = Readonly<{
   condition: string | null;
   ownershipState: "not_sold" | "awaiting_activation" | "activated";
   activatedAt: string | null;
+  warranty: Readonly<{
+    expiresAt: string | null;
+    status: "active" | "expired" | "unavailable";
+    availability: "available" | "historical_snapshot_missing";
+  }>;
+  publicImage: Readonly<{
+    url: string;
+    alt: string;
+    width: number | null;
+    height: number | null;
+  }> | null;
+  policy: Readonly<{
+    summaryItems: readonly string[];
+    warrantyUrl: string;
+    careUrl: string;
+  }> | null;
+  careOptions: readonly Readonly<{
+    code: string;
+    totalCoverageMonths: number;
+    price: number;
+  }>[];
   events: readonly PublicCareEvent[];
 }>;
+
+export function resolveWarrantyStatus(
+  expiresAt: string | null,
+  asOf: Date = new Date(),
+): "active" | "expired" | "unavailable" {
+  if (!expiresAt) return "unavailable";
+  const expiry = Date.parse(expiresAt);
+  return Number.isFinite(expiry) && asOf.getTime() < expiry
+    ? "active"
+    : "expired";
+}
 
 export function normalizeMachineCode(value: string) {
   return value.trim().toUpperCase();
@@ -65,7 +97,9 @@ export function mapPublicCareEvent(row: {
   event_type: string;
   created_at: string | null;
 }): PublicCareEvent | null {
-  if (!Object.prototype.hasOwnProperty.call(PUBLIC_EVENT_TITLES, row.event_type)) {
+  if (
+    !Object.prototype.hasOwnProperty.call(PUBLIC_EVENT_TITLES, row.event_type)
+  ) {
     return null;
   }
   const eventType = row.event_type as PublicCareEventType;

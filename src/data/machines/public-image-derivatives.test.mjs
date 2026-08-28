@@ -29,9 +29,41 @@ function candidate(imageOverrides = {}) {
     retail_price_expected: 15000000,
     rank: "A",
     sales: [],
-    machine_publications: { status: "published", slug: "mbmc-image", revision: 1, approved_by: "staff", approved_at: "2026-01-01T00:00:00Z", approved_editorial_revision: revision, published_by: "staff", published_at: "2026-01-01T00:00:00Z", published_editorial_revision: revision },
-    machine_editorials: { revision, public_condition_summary: "Tốt", included_items: {}, reviewed_by: "staff", reviewed_at: "2026-01-01T00:00:00Z" },
-    machine_images: [{ id: "image-id", public_url: "https://img.mbmc.vn/machines/legacy.jpg", image_type: "cover", image_stage: "listing", visibility: "public", sort_order: 0, is_cover: true, ...imageOverrides }],
+    public_availability: {
+      state_valid: true,
+      availability: "available",
+      reservation_kind: null,
+    },
+    machine_publications: {
+      status: "published",
+      slug: "mbmc-image",
+      revision: 1,
+      approved_by: "staff",
+      approved_at: "2026-01-01T00:00:00Z",
+      approved_editorial_revision: revision,
+      published_by: "staff",
+      published_at: "2026-01-01T00:00:00Z",
+      published_editorial_revision: revision,
+    },
+    machine_editorials: {
+      revision,
+      public_condition_summary: "Tốt",
+      included_items: {},
+      reviewed_by: "staff",
+      reviewed_at: "2026-01-01T00:00:00Z",
+    },
+    machine_images: [
+      {
+        id: "image-id",
+        public_url: "https://img.mbmc.vn/machines/legacy.jpg",
+        image_type: "cover",
+        image_stage: "listing",
+        visibility: "public",
+        sort_order: 0,
+        is_cover: true,
+        ...imageOverrides,
+      },
+    ],
   };
 }
 
@@ -39,7 +71,12 @@ test("parser exposes only valid fixed derivatives", () => {
   const parsed = parsePublicImageDerivatives({
     thumb: derivative("thumb", { width: 320, height: 320 }),
     card: derivative("card"),
-    display: derivative("display", { width: 1280, height: 1280, byte_size: undefined, mime_type: undefined }),
+    display: derivative("display", {
+      width: 1280,
+      height: 1280,
+      byte_size: undefined,
+      mime_type: undefined,
+    }),
     original: derivative("original"),
   });
   assert.deepEqual(Object.keys(parsed), ["thumb", "card", "display"]);
@@ -57,30 +94,53 @@ test("parser ignores unsafe URLs, invalid dimensions, and invalid optional metad
     { height: -1 },
     { byte_size: 0 },
     { mime_type: "image/jpeg" },
-  ]) assert.deepEqual(parsePublicImageDerivatives({ thumb: derivative("thumb", overrides) }), {});
+  ])
+    assert.deepEqual(
+      parsePublicImageDerivatives({ thumb: derivative("thumb", overrides) }),
+      {},
+    );
   assert.deepEqual(parsePublicImageDerivatives(null), {});
 });
 
 test("one malformed variant does not remove valid siblings", () => {
-  const parsed = parsePublicImageDerivatives({ thumb: derivative("thumb", { width: 0 }), card: derivative("card") });
+  const parsed = parsePublicImageDerivatives({
+    thumb: derivative("thumb", { width: 0 }),
+    card: derivative("card"),
+  });
   assert.deepEqual(Object.keys(parsed), ["card"]);
 });
 
 test("ready projection exposes sanitized variants without processing internals", () => {
   const row = candidate({
     processing_status: "ready",
-    derivatives: { card: derivative("card"), source: { object_key: "private/source.jpg" } },
+    derivatives: {
+      card: derivative("card"),
+      source: { object_key: "private/source.jpg" },
+    },
     object_key: "private/source.jpg",
     processing_error: "secret",
   });
   const detail = publicDetailBySlug([row], "mbmc-image");
   assert.equal(detail.gallery[0].variants.card.url, derivative("card").url);
   const serialized = JSON.stringify(detail);
-  for (const forbidden of ["processing_status", "object_key", "processing_error", "private/source.jpg", `"source":`]) assert.equal(serialized.includes(forbidden), false);
+  for (const forbidden of [
+    "processing_status",
+    "object_key",
+    "processing_error",
+    "private/source.jpg",
+    `"source":`,
+  ])
+    assert.equal(serialized.includes(forbidden), false);
 });
 
 test("legacy projection retains URL and omits variants", () => {
-  const detail = publicDetailBySlug([candidate({ processing_status: "legacy", derivatives: null })], "mbmc-image");
-  assert.equal(detail.gallery[0].url, "https://img.mbmc.vn/machines/legacy.jpg");
+  const detail = publicDetailBySlug(
+    [candidate({ processing_status: "legacy", derivatives: null })],
+    "mbmc-image",
+  );
+  assert.equal(
+    detail.gallery[0].url,
+    "https://img.mbmc.vn/machines/legacy.jpg",
+  );
   assert.equal("variants" in detail.gallery[0], false);
 });
