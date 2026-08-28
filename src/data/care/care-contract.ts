@@ -63,13 +63,68 @@ export type PublicCarePassport = Readonly<{
     warrantyUrl: string;
     careUrl: string;
   }> | null;
-  careOptions: readonly Readonly<{
+  careOffer: PublicCareOffer;
+  events: readonly PublicCareEvent[];
+}>;
+
+export type PublicCareOffer = Readonly<{
+  eligible: boolean;
+  reasonCode: string | null;
+  purchaseDeadlineAt: string | null;
+  options: readonly Readonly<{
     code: string;
     totalCoverageMonths: number;
     price: number;
   }>[];
-  events: readonly PublicCareEvent[];
 }>;
+
+export function mapPublicCareOffer(value: unknown): PublicCareOffer {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return Object.freeze({
+      eligible: false,
+      reasonCode: null,
+      purchaseDeadlineAt: null,
+      options: Object.freeze([]),
+    });
+  }
+  const row = value as Record<string, unknown>;
+  const eligible = row.eligible === true;
+  const availableProducts = Array.isArray(row.available_products)
+    ? row.available_products
+    : [];
+  const options = eligible
+    ? availableProducts.flatMap((option) => {
+        if (!option || typeof option !== "object" || Array.isArray(option)) {
+          return [];
+        }
+        const product = option as Record<string, unknown>;
+        return typeof product.product_code === "string" &&
+          (product.product_code === "care_3" ||
+            product.product_code === "care_6") &&
+          Number.isSafeInteger(product.total_coverage_months) &&
+          typeof product.price === "number" &&
+          Number.isSafeInteger(product.price) &&
+          product.price > 0
+          ? [
+              Object.freeze({
+                code: product.product_code,
+                totalCoverageMonths: product.total_coverage_months as number,
+                price: product.price,
+              }),
+            ]
+          : [];
+      })
+    : [];
+  return Object.freeze({
+    eligible,
+    reasonCode: typeof row.reason_code === "string" ? row.reason_code : null,
+    purchaseDeadlineAt:
+      typeof row.purchase_deadline_at === "string"
+        ? row.purchase_deadline_at
+        : null,
+    options: Object.freeze(options),
+  });
+}
 
 export function resolveWarrantyStatus(
   expiresAt: string | null,

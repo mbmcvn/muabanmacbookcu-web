@@ -218,37 +218,59 @@ export default async function CarePage({ params, searchParams }: PageProps) {
                 )}
               </div>
               <div className={styles.careOfferPanel}>
-                {passport.careOptions.length > 0 ? (
+                {passport.careOffer.eligible ? (
                   <>
-                    <h3>Gói Care gợi ý</h3>
-                    <ul
-                      className={styles.careOptions}
-                      aria-label="Các gói Care khả dụng"
+                    <div className={styles.emptyOffer}>
+                      <p className={styles.offerEyebrow}>Gia hạn bảo vệ</p>
+                      <h3>Care cho chiếc Mac này</h3>
+                      {passport.careOffer.options.length > 0 ? (
+                        <ul
+                          className={styles.careOptions}
+                          aria-label="Các gói Care khả dụng"
+                        >
+                          {passport.careOffer.options.map((option) => (
+                            <li key={option.code}>
+                              <strong>Care {option.totalCoverageMonths}</strong>
+                              <span>
+                                Tổng {option.totalCoverageMonths} tháng
+                              </span>
+                              <b>{formatMoney(option.price)}</b>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>
+                          Tiếp tục bảo vệ máy sau thời gian bảo hành tiêu chuẩn.
+                        </p>
+                      )}
+                    </div>
+                    <Link
+                      className={styles.link}
+                      href={passport.policy?.careUrl ?? "/chinh-sach/mbmc-care"}
                     >
-                      {passport.careOptions.map((option) => (
-                        <li key={option.code}>
-                          <strong>Care {option.totalCoverageMonths}</strong>
-                          <span>Tổng {option.totalCoverageMonths} tháng</span>
-                          <b>{formatMoney(option.price)}</b>
-                        </li>
-                      ))}
-                    </ul>
+                      Xem các gói Care
+                    </Link>
                   </>
                 ) : (
-                  <div className={styles.emptyOffer}>
-                    <p className={styles.offerEyebrow}>Gia hạn bảo vệ</p>
-                    <h3>Care cho chiếc Mac này</h3>
-                    <p>
-                      Tiếp tục bảo vệ máy sau thời gian bảo hành tiêu chuẩn.
-                    </p>
-                  </div>
+                  <>
+                    <div className={styles.emptyOffer}>
+                      <p className={styles.offerEyebrow}>Lựa chọn tiếp theo</p>
+                      <h3>Bán lại / lên đời</h3>
+                      <p>
+                        MBMC có thể định giá lại chiếc Mac này và hỗ trợ bạn đổi
+                        sang máy phù hợp hơn.
+                      </p>
+                    </div>
+                    <a
+                      className={styles.link}
+                      href={MBMC_CONTACTS.zalo.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Bán lại / lên đời
+                    </a>
+                  </>
                 )}
-                <Link
-                  className={styles.link}
-                  href={passport.policy?.careUrl ?? "/chinh-sach/mbmc-care"}
-                >
-                  Xem các gói Care
-                </Link>
               </div>
             </div>
           </section>

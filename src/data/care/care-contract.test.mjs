@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   mapPublicCareEvent,
+  mapPublicCareOffer,
   prepareActivationName,
   normalizeMachineCode,
   normalizePhone,
@@ -54,4 +55,34 @@ test("warranty status uses the canonical exclusive timestamptz boundary", () => 
     "expired",
   );
   assert.equal(resolveWarrantyStatus(null), "unavailable");
+});
+
+test("canonical Care offer eligibility gates resolver products", () => {
+  const product = {
+    product_code: "care_3",
+    total_coverage_months: 3,
+    price: 800000,
+  };
+  assert.deepEqual(
+    mapPublicCareOffer({
+      eligible: true,
+      reason_code: "eligible",
+      purchase_deadline_at: "2026-08-31T00:00:00Z",
+      available_products: [product],
+    }),
+    {
+      eligible: true,
+      reasonCode: "eligible",
+      purchaseDeadlineAt: "2026-08-31T00:00:00Z",
+      options: [{ code: "care_3", totalCoverageMonths: 3, price: 800000 }],
+    },
+  );
+  assert.deepEqual(
+    mapPublicCareOffer({
+      eligible: false,
+      reason_code: "deadline_expired",
+      available_products: [product],
+    }).options,
+    [],
+  );
 });

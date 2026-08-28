@@ -128,6 +128,7 @@ test("warranty policy disclosure and full canonical policy link remain available
   assert.match(page, /Xem phạm vi chi tiết/);
   assert.match(page, /passport\.policy\?\.warrantyUrl/);
   assert.match(page, /Xem chính sách bảo hành đầy đủ/);
+  assert.match(page, /passport\.careOffer\.eligible/);
   assert.match(page, /passport\.policy\?\.careUrl/);
   assert.match(page, /Xem các gói Care/);
   assert.match(page, /passport\.policy\.summaryItems\.map/);
@@ -146,12 +147,25 @@ test("canonical coverage errors cannot be rendered as a missing-data warranty st
     /care_coverage_end_at \?\? coverage\.default_warranty_end_at/,
   );
   assert.match(repository, /resolve_public_machine_care_offer/);
-  assert.match(page, /passport\.careOptions\.map/);
+  assert.match(page, /passport\.careOffer\.options\.map/);
   assert.doesNotMatch(page, /Chưa có dữ liệu/);
   assert.match(page, /historical_snapshot_missing/);
   assert.match(page, /Chưa ghi nhận hạn bảo hành/);
   assert.match(page, /Cần MBMC xác nhận/);
   assert.match(page, /hồ sơ cũ chưa ghi[\s\S]*nhận ngày hết hạn/);
+});
+
+test("warranty CTA renders canonical Care eligibility without local deadline math", () => {
+  assert.match(repository, /careOffer:\s*mapPublicCareOffer/);
+  assert.match(page, /passport\.careOffer\.eligible \?/);
+  assert.match(page, /Gia hạn bảo vệ/);
+  assert.match(page, /Care cho chiếc Mac này/);
+  assert.match(page, /Xem các gói Care/);
+  assert.match(page, /Lựa chọn tiếp theo/);
+  assert.match(page, /Bán lại \/ lên đời/);
+  assert.match(page, /MBMC có thể định giá lại chiếc Mac này/);
+  assert.match(page, /href=\{MBMC_CONTACTS\.zalo\.href\}/);
+  assert.doesNotMatch(page, /interval '7 days'|\+\s*7\s*\*|setDate\(/);
 });
 
 test("compact service hub has three working contact fallbacks and responsive markup", () => {

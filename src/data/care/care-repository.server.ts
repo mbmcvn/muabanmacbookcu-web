@@ -10,6 +10,7 @@ import {
 } from "./care-activation";
 import {
   mapPublicCareEvent,
+  mapPublicCareOffer,
   normalizeMachineCode,
   PUBLIC_CARE_EVENT_TYPES,
   resolveWarrantyStatus,
@@ -95,6 +96,9 @@ export async function getPublicCarePassport(
     logCareError("CARE_COVERAGE_QUERY_FAILED", coverageResult.error.code);
     throw new Error("Care Passport is temporarily unavailable.");
   }
+  if (careOfferResult.error) {
+    logCareError("CARE_OFFER_QUERY_FAILED", careOfferResult.error.code);
+  }
 
   const events = Object.freeze(
     (eventRows ?? []).flatMap((row) => {
@@ -164,34 +168,10 @@ export async function getPublicCarePassport(
           careUrl: policy.carePolicyUrl,
         })
       : null,
-    careOptions: Object.freeze(mapPublicCareOptions(careOfferResult.data)),
+    careOffer: mapPublicCareOffer(
+      careOfferResult.error ? null : careOfferResult.data,
+    ),
     events,
-  });
-}
-
-function mapPublicCareOptions(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
-  const options = (value as { available_products?: unknown })
-    .available_products;
-  if (!Array.isArray(options)) return [];
-  return options.flatMap((option) => {
-    if (!option || typeof option !== "object" || Array.isArray(option))
-      return [];
-    const row = option as Record<string, unknown>;
-    return typeof row.product_code === "string" &&
-      (row.product_code === "care_3" || row.product_code === "care_6") &&
-      Number.isSafeInteger(row.total_coverage_months) &&
-      typeof row.price === "number" &&
-      Number.isSafeInteger(row.price) &&
-      row.price > 0
-      ? [
-          Object.freeze({
-            code: row.product_code,
-            totalCoverageMonths: row.total_coverage_months as number,
-            price: row.price,
-          }),
-        ]
-      : [];
   });
 }
 
