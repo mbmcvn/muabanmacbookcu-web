@@ -15,8 +15,17 @@ export const metadata: Metadata = {
     title: "Hiểu rõ trước khi chọn MacBook cũ",
     description:
       "MBMC giúp bạn hiểu nhu cầu, hiểu từng chiếc MacBook cũ và tự tin hơn trước khi quyết định.",
+    siteName: "MBMC",
     type: "website",
     url: "/",
+    images: [
+      {
+        url: "/images/mbmc-og-default.png",
+        width: 1731,
+        height: 909,
+        alt: "MBMC · Hiểu rõ trước khi chọn MacBook cũ",
+      },
+    ],
   },
 };
 
