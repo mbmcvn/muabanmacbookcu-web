@@ -16,6 +16,7 @@ import { VerificationForm } from "./VerificationForm";
 import { ActivationForm } from "./ActivationForm";
 import styles from "./care.module.css";
 import { CareActions } from "./CareActions";
+import { CarePublicImageGallery } from "./CarePublicImageGallery";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +112,10 @@ export default async function CarePage({ params, searchParams }: PageProps) {
               <Info label="Tình trạng" value={passport.condition} />
             </dl>
           </div>
+          <CarePublicImageGallery
+            images={passport.publicImages}
+            representativeVisible={passport.publicImage !== null}
+          />
           <p
             className={`${styles.state} ${passport.ownershipState === "activated" ? styles.active : styles.pending}`}
           >

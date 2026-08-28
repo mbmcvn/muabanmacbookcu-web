@@ -107,6 +107,16 @@ export async function getPublicCarePassport(
   );
   const representativeImage =
     publicImages.find((image) => image.isCover) ?? publicImages[0] ?? null;
+  const careImages = Object.freeze(
+    publicImages.map((image, index) =>
+      Object.freeze({
+        url: image.variants?.display?.url ?? image.url,
+        alt: `Ảnh công khai ${index + 1} của ${machine.model_text ?? machine.machine_id}`,
+        width: image.variants?.display?.width ?? image.width,
+        height: image.variants?.display?.height ?? image.height,
+      }),
+    ),
+  );
   const coverage = coverageResult.data;
   const expiresAt = coverage
     ? (coverage.care_coverage_end_at ?? coverage.default_warranty_end_at)
@@ -146,6 +156,7 @@ export async function getPublicCarePassport(
             representativeImage.height,
         })
       : null,
+    publicImages: careImages,
     policy: policy
       ? Object.freeze({
           summaryItems: Object.freeze([...policy.warrantyItems]),

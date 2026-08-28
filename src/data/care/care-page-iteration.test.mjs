@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { canonicalPublicImages } from "../machines/project-public-candidates.ts";
 import { filterPublicMachineImages } from "../../lib/public-projection/kernel.server.ts";
+import { galleryDisclosureLabel } from "./care-gallery.ts";
 
 const page = readFileSync(
   new URL("../../app/care/[machine_id]/page.tsx", import.meta.url),
@@ -27,6 +28,13 @@ const styles = readFileSync(
 const storyStyles = readFileSync(
   new URL(
     "../../components/handover/CareStoryBlock.module.css",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const gallery = readFileSync(
+  new URL(
+    "../../app/care/[machine_id]/CarePublicImageGallery.tsx",
     import.meta.url,
   ),
   "utf8",
@@ -85,6 +93,23 @@ test("Care selects its representative image through canonical public-media filte
     /passport\.publicImage \? "" : styles\.passportGridWithoutImage/,
   );
   assert.match(styles, /object-fit: contain/);
+});
+
+test("Care gallery visibility follows zero, representative-only, and multi-image rules", () => {
+  assert.equal(galleryDisclosureLabel(0, false), null);
+  assert.equal(galleryDisclosureLabel(1, true), null);
+  assert.equal(galleryDisclosureLabel(1, false), "Xem ảnh máy lúc rao bán");
+  assert.equal(galleryDisclosureLabel(2, true), "Xem toàn bộ ảnh lúc rao bán");
+  assert.match(gallery, /<button/);
+  assert.match(gallery, /aria-expanded=\{expanded\}/);
+  assert.match(gallery, /images\.map/);
+  assert.match(gallery, /Ảnh công khai trước thời điểm bán/);
+  assert.match(repository, /publicImages\.map/);
+  assert.match(
+    page,
+    /<CarePublicImageGallery[\s\S]*className=\{`\$\{styles\.state\}/,
+  );
+  assert.match(styles, /\.galleryGrid[\s\S]*min-width: 0/);
 });
 
 test("authenticated information architecture keeps warranty before support and story", () => {

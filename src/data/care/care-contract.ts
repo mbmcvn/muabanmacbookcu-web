@@ -32,6 +32,13 @@ export type PublicCareEvent = Readonly<{
   createdAt: string | null;
 }>;
 
+export type PublicCareImage = Readonly<{
+  url: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+}>;
+
 export type PublicCarePassport = Readonly<{
   machineCode: string;
   model: string | null;
@@ -49,12 +56,8 @@ export type PublicCarePassport = Readonly<{
     status: "active" | "expired" | "unavailable";
     availability: "available" | "historical_snapshot_missing";
   }>;
-  publicImage: Readonly<{
-    url: string;
-    alt: string;
-    width: number | null;
-    height: number | null;
-  }> | null;
+  publicImage: PublicCareImage | null;
+  publicImages: readonly PublicCareImage[];
   policy: Readonly<{
     summaryItems: readonly string[];
     warrantyUrl: string;

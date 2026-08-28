@@ -134,6 +134,61 @@
 .passportGridWithoutImage .passportFacts > div:first-child {
   padding-top: 0.85rem;
 }
+.galleryDisclosure {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #e4e4de;
+}
+.galleryDisclosure > button {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  color: #6f4922;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+.galleryDisclosure > button:focus-visible {
+  border-radius: 0.2rem;
+  outline: 3px solid #b9834d;
+  outline-offset: 4px;
+}
+.galleryDisclosure > button span {
+  transition: transform 160ms ease;
+}
+.galleryChevronOpen {
+  transform: rotate(180deg);
+}
+.galleryPanel > p {
+  margin: 0.35rem 0 0.85rem;
+  font-size: 0.8rem;
+}
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+}
+.galleryGrid figure {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #e4e4de;
+  border-radius: 0.55rem;
+  background: #f5f4ef;
+}
+.galleryGrid img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 18rem;
+  object-fit: contain;
+}
 .warrantyBadge {
   display: inline-flex;
   padding: 0.3rem 0.55rem;
@@ -505,9 +560,15 @@
     border-left: 0;
     border-top: 1px solid #e4e4de;
   }
+  .galleryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 30rem) {
   .actionGrid {
+    grid-template-columns: 1fr;
+  }
+  .galleryGrid {
     grid-template-columns: 1fr;
   }
 }
