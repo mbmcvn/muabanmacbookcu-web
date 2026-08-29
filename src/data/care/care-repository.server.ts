@@ -188,6 +188,39 @@ export async function activateCarePassport(input: {
   );
 }
 
+export async function submitCareResaleDemand(
+  input: { machineCode: string; note: string; submissionKey: string },
+  access: CareAccessContext,
+) {
+  const machineCode = normalizeMachineCode(input.machineCode);
+  if (
+    access.machineCode !== machineCode ||
+    !/^[0-9a-f-]{36}$/i.test(input.submissionKey) ||
+    input.note.trim().length > 2000
+  )
+    return null;
+  const client = createServerSupabaseClient();
+  const { data, error } = await client.rpc(
+    "create_authenticated_care_resale_demand_v1",
+    {
+      p_submission_key: input.submissionKey,
+      p_machine_code: machineCode,
+      p_sale_id: access.saleId,
+      p_ownership_id: access.ownershipId,
+      p_note: input.note.trim() || null,
+    },
+  );
+  const row = (Array.isArray(data) ? data[0] : data) as {
+    demand_request_id?: string;
+    created?: boolean;
+  } | null;
+  if (error || !row?.demand_request_id) {
+    logCareError("CARE_RESALE_DEMAND_FAILED", error?.code);
+    return null;
+  }
+  return { submissionId: row.demand_request_id, created: row.created === true };
+}
+
 export type PublicCareState =
   | Readonly<{ state: "not_found"; machineCode: string }>
   | Readonly<{ state: "care_unavailable"; machineCode: string }>

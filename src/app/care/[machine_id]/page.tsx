@@ -261,14 +261,12 @@ export default async function CarePage({ params, searchParams }: PageProps) {
                         sang máy phù hợp hơn.
                       </p>
                     </div>
-                    <a
+                    <Link
                       className={styles.link}
-                      href={MBMC_CONTACTS.zalo.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/care/${encodeURIComponent(passport.machineCode)}/resale`}
                     >
                       Bán lại / lên đời
-                    </a>
+                    </Link>
                   </>
                 )}
               </div>

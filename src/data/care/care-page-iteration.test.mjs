@@ -52,7 +52,7 @@ test("authenticated Care removes the redundant unlock action while pre-unlock pr
   assert.match(actions, /Máy tôi có vấn đề/);
   assert.match(actions, /Bán lại \/ lên đời/);
   assert.match(actions, /href=\{`\/care\/\$\{code\}\/support`\}/);
-  assert.match(actions, /MBMC_CONTACTS\.zalo\.href/);
+  assert.match(actions, /href=\{`\/care\/\$\{code\}\/resale`\}/);
 });
 
 test("Care selects its representative image through canonical public-media filters", () => {

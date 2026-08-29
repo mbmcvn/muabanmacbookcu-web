@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { MBMC_CONTACTS } from "@/lib/contact-routing";
 import styles from "./care.module.css";
 
 export function CareActions({
@@ -47,11 +46,9 @@ export function CareActions({
                 <small>Kiểm tra, sửa chữa, bảo hành</small>
               </span>
             </Link>
-            <a
+            <Link
               className={`${styles.actionCard} ${styles.secondaryAction}`}
-              href={MBMC_CONTACTS.zalo.href}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`/care/${code}/resale`}
               aria-label={`Bán lại hoặc lên đời ${model ?? machineCode}`}
             >
               <span className={styles.actionIcon} aria-hidden="true">
@@ -61,7 +58,7 @@ export function CareActions({
                 <strong>Bán lại / lên đời</strong>
                 <small>Định giá, thu cũ đổi mới</small>
               </span>
-            </a>
+            </Link>
           </>
         ) : (
           <Link
