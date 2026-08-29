@@ -1,14 +1,22 @@
 "use client";
 import { useState } from "react";
+import {
+  CARE_RESALE_REASONS,
+  type CareResaleReason,
+} from "@/data/care/care-resale";
 import styles from "../support/support.module.css";
 export function ResaleDemandForm({ machineCode }: { machineCode: string }) {
   const [note, setNote] = useState(""),
+    [reason, setReason] = useState<CareResaleReason | null>(null),
     [submissionKey] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [receipt, setReceipt] = useState<string | null>(null);
   async function submit() {
-    if (busy || note.length > 2000) return;
+    if (busy || !reason || note.length > 2000) {
+      if (!reason) setError("Chọn lý do bán lại.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -17,7 +25,7 @@ export function ResaleDemandForm({ machineCode }: { machineCode: string }) {
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ note, submissionKey }),
+          body: JSON.stringify({ reason, note, submissionKey }),
         },
       );
       const data = await response.json().catch(() => null);
@@ -34,9 +42,6 @@ export function ResaleDemandForm({ machineCode }: { machineCode: string }) {
       <section className={styles.card} aria-live="polite">
         <p className={styles.eyebrow}>Yêu cầu đã gửi</p>
         <h1>MBMC đã nhận nhu cầu của bạn</h1>
-        <p>
-          Mã yêu cầu: <strong>{receipt}</strong>
-        </p>
         <p>MBMC sẽ liên hệ qua số điện thoại đã xác thực trong Care.</p>
       </section>
     );
@@ -44,6 +49,26 @@ export function ResaleDemandForm({ machineCode }: { machineCode: string }) {
     <section className={styles.card}>
       <h2>Nhận định giá cho chiếc Mac này</h2>
       <p>Thông tin máy và số điện thoại Care đã được điền từ hồ sơ xác thực.</p>
+      <fieldset>
+        <legend>Lý do bán lại</legend>
+        <div className={styles.options}>
+          {CARE_RESALE_REASONS.map(([value, label]) => (
+            <label key={value} data-selected={reason === value}>
+              <input
+                type="radio"
+                name="resale-reason"
+                value={value}
+                checked={reason === value}
+                onChange={() => {
+                  setReason(value);
+                  setError("");
+                }}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <label className={styles.field}>
         <strong>Ghi chú thêm (không bắt buộc)</strong>
         <span>

@@ -17,6 +17,7 @@ import {
   type PublicCarePassport,
 } from "./care-contract";
 import type { CareAccessContext } from "./care-session";
+import type { CareResaleReason } from "./care-resale";
 import {
   findCareLifecycle,
   findEffectiveCareOwnership,
@@ -189,7 +190,12 @@ export async function activateCarePassport(input: {
 }
 
 export async function submitCareResaleDemand(
-  input: { machineCode: string; note: string; submissionKey: string },
+  input: {
+    machineCode: string;
+    reason: CareResaleReason;
+    note: string;
+    submissionKey: string;
+  },
   access: CareAccessContext,
 ) {
   const machineCode = normalizeMachineCode(input.machineCode);
@@ -207,6 +213,7 @@ export async function submitCareResaleDemand(
       p_machine_code: machineCode,
       p_sale_id: access.saleId,
       p_ownership_id: access.ownershipId,
+      p_reason: input.reason,
       p_note: input.note.trim() || null,
     },
   );

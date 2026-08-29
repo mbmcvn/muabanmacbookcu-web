@@ -1,5 +1,6 @@
 import { readCurrentCareAccess } from "@/data/care/care-access.server";
 import { submitCareResaleDemand } from "@/data/care/care-repository.server";
+import { isCareResaleReason } from "@/data/care/care-resale";
 import { notifyCareDemandBestEffort } from "@/lib/demand-notification.server";
 export const runtime = "nodejs";
 export async function POST(
@@ -9,17 +10,22 @@ export async function POST(
   const { machine_id } = await context.params;
   const access = await readCurrentCareAccess(machine_id);
   if (!access) return Response.json({ error: "unauthorized" }, { status: 401 });
-  let input: { note?: unknown; submissionKey?: unknown };
+  let input: { reason?: unknown; note?: unknown; submissionKey?: unknown };
   try {
     input = await request.json();
   } catch {
     return Response.json({ error: "invalid_request" }, { status: 400 });
   }
-  if (typeof input.note !== "string" || typeof input.submissionKey !== "string")
+  if (
+    !isCareResaleReason(input.reason) ||
+    typeof input.note !== "string" ||
+    typeof input.submissionKey !== "string"
+  )
     return Response.json({ error: "invalid_request" }, { status: 400 });
   const outcome = await submitCareResaleDemand(
     {
       machineCode: machine_id,
+      reason: input.reason,
       note: input.note,
       submissionKey: input.submissionKey,
     },
