@@ -7,9 +7,11 @@ import { CareActions } from "./CareActions";
 export function VerificationForm({
   machineCode,
   failed,
+  expired,
 }: {
   machineCode: string;
   failed: boolean;
+  expired?: boolean;
 }) {
   const [pending, setPending] = useState(false);
   return (
@@ -29,6 +31,11 @@ export function VerificationForm({
             <p className={`${styles.notice} ${styles.error}`} role="alert">
               Thông tin chưa khớp. Kiểm tra lại số điện thoại đã dùng khi kích
               hoạt bảo hành.
+            </p>
+          )}
+          {expired && (
+            <p className={`${styles.notice} ${styles.error}`} role="alert">
+              Phiên Care đã hết hạn. Xác minh lại số điện thoại để tiếp tục.
             </p>
           )}
           <form

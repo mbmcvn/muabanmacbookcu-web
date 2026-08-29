@@ -29,6 +29,12 @@ export function ResaleDemandForm({ machineCode }: { machineCode: string }) {
         },
       );
       const data = await response.json().catch(() => null);
+      if (response.status === 401) {
+        window.location.assign(
+          `/care/${encodeURIComponent(machineCode)}?verification=expired`,
+        );
+        return;
+      }
       if (!response.ok) throw new Error("failed");
       setReceipt(data.submissionId);
     } catch {

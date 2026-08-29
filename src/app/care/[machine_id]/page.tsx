@@ -58,6 +58,7 @@ export default async function CarePage({ params, searchParams }: PageProps) {
       <VerificationForm
         machineCode={machineCode}
         failed={status.verification === "failed"}
+        expired={status.verification === "expired"}
       />
     );
   }

@@ -24,6 +24,7 @@ const notify = fs.readFileSync(
 test("resale flow is authenticated, machine-aware, canonical, and only fans out newly created rows", () => {
   assert.match(route, /readCurrentCareAccess/);
   assert.match(route, /if \(!access\)/);
+  assert.match(route, /care_session_required/);
   assert.match(repo, /create_authenticated_care_resale_demand_v1/);
   assert.match(route, /if \(outcome\.created\)/);
   assert.match(
@@ -34,6 +35,8 @@ test("resale flow is authenticated, machine-aware, canonical, and only fans out 
   assert.match(form, /Lý do bán lại/);
   assert.match(form, /type="radio"/);
   assert.match(form, /if \(busy \|\| !reason/);
+  assert.match(form, /response\.status === 401/);
+  assert.match(form, /verification=expired/);
   assert.match(form, /JSON\.stringify\(\{ reason, note, submissionKey \}\)/);
   assert.doesNotMatch(form, /Mã yêu cầu/);
   assert.match(repo, /p_reason: input\.reason/);

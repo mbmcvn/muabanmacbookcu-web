@@ -9,7 +9,8 @@ export async function POST(
 ) {
   const { machine_id } = await context.params;
   const access = await readCurrentCareAccess(machine_id);
-  if (!access) return Response.json({ error: "unauthorized" }, { status: 401 });
+  if (!access)
+    return Response.json({ error: "care_session_required" }, { status: 401 });
   let input: { reason?: unknown; note?: unknown; submissionKey?: unknown };
   try {
     input = await request.json();

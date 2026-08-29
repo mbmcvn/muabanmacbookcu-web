@@ -55,6 +55,12 @@ test("authenticated Care removes the redundant unlock action while pre-unlock pr
   assert.match(actions, /href=\{`\/care\/\$\{code\}\/resale`\}/);
 });
 
+test("expired Care session gets explicit re-verification recovery", () => {
+  assert.match(page, /expired=\{status\.verification === "expired"\}/);
+  assert.match(verification, /Phiên Care đã hết hạn/);
+  assert.match(verification, /Xác minh lại số điện thoại để tiếp tục/);
+});
+
 test("Care selects its representative image through canonical public-media filters", () => {
   const rows = [
     {
