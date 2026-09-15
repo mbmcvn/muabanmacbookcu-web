@@ -38,6 +38,7 @@ export default function SoftwareHubPage() {
           </span>
           <div className={styles.cardHeading}>
             <h2 id="mac-checker-title">Mac Checker</h2>
+            <span className={styles.status}>Có thể sử dụng</span>
           </div>
           <p>
             Kiểm tra MacBook theo một quy trình thống nhất, lưu kết quả và tạo
@@ -55,7 +56,7 @@ export default function SoftwareHubPage() {
               Khám phá Mac Checker
             </Link>
             <a className={styles.secondary} href={serialLookupUrl}>
-              Tra serial
+              Tra cứu serial
             </a>
           </div>
         </section>
@@ -72,7 +73,7 @@ export default function SoftwareHubPage() {
             sinh thái MBMC.
           </p>
           <ul className={styles.featureList}>
-            <li>Device Check</li>
+            <li>Mac Checker</li>
             <li>MBMC Care</li>
             <li>Kho phần mềm</li>
             <li>Các module dành cho người dùng Mac</li>
