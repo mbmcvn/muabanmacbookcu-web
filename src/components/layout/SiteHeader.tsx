@@ -22,6 +22,7 @@ type HeaderIconName =
   | "people"
   | "policy"
   | "sell"
+  | "software"
   | "selector";
 type HeaderLink = Readonly<{
   href: string;
@@ -58,6 +59,12 @@ const iconPaths: Record<HeaderIconName, ReactNode> = {
     <>
       <path d="m12 2 8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4Z" />
       <path d="m8.5 12 2.2 2.2 4.8-5" />
+    </>
+  ),
+  software: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 9h18M8 14l2 2-2 2M13 18h3" />
     </>
   ),
   sell: (
@@ -122,6 +129,11 @@ export function SiteHeader() {
       href: withContactChannel("/chinh-sach", channel),
       label: "Chính sách",
       icon: "policy",
+    },
+    {
+      href: withContactChannel("/phan-mem", channel),
+      label: "Phần mềm",
+      icon: "software",
     },
     {
       href: resolvedContactHref,
