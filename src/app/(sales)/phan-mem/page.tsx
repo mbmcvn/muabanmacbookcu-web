@@ -66,7 +66,7 @@ export default function SoftwareHubPage() {
           </span>
           <div className={styles.cardHeading}>
             <h2 id="desktop-title">MBMC Desktop</h2>
-            <span className={styles.status}>Đang phát triển</span>
+            <span className={styles.status}>Public Beta</span>
           </div>
           <p>
             Ứng dụng macOS kết nối chiếc Mac với các công cụ và dịch vụ trong hệ

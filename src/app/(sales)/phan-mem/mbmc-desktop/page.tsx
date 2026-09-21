@@ -1,35 +1,42 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { ContactActionLink } from "@/components/contact/ContactActionLink";
+import { MBMC_DESKTOP_DOWNLOAD_URL } from "@/config/public-destinations";
 import styles from "../software.module.css";
 
 export const metadata: Metadata = {
-  title: "MBMC Desktop | Ứng dụng macOS của MBMC",
+  title: "MBMC Desktop | Tải ứng dụng kiểm tra MacBook",
   description:
-    "MBMC Desktop là ứng dụng macOS kết nối chiếc Mac với các công cụ trong hệ sinh thái MBMC.",
+    "Tải MBMC Desktop Public Beta cho macOS để kiểm tra phần cứng, xem thông tin máy và tạo báo cáo kiểm định.",
   alternates: { canonical: "/phan-mem/mbmc-desktop" },
 };
 
-const modules = [
+const productFacts = [
+  ["Trạng thái", "Public Beta"],
+  ["Hệ điều hành", "macOS 13 trở lên"],
+  ["Kiến trúc", "Universal: Apple Silicon + Intel"],
+  ["Phiên bản", "1.0 Beta"],
+] as const;
+
+const features = [
   [
-    "Mac Checker / Device Check",
-    "Trải nghiệm kiểm tra máy theo quy trình và lưu lại kết quả.",
-    "Đang phát triển",
+    "Kiểm tra phần cứng",
+    "Màn hình, bàn phím, trackpad, loa, mic, camera, Bluetooth và cổng kết nối.",
   ],
+  ["Thông tin máy", "Model, pin, SSD và thông tin nhận dạng thiết bị."],
   [
-    "MBMC Care",
-    "Kết nối với các dịch vụ chăm sóc dành cho máy trong hệ sinh thái MBMC.",
-    "Đang phát triển",
+    "Báo cáo kiểm định",
+    "Hoàn thành bài kiểm tra và nhận báo cáo có thể tra cứu lại.",
   ],
-  [
-    "Kho phần mềm",
-    "Một khu vực dành cho các phần mềm hữu ích với người dùng Mac.",
-    "Đang lên kế hoạch",
-  ],
-  [
-    "Các module MBMC",
-    "Nơi các công cụ mới của MBMC có thể được bổ sung trong tương lai.",
-    "Đang lên kế hoạch",
-  ],
+] as const;
+
+const usageSteps = [
+  "Tải ứng dụng",
+  "Giải nén",
+  "Mở MBMC Desktop",
+  "Nhập mã hiển thị",
+  "Bắt đầu kiểm tra máy",
 ] as const;
 
 export default function MbmcDesktopPage() {
@@ -42,62 +49,106 @@ export default function MbmcDesktopPage() {
         <span aria-hidden="true">/</span>
         <span>MBMC Desktop</span>
       </nav>
-      <header className={styles.hero}>
-        <p className={styles.eyebrow}>Ứng dụng đồng hành trên macOS</p>
-        <h1>MBMC Desktop</h1>
-        <p>Một nơi để kết nối chiếc Mac của bạn với các công cụ của MBMC.</p>
+
+      <header className={styles.downloadHero}>
+        <div className={styles.downloadHeroCopy}>
+          <Image
+            className={styles.desktopAppIcon}
+            src="/brand/mbmc-desktop-icon.png"
+            alt="MBMC Desktop"
+            width={1536}
+            height={1536}
+            priority
+          />
+          <p className={styles.eyebrow}>Ứng dụng macOS · Public Beta</p>
+          <h1>MBMC Desktop</h1>
+          <p>Công cụ kiểm tra MacBook cũ trực tiếp trên máy.</p>
+          <div className={styles.downloadActions}>
+            <a
+              className={styles.primary}
+              href={MBMC_DESKTOP_DOWNLOAD_URL}
+              download
+            >
+              Tải MBMC Desktop
+            </a>
+            <Link className={styles.secondary} href="/phan-mem/mac-checker">
+              Tìm hiểu Mac Checker
+            </Link>
+          </div>
+          <p className={styles.accessCode}>
+            Mã dùng phần mềm là: <strong>mbmc.vn</strong>
+          </p>
+        </div>
+
+        <dl className={styles.productFacts} aria-label="Thông tin phiên bản">
+          {productFacts.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
       </header>
+
       <div className={styles.sections}>
-        <section
-          className={styles.section}
-          aria-labelledby="desktop-about-title"
-        >
+        <section className={styles.section} aria-labelledby="features-title">
           <div className={styles.sectionHeader}>
-            <h2 id="desktop-about-title">Rộng hơn một công cụ kiểm tra</h2>
+            <h2 id="features-title">
+              Kiểm tra rõ ràng, lưu kết quả để tra cứu
+            </h2>
             <p>
-              Mac Checker là một trải nghiệm quan trọng trong ứng dụng. MBMC
-              Desktop được định hướng là ứng dụng đồng hành rộng hơn, kết nối
-              chiếc Mac với nhiều công cụ và dịch vụ của MBMC.
+              MBMC Desktop đưa quy trình Mac Checker lên chính chiếc Mac đang
+              được kiểm tra.
             </p>
           </div>
-        </section>
-        <section className={styles.section} aria-labelledby="modules-title">
-          <div className={styles.sectionHeader}>
-            <h2 id="modules-title">Các khu vực sản phẩm</h2>
-            <p>
-              Các module dưới đây đang được phát triển hoặc lên kế hoạch. MBMC
-              chưa công bố bản tải xuống rộng rãi.
-            </p>
-          </div>
-          <div className={styles.detailGrid}>
-            {modules.map(([title, copy, status]) => (
-              <div className={styles.detailCard} key={title}>
-                <div className={styles.cardHeading}>
-                  <h3>{title}</h3>
-                  <span className={styles.status}>{status}</span>
-                </div>
-                <p>{copy}</p>
+          <div className={styles.featureGrid}>
+            {features.map(([title, description], index) => (
+              <div className={styles.featureCard} key={title}>
+                <span aria-hidden="true">0{index + 1}</span>
+                <h3>{title}</h3>
+                <p>{description}</p>
               </div>
             ))}
           </div>
         </section>
-        <section
-          className={styles.section}
-          aria-labelledby="desktop-status-title"
-        >
-          <div className={styles.cta}>
+
+        <section className={styles.section} aria-labelledby="usage-title">
+          <div className={styles.sectionHeader}>
+            <h2 id="usage-title">Cách bắt đầu</h2>
+            <p>
+              Tải một bản Universal duy nhất cho cả máy Mac dùng Apple Silicon
+              và Intel.
+            </p>
+          </div>
+          <ol className={styles.usageSteps}>
+            {usageSteps.map((step) => (
+              <li key={step}>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+          <div className={styles.accessNote}>
+            <p>Mã dùng phần mềm là:</p>
+            <strong>mbmc.vn</strong>
+          </div>
+        </section>
+
+        <section className={styles.section} aria-labelledby="beta-title">
+          <div className={styles.betaPanel}>
             <div>
-              <h2 id="desktop-status-title">MBMC Desktop đang phát triển</h2>
+              <p className={styles.eyebrow}>Trạng thái phát hành</p>
+              <h2 id="beta-title">
+                MBMC Desktop hiện đang ở giai đoạn Public Beta.
+              </h2>
               <p>
-                Trong lúc chờ ứng dụng hoàn thiện, bạn có thể tìm hiểu quy trình
-                kiểm tra MacBook.
+                Nếu cần hỗ trợ trong quá trình cài đặt hoặc kiểm tra máy, hãy
+                liên hệ MBMC qua kênh hỗ trợ hiện có.
               </p>
             </div>
-            <div className={styles.actions}>
-              <Link className={styles.primary} href="/phan-mem/mac-checker">
-                Tìm hiểu Mac Checker
-              </Link>
-            </div>
+            <ContactActionLink
+              className={styles.secondary}
+              label="Liên hệ MBMC"
+            />
           </div>
         </section>
       </div>
