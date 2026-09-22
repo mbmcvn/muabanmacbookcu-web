@@ -4,6 +4,7 @@ import type { HomepageStoryDTO } from "@/data/handover/homepage-story";
 import { ClosingDecisionCta } from "./ClosingDecisionCta";
 import { DecisionProblemFraming } from "./DecisionProblemFraming";
 import { HomeHero } from "./HomeHero";
+import { MbmcDesktopSpotlight } from "./MbmcDesktopSpotlight";
 import { HowMbmcHelps } from "./HowMbmcHelps";
 import { HumanGuidanceEntry } from "./HumanGuidanceEntry";
 import { AvailableMachines } from "./AvailableMachines";
@@ -22,6 +23,7 @@ export function HomeView({
   return (
     <>
       <HomeHero />
+      <MbmcDesktopSpotlight />
       <div className={`container ${styles.home}`}>
         <UncertaintyRecognition />
         <DecisionProblemFraming />

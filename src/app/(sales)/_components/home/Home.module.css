@@ -1,8 +1,10 @@
 .home {
   --home-divider: color-mix(in srgb, var(--border) 52%, transparent);
   --home-radius: 0.85rem;
-  --home-shadow-rest: 0 1px 2px rgb(24 24 23 / 3%), 0 10px 28px rgb(24 24 23 / 4%);
-  --home-shadow-emphasis: 0 2px 4px rgb(24 24 23 / 3%), 0 16px 38px rgb(24 24 23 / 5%);
+  --home-shadow-rest:
+    0 1px 2px rgb(24 24 23 / 3%), 0 10px 28px rgb(24 24 23 / 4%);
+  --home-shadow-emphasis:
+    0 2px 4px rgb(24 24 23 / 3%), 0 16px 38px rgb(24 24 23 / 5%);
   padding-block: 0 8rem;
 }
 
@@ -129,6 +131,307 @@
   z-index: 0;
   object-fit: cover;
   object-position: center 52%;
+}
+
+.desktopSpotlight {
+  overflow: hidden;
+  border-block: 1px solid color-mix(in srgb, var(--border) 58%, transparent);
+  background: #f2f1ed;
+}
+
+.desktopSpotlightInner {
+  width: min(88rem, calc(100% - 5rem));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(28rem, 0.9fr) minmax(32rem, 1.1fr);
+  align-items: center;
+  column-gap: clamp(2rem, 3.5vw, 4rem);
+  row-gap: 1.75rem;
+  padding-block: clamp(3.75rem, 5vw, 5rem) clamp(2.5rem, 4vw, 3.5rem);
+}
+
+.desktopSpotlightCopy {
+  position: relative;
+  z-index: 2;
+}
+
+.desktopSpotlightCopy h2 {
+  margin-bottom: 1rem;
+  font-size: clamp(3rem, 4.3vw, 4.5rem);
+  font-weight: 540;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.desktopSpotlightCopy .primaryAction {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.desktopSpotlightCopy .primaryAction svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-right: 0.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.desktopSpotlightLead {
+  max-width: 32rem;
+  margin-bottom: 0.55rem;
+  font-size: clamp(1.15rem, 1.7vw, 1.35rem);
+  font-weight: 570;
+  line-height: 1.45;
+}
+
+.desktopSpotlightDescription {
+  max-width: 31rem;
+  margin-bottom: 1.75rem;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.desktopSpotlightMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desktopSpotlightMetadata li {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 56%);
+  color: #555550;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.desktopSpotlightVisual {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  overflow: visible;
+  aspect-ratio: 1.45 / 1;
+}
+
+.desktopProductImage {
+  position: absolute;
+  z-index: 2;
+  right: 12%;
+  bottom: 1%;
+  width: 92%;
+  height: auto;
+  object-fit: contain;
+}
+
+.desktopProductIcon {
+  position: absolute;
+  z-index: 4;
+  top: 29%;
+  right: 2%;
+  width: clamp(4.5rem, 6vw, 6rem);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1.25rem 1.6rem rgb(24 24 23 / 16%));
+}
+
+.desktopAnnotation {
+  position: absolute;
+  z-index: 3;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.desktopAnnotationOne {
+  top: -10%;
+  right: -7%;
+  width: 28%;
+  transform: rotate(-2deg);
+}
+
+.desktopAnnotationTwo {
+  top: 50%;
+  right: -8%;
+  bottom: auto;
+  width: 28%;
+  transform: rotate(2deg);
+}
+
+.desktopAccessCode {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border));
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--accent-soft) 62%, #f8f7f3);
+}
+
+.desktopAccessCodeIcon,
+.desktopFeatureIcon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.desktopAccessCodeIcon {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.6rem;
+  background: rgb(255 255 255 / 68%);
+}
+
+.desktopAccessCode svg,
+.desktopFeatureIcon svg,
+.desktopBetaNote svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+}
+
+.desktopAccessCodeIcon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.desktopAccessCode p {
+  margin: 0;
+  color: #444842;
+  font-size: 0.88rem;
+}
+
+.desktopAccessCode strong {
+  display: inline-flex;
+  margin-left: 0.35rem;
+  padding: 0.18rem 0.52rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: 999px;
+  background: white;
+  color: var(--accent);
+  font-size: 0.82rem;
+}
+
+.desktopAccessCode div > span {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.desktopFeatureStrip {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border-block: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  list-style: none;
+}
+
+.desktopFeatureStrip li {
+  min-width: 0;
+  padding: 1.75rem clamp(1.15rem, 2vw, 2rem);
+  border-right: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.desktopFeatureStrip li:first-child {
+  padding-left: 0;
+}
+
+.desktopFeatureStrip li:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.desktopFeatureHeading {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.desktopFeatureIcon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
+  background: var(--accent-soft);
+}
+
+.desktopFeatureIcon svg {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+
+.desktopFeatureNumber {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 740;
+  letter-spacing: 0.07em;
+}
+
+.desktopFeatureStrip h3 {
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.desktopFeatureStrip p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.desktopBetaNote {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, var(--border));
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--accent-soft) 40%, #f8f7f3);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.desktopBetaNote p {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.desktopBetaNote p svg {
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--accent);
+}
+
+.desktopSupportLink {
+  color: var(--accent);
+  font-weight: 680;
+  text-decoration: none;
 }
 
 .section {
@@ -479,6 +782,11 @@
     box-shadow: 0 5px 14px rgb(24 24 23 / 10%);
     transform: translateY(-1px);
   }
+
+  .desktopSpotlightCopy .primaryAction:hover {
+    border-color: color-mix(in srgb, var(--accent) 88%, black);
+    background: color-mix(in srgb, var(--accent) 88%, black);
+  }
 }
 
 @media (min-width: 40rem) and (max-width: 55.99rem) {
@@ -488,6 +796,48 @@
 
   .problemImage img {
     object-position: center 58%;
+  }
+}
+
+@media (max-width: 67.99rem) {
+  .desktopSpotlightInner {
+    width: min(52rem, calc(100% - 4rem));
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .desktopSpotlightCopy {
+    max-width: 42rem;
+  }
+
+  .desktopSpotlightVisual {
+    width: min(100%, 48rem);
+    margin-inline: auto;
+  }
+
+  .desktopProductImage {
+    right: 0;
+    width: 96%;
+  }
+
+  .desktopProductIcon {
+    top: 24%;
+    right: 0;
+  }
+
+  .desktopAnnotationOne {
+    top: -10%;
+    right: 3%;
+    left: auto;
+  }
+
+  .desktopAnnotationTwo {
+    right: -2%;
+    bottom: -10%;
+  }
+
+  .desktopAnnotation {
+    display: none;
   }
 }
 
@@ -514,6 +864,40 @@
 
   .heroImage {
     object-position: 52% center;
+  }
+
+  .desktopSpotlightInner {
+    width: min(46rem, calc(100% - 3rem));
+    gap: 2.5rem;
+  }
+
+  .desktopSpotlightCopy {
+    max-width: 37rem;
+  }
+
+  .desktopSpotlightVisual {
+    width: min(100%, 44rem);
+    margin-inline: auto;
+  }
+
+  .desktopProductImage {
+    right: -2%;
+    width: 100%;
+  }
+
+  .desktopProductIcon {
+    top: 24%;
+    right: 6%;
+  }
+
+  .desktopAnnotationOne {
+    top: -7%;
+    right: 4%;
+    left: auto;
+  }
+
+  .desktopAnnotationTwo {
+    right: -7%;
   }
 }
 
@@ -561,6 +945,91 @@
     top: auto !important;
     height: 35% !important;
     object-position: 58% 56%;
+  }
+
+  .desktopSpotlightInner {
+    width: calc(100% - 2rem);
+    gap: 1.65rem;
+    padding-block: 3.75rem 2.75rem;
+  }
+
+  .desktopSpotlightCopy h2 {
+    font-size: clamp(2.35rem, 11vw, 3rem);
+  }
+
+  .desktopSpotlightCopy .actions {
+    width: 100%;
+  }
+
+  .desktopSpotlightCopy .actions a {
+    width: 100%;
+  }
+
+  .desktopSpotlightVisual {
+    aspect-ratio: 1.2 / 1;
+  }
+
+  .desktopProductImage {
+    right: -2%;
+    bottom: 3%;
+    width: 102%;
+  }
+
+  .desktopProductIcon {
+    top: -1%;
+    right: 1%;
+    width: 5.25rem;
+  }
+
+  .desktopAnnotation {
+    display: none;
+  }
+
+  .desktopFeatureStrip {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 1rem;
+  }
+
+  .desktopFeatureIcon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .desktopFeatureIcon svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .desktopAccessCode {
+    align-items: flex-start;
+    padding: 0.9rem;
+  }
+
+  .desktopAccessCode strong {
+    margin-top: 0.35rem;
+    margin-left: 0;
+  }
+
+  .desktopFeatureStrip li,
+  .desktopFeatureStrip li:first-child,
+  .desktopFeatureStrip li:last-child {
+    padding: 1.1rem 0;
+    border-right: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .desktopFeatureStrip li:last-child {
+    border-bottom: 0;
+  }
+
+  .desktopFeatureStrip li > span {
+    margin-bottom: 0.5rem;
+  }
+
+  .desktopBetaNote {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 0.9rem;
   }
 
   .section {
@@ -640,7 +1109,6 @@
     padding-block: clamp(5.5rem, 9vw, 8rem);
   }
 }
-
 
 .storySection {
   display: block;
