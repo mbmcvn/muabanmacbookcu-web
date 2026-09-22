@@ -133,7 +133,7 @@ export default function MacCheckerPage() {
               <a className={styles.primary} href={serialLookupUrl}>
                 Tra serial / Kiểm tra máy
               </a>
-              <Link className={styles.secondary} href="/phan-mem/mbmc-desktop">
+              <Link className={styles.secondary} href="/phan-mem">
                 Tìm hiểu MBMC Desktop
               </Link>
             </div>

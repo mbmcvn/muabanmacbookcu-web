@@ -44,6 +44,20 @@
   font-size: clamp(1.05rem, 2vw, 1.2rem);
   line-height: 1.7;
 }
+.hubHero .heroLead {
+  max-width: 43rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  line-height: 1.7;
+}
+.hubHero .heroAside {
+  max-width: 40rem;
+  margin-top: 0.8rem;
+  color: var(--subtle);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
 .downloadHero {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.65fr);
@@ -115,46 +129,78 @@
 .productGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: clamp(1rem, 2.2vw, 1.5rem);
   margin-top: clamp(3rem, 7vw, 5rem);
 }
 .productCard {
+  position: relative;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: clamp(1.4rem, 3vw, 2rem);
-  border: 1px solid var(--border);
-  border-radius: 1.1rem;
-  background: var(--surface);
-  box-shadow: 0 0.3rem 1.25rem rgb(24 24 23 / 4%);
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  border: 1px solid var(--border-strong);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 96%, #f7f4ed);
+  box-shadow: 0 0.45rem 1.6rem rgb(24 24 23 / 4%);
 }
-.productMark {
-  width: 3rem;
-  height: 3rem;
+.productIdentity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-right: 7rem;
+}
+.checkerMark,
+.productIcon {
+  width: clamp(3.6rem, 6vw, 4.5rem);
+  height: clamp(3.6rem, 6vw, 4.5rem);
+  flex: 0 0 auto;
+  border-radius: 0.95rem;
+}
+.checkerMark {
   display: grid;
   place-items: center;
-  margin-bottom: 1.5rem;
-  border-radius: 0.8rem;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 0.78rem;
+  border: 1px solid #c9d3cc;
+  background: #edf2ef;
+  color: #2f5d49;
+}
+.checkerMark span {
+  width: 2.55rem;
+  height: 2.55rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.75rem;
   font-weight: 780;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
+}
+.productIcon {
+  display: block;
+  object-fit: contain;
 }
 .cardHeading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
+  min-width: 0;
 }
 .cardHeading h2 {
   margin: 0;
   font-size: clamp(1.4rem, 3vw, 1.8rem);
   letter-spacing: -0.035em;
 }
+.productKind {
+  margin: 0 0 0.3rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 680;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .status {
+  position: absolute;
+  top: clamp(1.5rem, 3vw, 2.25rem);
+  right: clamp(1.5rem, 3vw, 2.25rem);
   padding: 0.25rem 0.55rem;
+  border: 1px solid #d7d7d1;
   border-radius: 999px;
   background: #f0f0ed;
   color: #65655f;
@@ -162,14 +208,14 @@
   font-weight: 680;
 }
 .productCard > p {
-  margin: 0.85rem 0 1.35rem;
+  margin: 1.5rem 0 1.25rem;
   color: var(--muted);
   line-height: 1.7;
 }
 .featureList {
   display: grid;
   gap: 0.55rem;
-  margin: 0 0 1.7rem;
+  margin: 0 0 1.5rem;
   padding: 0;
   list-style: none;
 }
@@ -188,6 +234,20 @@
   border-radius: 50%;
   background: var(--accent);
 }
+.metaPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: -0.15rem 0 1.5rem;
+}
+.metaPills span {
+  padding: 0.28rem 0.58rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -205,6 +265,470 @@
   border-radius: 0.5rem;
   font-weight: 680;
   text-decoration: none;
+}
+.primary,
+.secondary,
+.noteLink {
+  transition: border-color 0.18s ease, background-color 0.18s ease,
+    color 0.18s ease, transform 0.18s ease;
+}
+.primary:hover,
+.primary:focus-visible {
+  transform: translateY(-1px);
+}
+.secondary:hover,
+.secondary:focus-visible,
+.noteLink:hover,
+.noteLink:focus-visible {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+.originNote {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2rem;
+  margin-top: clamp(1rem, 2.5vw, 1.5rem);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+.originNote .eyebrow {
+  margin-bottom: 0.45rem;
+}
+.originNote > div > p:last-child {
+  max-width: 48rem;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.noteLink {
+  min-height: 2.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+  font-weight: 680;
+  text-decoration: none;
+}
+.desktopProduct {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.82fr) minmax(0, 1.18fr);
+  align-items: center;
+  gap: clamp(2rem, 4.5vw, 4rem);
+  margin-top: clamp(3rem, 7vw, 5rem);
+  padding: clamp(1.75rem, 4vw, 3rem);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 94%, #f3f0e8);
+}
+.desktopProductCopy {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+.releaseBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid #d5d5ce;
+  border-radius: 999px;
+  background: #f1f1ed;
+  color: #62625d;
+  font-size: 0.75rem;
+  font-weight: 680;
+}
+.productEyebrow {
+  margin: 1.25rem 0 0.45rem;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 720;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.desktopProduct h2 {
+  margin: 0;
+  font-size: clamp(2.25rem, 5vw, 3.8rem);
+  font-weight: 680;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+.desktopProductLead {
+  max-width: 31rem;
+  margin: 1.1rem 0 0;
+  color: #343431;
+  font-size: clamp(1.08rem, 2vw, 1.25rem);
+  font-weight: 590;
+  line-height: 1.5;
+}
+.desktopProductDescription {
+  max-width: 32rem;
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.desktopMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.desktopMetadata li {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 58%);
+  color: #5e5e59;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+.desktopActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+.downloadAction,
+.learnMoreAction {
+  min-height: 3.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  font-weight: 680;
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.downloadAction {
+  gap: 0.7rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--foreground);
+  background: var(--foreground);
+  color: white;
+}
+.downloadAction svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+.downloadAction span {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+  text-align: left;
+}
+.downloadAction strong {
+  font-size: 0.94rem;
+}
+.downloadAction small {
+  max-width: 17rem;
+  overflow: hidden;
+  color: rgb(255 255 255 / 65%);
+  font-size: 0.66rem;
+  font-weight: 520;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.learnMoreAction {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border-strong);
+  color: var(--foreground);
+}
+.downloadAction:hover,
+.downloadAction:focus-visible,
+.learnMoreAction:hover,
+.learnMoreAction:focus-visible {
+  transform: translateY(-1px);
+}
+.learnMoreAction:hover,
+.learnMoreAction:focus-visible {
+  border-color: var(--foreground);
+}
+.desktopProductVisual {
+  position: relative;
+  min-width: 0;
+  min-height: clamp(24rem, 38vw, 31rem);
+}
+.productLaptop,
+.productAppIcon,
+.productAnnotation {
+  position: absolute;
+  display: block;
+  height: auto;
+  object-fit: contain;
+}
+.productLaptop {
+  z-index: 1;
+  top: 17%;
+  left: -6%;
+  width: 90%;
+}
+.productAppIcon {
+  z-index: 3;
+  right: 2%;
+  bottom: 9%;
+  width: clamp(4.5rem, 8vw, 6.25rem);
+}
+.productAnnotation {
+  z-index: 2;
+  pointer-events: none;
+}
+.productAnnotationTop {
+  top: -5%;
+  right: -5%;
+  width: 43%;
+}
+.productAnnotationSide {
+  right: -3%;
+  bottom: 31%;
+  width: 34%;
+}
+.hubAccessCode {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+.hubAccessCode > span {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.5rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 760;
+}
+.hubAccessCode p {
+  margin: 0;
+  color: var(--muted);
+}
+.hubAccessCode strong {
+  color: var(--foreground);
+}
+.hubAccessCode small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.coreSection,
+.usageSection {
+  margin-top: clamp(2.75rem, 6vw, 4.5rem);
+}
+.compactSectionHeading {
+  max-width: 46rem;
+  margin-bottom: 1.25rem;
+}
+.compactSectionHeading h2 {
+  margin: 0 0 0.55rem;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+.compactSectionHeading p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.coreCapabilities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-block: 1px solid var(--border-strong);
+  list-style: none;
+}
+.coreCapabilities li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem;
+  padding: 1.25rem 1.1rem;
+  border-right: 1px solid var(--border);
+}
+.coreCapabilities li:last-child {
+  border-right: 0;
+}
+.capabilityNumber {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 740;
+  letter-spacing: 0.08em;
+}
+.coreCapabilities h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+.coreCapabilities p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.hubUsageSteps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-block: 1px solid var(--border-strong);
+  list-style: none;
+  counter-reset: hub-step;
+}
+.hubUsageSteps li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1rem 0.9rem;
+  border-right: 1px solid var(--border);
+  counter-increment: hub-step;
+}
+.hubUsageSteps li:last-child {
+  border-right: 0;
+}
+.hubUsageSteps li::before {
+  color: var(--accent);
+  content: counter(hub-step, decimal-leading-zero);
+  font-size: 0.7rem;
+  font-weight: 740;
+}
+.hubUsageSteps span {
+  font-size: 0.84rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.moduleSection {
+  margin-top: clamp(2.75rem, 6vw, 4.5rem);
+}
+.moduleHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.moduleHeading .eyebrow {
+  margin: 0 0 0.35rem;
+}
+.moduleHeading h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+.moduleStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-block: 1px solid var(--border-strong);
+  list-style: none;
+}
+.moduleStrip li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem;
+  padding: 1.35rem 1.1rem;
+  border-right: 1px solid var(--border);
+}
+.moduleStrip li:last-child {
+  border-right: 0;
+}
+.moduleIcon {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+  border-radius: 0.7rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.moduleIcon svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+}
+.moduleStrip h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+.moduleStrip p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.architectureNote {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+  padding: 1.25rem 1.4rem;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+}
+.architectureNote strong {
+  font-size: 1rem;
+}
+.architectureNote span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.hubBetaPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding: clamp(1.35rem, 3vw, 1.75rem);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+}
+.hubBetaPanel > div {
+  max-width: 45rem;
+}
+.hubBetaPanel .eyebrow {
+  margin-bottom: 0.4rem;
+}
+.hubBetaPanel h2 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+  letter-spacing: -0.03em;
+}
+.hubBetaPanel > div > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
 }
 .primary {
   background: var(--foreground);
@@ -442,6 +966,95 @@
     align-items: stretch;
     flex-direction: column;
   }
+  .hubPage {
+    padding-top: 1rem;
+  }
+  .hubHero h1 {
+    font-size: clamp(2.5rem, 14vw, 3.5rem);
+  }
+  .productIdentity {
+    padding-right: 0;
+  }
+  .status {
+    position: static;
+    align-self: flex-start;
+    margin-top: 1rem;
+  }
+  .originNote {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+  .noteLink {
+    width: 100%;
+  }
+  .desktopProduct {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.35rem;
+  }
+  .desktopProductVisual {
+    min-height: 18rem;
+  }
+  .productLaptop {
+    top: 17%;
+    left: -4%;
+    width: 94%;
+  }
+  .productAppIcon {
+    right: 1%;
+    bottom: 5%;
+    width: 4.25rem;
+  }
+  .productAnnotation {
+    display: none;
+  }
+  .desktopActions,
+  .downloadAction,
+  .learnMoreAction {
+    width: 100%;
+  }
+  .downloadAction small {
+    max-width: 15rem;
+  }
+  .hubAccessCode {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .hubAccessCode small {
+    grid-column: 2;
+  }
+  .coreCapabilities,
+  .hubUsageSteps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .coreCapabilities li,
+  .coreCapabilities li:last-child,
+  .hubUsageSteps li,
+  .hubUsageSteps li:last-child {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .coreCapabilities li:last-child,
+  .hubUsageSteps li:last-child {
+    border-bottom: 0;
+  }
+  .moduleStrip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .moduleStrip li,
+  .moduleStrip li:last-child {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .moduleStrip li:last-child {
+    border-bottom: 0;
+  }
+  .hubBetaPanel {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .hubBetaPanel .learnMoreAction {
+    width: 100%;
+  }
   .actions,
   .downloadActions,
   .primary,
@@ -456,5 +1069,41 @@
   }
   .usageSteps {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .desktopProduct {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .desktopProductVisual {
+    min-height: 29rem;
+  }
+  .productLaptop {
+    left: 2%;
+    width: 78%;
+  }
+  .productAnnotationTop {
+    right: 0;
+    width: 36%;
+  }
+  .productAnnotationSide {
+    right: 0;
+    width: 28%;
+  }
+  .moduleStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .moduleStrip li:nth-child(2) {
+    border-right: 0;
+  }
+  .moduleStrip li:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border);
+  }
+  .hubUsageSteps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .hubUsageSteps li:nth-child(3) {
+    border-right: 0;
+  }
+  .hubUsageSteps li:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--border);
   }
 }
