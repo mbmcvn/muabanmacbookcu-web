@@ -1,10 +1,16 @@
 import Image from "next/image";
-import Link from "next/link";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { MBMC_DESKTOP_DOWNLOAD_URL } from "@/config/public-destinations";
 import styles from "./Home.module.css";
 
 const accessCode = "mbmc.vn";
+const downloadFilename = "MBMC-Desktop-V1.0-Beta-Universal.zip";
+
+const metadata = [
+  { icon: "beta", label: "Public Beta" },
+  { icon: "device", label: "macOS 13+" },
+  { icon: "chip", label: "Apple Silicon + Intel" },
+] as const;
 
 const features = [
   {
@@ -47,6 +53,33 @@ function InfoIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 11v6m0-10h.01" />
+    </svg>
+  );
+}
+
+function MetadataIcon({ icon }: { icon: (typeof metadata)[number]["icon"] }) {
+  if (icon === "beta") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 3h6m-5 0v5l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3" />
+        <path d="M8 14h8" />
+      </svg>
+    );
+  }
+
+  if (icon === "device") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4" y="5" width="16" height="13" rx="1.5" />
+        <path d="M9 21h6m-3-3v3" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="7" y="7" width="10" height="10" rx="1.5" />
+      <path d="M9 2v3m3-3v3m3-3v3M9 19v3m3-3v3m3-3v3M2 9h3m-3 3h3m-3 3h3m14-6h3m-3 3h3m-3 3h3" />
     </svg>
   );
 }
@@ -97,24 +130,24 @@ export function MbmcDesktopSpotlight() {
           </p>
           <div className={styles.actions}>
             <a
-              className={styles.primaryAction}
+              className={`${styles.primaryAction} ${styles.desktopDownloadAction}`}
               href={MBMC_DESKTOP_DOWNLOAD_URL}
               download
             >
               <DownloadIcon />
-              Tải MBMC Desktop
+              <span>
+                <strong>Tải MBMC Desktop</strong>
+                <small>{downloadFilename}</small>
+              </span>
             </a>
-            <Link
-              className={styles.secondaryAction}
-              href="/phan-mem/mac-checker"
-            >
-              Xem Mac Checker
-            </Link>
           </div>
           <ul className={styles.desktopSpotlightMetadata} aria-label="Yêu cầu">
-            <li>Public Beta</li>
-            <li>macOS 13+</li>
-            <li>Apple Silicon + Intel</li>
+            {metadata.map((item) => (
+              <li key={item.label}>
+                <MetadataIcon icon={item.icon} />
+                {item.label}
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -164,23 +197,30 @@ export function MbmcDesktopSpotlight() {
             <p>
               Mã dùng phần mềm là: <strong>{accessCode}</strong>
             </p>
-            <span>Nhập mã trong ứng dụng để bắt đầu sử dụng.</span>
           </div>
+          <span className={styles.desktopAccessCodeHelper}>
+            Nhập mã trong ứng dụng để bắt đầu sử dụng.
+          </span>
         </div>
 
         <ol className={styles.desktopFeatureStrip}>
           {features.map((feature, index) => (
             <li key={feature.title}>
-              <div className={styles.desktopFeatureHeading}>
-                <span className={styles.desktopFeatureIcon}>
-                  <FeatureIcon icon={feature.icon} />
-                </span>
-                <span className={styles.desktopFeatureNumber} aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+              <span className={styles.desktopFeatureIcon}>
+                <FeatureIcon icon={feature.icon} />
+              </span>
+              <div className={styles.desktopFeatureContent}>
+                <div className={styles.desktopFeatureTitleRow}>
+                  <span
+                    className={styles.desktopFeatureNumber}
+                    aria-hidden="true"
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3>{feature.title}</h3>
+                </div>
+                <p>{feature.description}</p>
               </div>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
             </li>
           ))}
         </ol>
