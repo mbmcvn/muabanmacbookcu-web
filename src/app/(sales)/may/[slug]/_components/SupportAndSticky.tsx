@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { publicSalesPolicies } from "@/config/public-sales-policies";
 import {
@@ -13,7 +13,7 @@ import {
 export function PoliciesAndSupport({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const summary = machine.summary;
   const displayName = formatPublicMachineDisplayName(summary.displayName);
@@ -59,7 +59,7 @@ export function shouldShowStickyContact({
 export function PublicMachineStickyBar({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const summary = machine.summary;
@@ -67,7 +67,8 @@ export function PublicMachineStickyBar({
   const specs = formatPublicMachineSpecs({
     chip: summary.chip,
     ramGb: summary.ramGb,
-    storageGb: summary.ssdGb,
+    storageGb: summary.storage.capacityGb,
+    storageType: summary.storage.type,
   });
 
   useEffect(() => {

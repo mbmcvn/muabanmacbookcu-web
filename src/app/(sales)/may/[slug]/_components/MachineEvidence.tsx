@@ -1,4 +1,4 @@
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import { buildMachineEvidence } from "./machine-evidence-presentation";
 import { MachineDetailIcon } from "./MachineDetailIcon";
 
@@ -12,12 +12,13 @@ const evidenceIcons = {
 export function MachineEvidenceGrid({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const summary = machine.summary;
   const evidence = buildMachineEvidence({
-    batteryHealthPercent: summary.batteryHealthPercent,
-    cycleCount: summary.cycleCount,
+    machineFamily: summary.machineFamily,
+    batteryHealthPercent: summary.familyFacts.machineFamily === "macbook" ? summary.familyFacts.batteryHealthPercent : null,
+    cycleCount: summary.familyFacts.machineFamily === "macbook" ? summary.familyFacts.cycleCount : null,
     cosmeticGrade: summary.cosmeticGrade,
     conditionSummary: summary.conditionSummary,
     includedItems: machine.includedItems,

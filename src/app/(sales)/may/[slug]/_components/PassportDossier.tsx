@@ -1,4 +1,4 @@
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import {
   formatMachineAvailability,
   formatPublicDate,
@@ -9,7 +9,7 @@ import { MachineDetailIcon } from "./MachineDetailIcon";
 export function PassportDossier({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const passport = machine.passport;
   return (

@@ -1,7 +1,7 @@
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 
 export function buildPublicLimitations(
-  machine: PublicMachineDetailV2,
+  machine: PublicMachineDetailV3,
 ): string[] {
   const limitations: string[] = [];
   if (machine.summary.inspection.status === "not_available") {

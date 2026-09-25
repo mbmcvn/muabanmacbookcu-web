@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { PublicMachineSummaryV1 } from "@/models";
+import type { PublicMachineSummaryV2 } from "@/models";
 import type { PublicInventoryLoadState } from "@/data/machines/public-inventory-load-state";
 import { PageState } from "@/components/ui/PageState";
 import { MachineCard } from "../../may-dang-co/_components/MachineCard";
@@ -10,7 +10,7 @@ import styles from "./Home.module.css";
 export function AvailableMachines({
   state,
 }: {
-  state: PublicInventoryLoadState<PublicMachineSummaryV1>;
+  state: PublicInventoryLoadState<PublicMachineSummaryV2>;
 }) {
   const machines =
     state.status === "ready" ? selectHomepageMachines(state.machines) : [];

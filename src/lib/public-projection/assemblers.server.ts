@@ -1,16 +1,21 @@
 import {
   PUBLIC_MACHINE_DETAIL_V1_SCHEMA,
   PUBLIC_MACHINE_DETAIL_V2_SCHEMA,
+  PUBLIC_MACHINE_DETAIL_V3_SCHEMA,
   PUBLIC_MACHINE_PASSPORT_V1_SCHEMA,
   PUBLIC_MACHINE_SUMMARY_V1_SCHEMA,
+  PUBLIC_MACHINE_SUMMARY_V2_SCHEMA,
   type PublicImage,
   type PublicInspection,
   type PublicMachineDetailV1,
   type PublicMachineDetailV2,
+  type PublicMachineDetailV3,
   type PublicMachinePassportV1,
   type PublicMachineSummaryV1,
+  type PublicMachineSummaryV2,
   type PublicWarranty,
 } from "./contracts.ts";
+import type { PublicProductLine } from "./family-applicability.ts";
 import type {
   PublicKernelImage,
   PublicProjectionKernel,
@@ -80,6 +85,33 @@ export function assemblePublicMachineSummaryV1(
     contextualLabel: kernel.contextualLabel,
     publishedAt: kernel.publishedAt,
     updatedAt: kernel.updatedAt,
+  };
+}
+
+export function assemblePublicMachineSummaryV2(
+  kernel: PublicProjectionKernel,
+  productLine: PublicProductLine,
+): PublicMachineSummaryV2 {
+  const legacy = assemblePublicMachineSummaryV1(kernel);
+  const machineFamily = kernel.machineFamily!;
+  const familyFacts = machineFamily === "macbook"
+    ? { machineFamily, batteryHealthPercent: kernel.batteryHealthPercent, cycleCount: kernel.cycleCount, displaySizeInches: kernel.screenSizeInches }
+    : machineFamily === "imac"
+      ? { machineFamily, displaySizeInches: kernel.screenSizeInches }
+      : { machineFamily };
+  return {
+    schemaVersion: PUBLIC_MACHINE_SUMMARY_V2_SCHEMA,
+    code: legacy.code, slug: legacy.slug, displayName: legacy.displayName,
+    machineFamily, productLine, year: legacy.year, chip: legacy.chip,
+    ramGb: legacy.ramGb,
+    storage: { capacityGb: kernel.ssdGb, type: kernel.storageType! },
+    color: legacy.color, price: { ...legacy.price }, availability: legacy.availability,
+    reservationKind: legacy.reservationKind,
+    coverImage: { ...legacy.coverImage }, imageCount: legacy.imageCount,
+    familyFacts, cosmeticGrade: legacy.cosmeticGrade,
+    conditionSummary: legacy.conditionSummary, warranty: { ...legacy.warranty },
+    inspection: { ...legacy.inspection }, contextualLabel: legacy.contextualLabel,
+    publishedAt: legacy.publishedAt, updatedAt: legacy.updatedAt,
   };
 }
 
@@ -175,5 +207,28 @@ export function assemblePublicMachineDetailV2(
   return {
     schemaVersion: PUBLIC_MACHINE_DETAIL_V2_SCHEMA,
     ...assemblePublicMachineDetailCurrent(kernel),
+  };
+}
+
+export function assemblePublicMachineDetailV3(
+  kernel: PublicProjectionKernel,
+  productLine: PublicProductLine,
+): PublicMachineDetailV3 {
+  const current = assemblePublicMachineDetailCurrent(kernel);
+  const { machineExplanation: currentExplanation, ...applicableCurrent } = current;
+  const machineExplanation = currentExplanation
+    ? {
+        ...currentExplanation,
+        blocks: kernel.machineFamily === "macbook"
+          ? currentExplanation.blocks
+          : currentExplanation.blocks.filter((block) => block.domain !== "battery"),
+      }
+    : undefined;
+  return {
+    schemaVersion: PUBLIC_MACHINE_DETAIL_V3_SCHEMA,
+    ...applicableCurrent,
+    summary: assemblePublicMachineSummaryV2(kernel, productLine),
+    ...(machineExplanation?.blocks.length ? { machineExplanation } : {}),
+    relatedMachines: [],
   };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import {
   buildSpecificationGroups,
   buildSpecificationSummary,
@@ -11,13 +11,13 @@ import {
 export function PublicSpecifications({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const panelId = useId();
   const specifications = specificationsForMachine(machine);
-  const summary = buildSpecificationSummary(specifications);
-  const groups = buildSpecificationGroups(specifications);
+  const summary = buildSpecificationSummary(specifications, machine.summary.machineFamily);
+  const groups = buildSpecificationGroups(specifications, machine.summary.machineFamily);
   if (!groups.length) return null;
 
   return (

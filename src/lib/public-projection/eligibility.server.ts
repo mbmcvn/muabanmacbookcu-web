@@ -110,6 +110,8 @@ export function validatePublicMachineEligibility(
       modelSpecKey: facts.modelSpecKey,
       verifications: facts.verifications.map((item) => ({ ...item })),
       family: facts.family,
+      machineFamily: facts.machineFamily,
+      storageType: facts.storageType,
       year: facts.year,
       screenSizeInches: facts.screenSizeInches,
       chip: facts.chip!.trim(),

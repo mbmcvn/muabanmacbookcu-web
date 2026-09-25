@@ -1,6 +1,6 @@
 import {
-  projectPublicMachineV2,
-  type PublicMachineProjectionV2Result,
+  projectPublicMachineV3,
+  type PublicMachineProjectionV3Result,
 } from "../../lib/public-projection/project-machine.server.ts";
 import type {
   PublicImageInput,
@@ -8,11 +8,13 @@ import type {
 } from "../../lib/public-projection/kernel.server.ts";
 import type { ProjectionDenialReason } from "../../lib/public-projection/eligibility.server.ts";
 import type {
-  PublicMachineDetailV2,
   PublicMachineExplanationV0,
   PublicImageVariants,
-  PublicMachineSummaryV1,
+  PublicMachineDetailV3,
+  PublicMachineFamily,
+  PublicMachineSummaryV2,
 } from "../../lib/public-projection/contracts.ts";
+import { PUBLIC_STORAGE_TYPES, type FamilyApplicabilityReason, type PublicStorageType } from "../../lib/public-projection/family-applicability.ts";
 import {
   isVerificationCode,
   type MachineVerificationItem,
@@ -54,6 +56,51 @@ function family(model: string | null): "Air" | "Pro" | "Unknown" {
   if (/macbook\s+air/i.test(model ?? "")) return "Air";
   if (/macbook\s+pro/i.test(model ?? "")) return "Pro";
   return "Unknown";
+}
+function machineFamily(value: unknown): PublicMachineFamily | null {
+  return value === "macbook" || value === "imac" || value === "mac-mini" ? value : null;
+}
+function storageType(value: unknown): PublicStorageType | null {
+  return typeof value === "string" && PUBLIC_STORAGE_TYPES.includes(value as PublicStorageType)
+    ? (value as PublicStorageType)
+    : null;
+}
+
+const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
+const PHONE_PATTERN = /(?:\+?\d[\s().-]*){9,}/;
+const SERIAL_PATTERN = /\b(?:serial|s\/n|sn)\s*[:#-]?\s*[a-z0-9]{8,16}\b|\b(?=[A-Z0-9]{10,12}\b)(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]+\b/i;
+function publicUrlIsValid(value: string | null): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    const privateHost = host === "localhost" || host.endsWith(".local") || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(?:1[6-9]|2\d|3[01])\./.test(host);
+    const sensitiveQuery = [...url.searchParams.keys()].some((key) => /^(?:token|signature|x-amz-signature)$/i.test(key));
+    return url.protocol === "https:" && !url.username && !url.password && !privateHost && !sensitiveQuery;
+  } catch { return false; }
+}
+function privacyValid(row: UnknownRow): boolean {
+  const editorial = oneRow(row.machine_editorials);
+  const publication = oneRow(row.machine_publications);
+  const publicText = [
+    row.machine_id,
+    row.model_text,
+    row.chip,
+    row.color,
+    publication?.slug,
+    editorial?.contextual_label,
+    editorial?.public_condition_summary,
+    editorial?.included_items,
+    editorial?.policy_applicability,
+    row.machine_explanation,
+  ];
+  if (publicText.some((value) => {
+    const serialized = JSON.stringify(value);
+    return UUID_PATTERN.test(serialized) || EMAIL_PATTERN.test(serialized) || PHONE_PATTERN.test(serialized) || SERIAL_PATTERN.test(serialized);
+  })) return false;
+  const images = Array.isArray(row.machine_images) ? row.machine_images : [];
+  return images.every((image) => !isRow(image) || text(image.visibility) !== "public" || !["approved", "listing"].includes(text(image.image_stage) ?? "") || publicUrlIsValid(text(image.public_url)));
 }
 function publicAvailability(value: unknown): {
   reservations: ("manual" | "deposit")[];
@@ -276,6 +323,8 @@ export function normalizePublicCandidate(
     modelSpecKey: text(value.model_spec_key),
     verifications: machineVerifications(value.machine_verifications),
     family: family(model),
+    machineFamily: machineFamily(value.machine_family),
+    storageType: storageType(value.storage_type),
     chip: text(value.chip),
     ramGb: integer(value.ram_gb),
     ssdGb: integer(value.ssd_gb),
@@ -320,7 +369,7 @@ export function normalizePublicCandidate(
       : null,
     machineExplanation: normalizeMachineExplanation(value.machine_explanation),
     images: canonicalPublicImages(value.machine_images),
-    privacyValid: true,
+    privacyValid: privacyValid(value),
   };
 }
 
@@ -339,7 +388,7 @@ export type PublicCandidateDiagnostic = {
 };
 
 const ELIGIBILITY_DIAGNOSTICS: Record<
-  ProjectionDenialReason,
+  ProjectionDenialReason | FamilyApplicabilityReason,
   Pick<PublicCandidateDiagnostic, "validationPath" | "message">
 > = {
   publication_not_published: {
@@ -391,6 +440,14 @@ const ELIGIBILITY_DIAGNOSTICS: Record<
     validationPath: "candidate.privacy",
     message: "Candidate failed the public privacy boundary.",
   },
+  machine_family_invalid: { validationPath: "machine.machineFamily", message: "Canonical machine family is missing or invalid." },
+  storage_type_invalid: { validationPath: "machine.storageType", message: "Canonical storage type is missing or invalid." },
+  storage_capacity_invalid: { validationPath: "machine.storage", message: "Storage capacity is missing or invalid." },
+  storage_type_not_applicable: { validationPath: "machine.storageType", message: "Storage type is not applicable to this family." },
+  product_line_invalid: { validationPath: "machine.productLine", message: "Product line cannot be determined for the canonical family." },
+  battery_facts_not_applicable: { validationPath: "machine.battery", message: "Battery facts are not applicable to this family." },
+  display_facts_not_applicable: { validationPath: "machine.display", message: "Display facts are not applicable to this family." },
+  display_size_invalid: { validationPath: "machine.display", message: "Display size is invalid." },
 };
 
 function safeMachineCode(value: unknown): string | undefined {
@@ -407,8 +464,8 @@ function safeMachineCode(value: unknown): string | undefined {
 export function projectPublicCandidates(
   values: unknown[],
   onDiagnostic: (diagnostic: PublicCandidateDiagnostic) => void = () => {},
-): PublicMachineProjectionV2Result[] {
-  const projected: PublicMachineProjectionV2Result[] = [];
+): PublicMachineProjectionV3Result[] {
+  const projected: PublicMachineProjectionV3Result[] = [];
   for (const value of values) {
     const machineCode = safeMachineCode(value);
     let candidate: PublicMachineProjectionInput | null;
@@ -438,7 +495,7 @@ export function projectPublicCandidates(
     }
 
     try {
-      const result = projectPublicMachineV2(candidate);
+      const result = projectPublicMachineV3(candidate);
       projected.push(result);
       if (!result.eligible) {
         for (const exclusionReason of result.reasons) {
@@ -471,7 +528,7 @@ export function projectPublicCandidates(
   return projected;
 }
 
-export function publicSummaries(values: unknown[]): PublicMachineSummaryV1[] {
+export function publicSummaries(values: unknown[]): PublicMachineSummaryV2[] {
   return projectPublicCandidates(values)
     .filter((result) => result.eligible)
     .map((result) => result.summary)
@@ -485,7 +542,7 @@ export function publicSummaries(values: unknown[]): PublicMachineSummaryV1[] {
 export function publicDetailBySlug(
   values: unknown[],
   slug: string,
-): PublicMachineDetailV2 | null {
+): PublicMachineDetailV3 | null {
   for (const result of projectPublicCandidates(values)) {
     if (result.eligible && result.detail.summary.slug === slug)
       return result.detail;

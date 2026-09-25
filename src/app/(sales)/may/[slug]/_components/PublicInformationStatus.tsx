@@ -1,4 +1,4 @@
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import {
   formatMachineAvailability,
   formatPublicMachineDisplayName,
@@ -9,7 +9,7 @@ import { MachineDetailIcon } from "./MachineDetailIcon";
 export function VerifiedPublicInformation({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const summary = machine.summary;
   return (
@@ -62,7 +62,7 @@ export function VerifiedPublicInformation({
 export function PublicInformationLimitations({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const limitations = buildPublicLimitations(machine);
   if (!limitations.length) return null;

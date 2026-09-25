@@ -62,6 +62,9 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .search-field input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--foreground); font-size: 1rem; }
 .search-field input::placeholder { color: #85857e; }
 .facet-filter { margin-top: .8rem; }
+.machine-family-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 .8rem; }
+.machine-family-filters button { min-height: 2.65rem; padding: .5rem .95rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--foreground); cursor: pointer; font: inherit; font-weight: 650; }
+.machine-family-filters button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: white; }
 .facet-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; }
 .facet-group { position: relative; }
 .facet-group[data-open="true"] { z-index: 12; }

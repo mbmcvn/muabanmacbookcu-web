@@ -18,9 +18,11 @@ function row(
     status: "new_in_stock",
     deleted_at: null,
     model_text: "MacBook Air M1",
+    machine_family: "macbook",
     chip: "Apple M1",
     ram_gb: 8,
     ssd_gb: 256,
+    storage_type: "ssd",
     color: "Space Gray",
     retail_price_expected: 15_000_000,
     battery_health: 95,
@@ -157,7 +159,7 @@ test("reserved public UI removes normal purchase actions", () => {
     ),
     "utf8",
   );
-  assert.match(card, /reserved \? "Xem thông tin"/);
+  assert.match(card, /reserved \?[\s\S]*"Xem thông tin"/);
   assert.match(detail, /Các thao tác mua được tạm khóa/);
   assert.match(detail, /reserved \?/);
 });

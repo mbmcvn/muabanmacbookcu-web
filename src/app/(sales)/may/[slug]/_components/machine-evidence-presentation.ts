@@ -12,10 +12,10 @@ export interface MachineEvidence {
   wide?: boolean;
 }
 
-function formatIncludedItems(items: IncludedItemsInput): string | null {
+function formatIncludedItems(items: IncludedItemsInput, machineFamily: "macbook" | "imac" | "mac-mini"): string | null {
   const known = [
-    items.charger === true ? "Sạc" : null,
-    items.cable === true ? "Cáp" : null,
+    items.charger === true ? (machineFamily === "macbook" ? "Sạc" : "Dây nguồn") : null,
+    items.cable === true ? (machineFamily === "macbook" ? "Cáp" : "Dây nguồn") : null,
     items.box === true ? "Hộp" : null,
     items.bag === true ? "Túi chống sốc" : null,
     ...items.accessories,
@@ -43,20 +43,22 @@ export function publicConditionDescription(
 }
 
 export function buildMachineEvidence(input: {
+  machineFamily?: "macbook" | "imac" | "mac-mini";
   batteryHealthPercent: number | null;
   cycleCount: number | null;
   cosmeticGrade: string | null;
   conditionSummary: string;
   includedItems: IncludedItemsInput;
 }): MachineEvidence[] {
-  const accessories = formatIncludedItems(input.includedItems);
+  const machineFamily = input.machineFamily ?? "macbook";
+  const accessories = formatIncludedItems(input.includedItems, machineFamily);
   const condition = publicConditionDescription(
     input.conditionSummary,
     input.includedItems,
   );
   return [
-    input.batteryHealthPercent === null ? null : { label: "Pin", value: `${input.batteryHealthPercent}%` },
-    input.cycleCount === null ? null : { label: "Chu kỳ sạc", value: `${input.cycleCount} lần` },
+    machineFamily !== "macbook" || input.batteryHealthPercent === null ? null : { label: "Pin", value: `${input.batteryHealthPercent}%` },
+    machineFamily !== "macbook" || input.cycleCount === null ? null : { label: "Chu kỳ sạc", value: `${input.cycleCount} lần` },
     input.cosmeticGrade === null ? null : { label: "Ngoại hình", value: `Hạng ${input.cosmeticGrade}` },
     accessories === null ? null : { label: "Phụ kiện đi kèm", value: accessories, wide: true },
     condition === null ? null : { label: "Mô tả tình trạng công khai", value: condition, wide: true },

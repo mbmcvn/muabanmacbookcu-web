@@ -4,6 +4,10 @@ export const PUBLIC_MACHINE_DETAIL_V1_SCHEMA =
   "public-machine-detail.v1" as const;
 export const PUBLIC_MACHINE_DETAIL_V2_SCHEMA =
   "public-machine-detail.v2" as const;
+export const PUBLIC_MACHINE_SUMMARY_V2_SCHEMA =
+  "public-machine-summary.v2" as const;
+export const PUBLIC_MACHINE_DETAIL_V3_SCHEMA =
+  "public-machine-detail.v3" as const;
 export const PUBLIC_MACHINE_PASSPORT_V1_SCHEMA =
   "public-machine-passport.v1" as const;
 
@@ -40,6 +44,25 @@ export type PublicRepairStatus =
 export type PublicSourceVerification =
   "verified" | "partially_verified" | "not_verified" | "unknown";
 export type PublicCosmeticGrade = string;
+export type PublicMachineFamily = "macbook" | "imac" | "mac-mini";
+export type PublicProductLine =
+  | "macbook-air"
+  | "macbook-pro"
+  | "imac"
+  | "mac-mini";
+export type PublicStorage = {
+  capacityGb: number;
+  type: "ssd" | "fusion" | "hdd";
+};
+export type PublicMachineFamilyFacts =
+  | {
+      machineFamily: "macbook";
+      batteryHealthPercent: number | null;
+      cycleCount: number | null;
+      displaySizeInches: number | null;
+    }
+  | { machineFamily: "imac"; displaySizeInches: number | null }
+  | { machineFamily: "mac-mini" };
 export type {
   PublicMachineVerification,
   VerificationCode,
@@ -140,6 +163,33 @@ export interface PublicMachineSummaryV1 {
   updatedAt: ISODateTime | null;
 }
 
+export interface PublicMachineSummaryV2 {
+  schemaVersion: typeof PUBLIC_MACHINE_SUMMARY_V2_SCHEMA;
+  code: string;
+  slug: string;
+  displayName: string;
+  machineFamily: PublicMachineFamily;
+  productLine: PublicProductLine;
+  year: number | null;
+  chip: string | null;
+  ramGb: number | null;
+  storage: PublicStorage;
+  color: string | null;
+  price: PublicMoney;
+  availability: PublicAvailability;
+  reservationKind: PublicReservationKind | null;
+  coverImage: PublicImage;
+  imageCount: number;
+  familyFacts: PublicMachineFamilyFacts;
+  cosmeticGrade: PublicCosmeticGrade | null;
+  conditionSummary: string;
+  warranty: PublicWarranty;
+  inspection: PublicInspection;
+  contextualLabel: string | null;
+  publishedAt: ISODateTime | null;
+  updatedAt: ISODateTime | null;
+}
+
 export interface PublicMachinePassportV1 {
   schemaVersion: typeof PUBLIC_MACHINE_PASSPORT_V1_SCHEMA;
   code: string;
@@ -195,6 +245,23 @@ export interface PublicMachineDetailV2 {
   relatedMachines: PublicMachineSummaryV1[];
 }
 
+export interface PublicMachineDetailV3 {
+  schemaVersion: typeof PUBLIC_MACHINE_DETAIL_V3_SCHEMA;
+  summary: PublicMachineSummaryV2;
+  modelSpecKey: string | null;
+  verifications: PublicMachineVerification[];
+  gallery: PublicImage[];
+  suitableAudiences?: PublicSuitableAudienceV0[];
+  decisionSpecifications: PublicFact[];
+  technicalSpecifications: Record<string, string | number | boolean | null>;
+  includedItems: PublicIncludedItems;
+  policyApplicability: string[];
+  policySummary?: PublicPolicySummary;
+  machineExplanation?: PublicMachineExplanationV0;
+  passport: PublicMachinePassportV1;
+  relatedMachines: PublicMachineSummaryV2[];
+}
+
 export const PUBLIC_MACHINE_SUMMARY_V1_KEYS = [
   "schemaVersion",
   "code",
@@ -222,6 +289,14 @@ export const PUBLIC_MACHINE_SUMMARY_V1_KEYS = [
   "publishedAt",
   "updatedAt",
 ] as const satisfies readonly (keyof PublicMachineSummaryV1)[];
+
+export const PUBLIC_MACHINE_SUMMARY_V2_KEYS = [
+  "schemaVersion", "code", "slug", "displayName", "machineFamily",
+  "productLine", "year", "chip", "ramGb", "storage", "color", "price",
+  "availability", "reservationKind", "coverImage", "imageCount", "familyFacts",
+  "cosmeticGrade", "conditionSummary", "warranty", "inspection",
+  "contextualLabel", "publishedAt", "updatedAt",
+] as const satisfies readonly (keyof PublicMachineSummaryV2)[];
 
 export const PUBLIC_MACHINE_DETAIL_V1_KEYS = [
   "schemaVersion",
@@ -259,6 +334,13 @@ export const PUBLIC_MACHINE_DETAIL_V2_KEYS = [
   "passport",
   "relatedMachines",
 ] as const satisfies readonly (keyof PublicMachineDetailV2)[];
+
+export const PUBLIC_MACHINE_DETAIL_V3_KEYS = [
+  "schemaVersion", "summary", "modelSpecKey", "verifications", "gallery",
+  "suitableAudiences", "decisionSpecifications", "technicalSpecifications",
+  "includedItems", "policyApplicability", "policySummary", "machineExplanation",
+  "passport", "relatedMachines",
+] as const satisfies readonly (keyof PublicMachineDetailV3)[];
 
 export const PUBLIC_MACHINE_PASSPORT_V1_KEYS = [
   "schemaVersion",

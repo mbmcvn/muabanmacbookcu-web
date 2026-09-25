@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import {
   useContactChannel,
   withContactChannel,
@@ -18,7 +18,7 @@ import { MachinePolicySummary } from "./MachinePolicySummary";
 export function PublicMachineDetailView({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   const { channel } = useContactChannel();
   const summary = machine.summary;

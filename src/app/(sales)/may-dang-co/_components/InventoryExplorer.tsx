@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { PublicMachineSummaryV1 } from "@/models";
+import type { PublicMachineSummaryV2 } from "@/models";
 import {
   chipFacetValues,
   countFacetOption,
@@ -18,6 +18,7 @@ import {
   sortNormalizedPublicInventory,
   type FacetGroup,
   type InventoryUrlState,
+  type FamilyFacet,
   type MultiFacetGroup,
 } from "@/data/machines/public-inventory-query";
 import { InventoryEmptyState } from "./InventoryEmptyState";
@@ -40,7 +41,7 @@ const defaultState = (): InventoryUrlState => ({
 export function InventoryExplorer({
   machines,
 }: {
-  machines: PublicMachineSummaryV1[];
+  machines: PublicMachineSummaryV2[];
 }) {
   const { channel, referralEvidence } = useContactChannel();
   const [state, setState] = useState<InventoryUrlState>(defaultState);
@@ -110,6 +111,31 @@ export function InventoryExplorer({
 
   return (
     <>
+      <nav className="machine-family-filters" aria-label="Lọc theo loại máy">
+        {([
+          { value: null, label: "Tất cả" },
+          { value: "macbook", label: "MacBook" },
+          { value: "imac", label: "iMac" },
+          { value: "mac-mini", label: "Mac mini" },
+        ] satisfies Array<{ value: FamilyFacet | null; label: string }>).map((option) => {
+          const selected = option.value === null
+            ? state.facets.family.length === 0
+            : state.facets.family.length === 1 && state.facets.family[0] === option.value;
+          return (
+            <button
+              key={option.label}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => commit({
+                ...state,
+                facets: { ...state.facets, family: option.value ? [option.value] : [] },
+              })}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </nav>
       <div className="inventory-controls">
         <label className="search-field" htmlFor="inventory-search">
           <span className="visually-hidden">Tìm trong danh sách máy</span>
@@ -117,7 +143,7 @@ export function InventoryExplorer({
           <input
             id="inventory-search"
             type="search"
-            placeholder="Tìm theo model, chip, RAM, màu…"
+            placeholder="Tìm model, chip, RAM, SSD, Fusion Drive, HDD…"
             value={state.query}
             onChange={(event) =>
               commit({ ...state, query: event.target.value }, "replace")

@@ -1,4 +1,4 @@
-import type { PublicMachineDetailV2 } from "../../../../../lib/public-projection/contracts.ts";
+import type { PublicMachineDetailV3 } from "../../../../../lib/public-projection/contracts.ts";
 import {
   buildPublicMachineSpecifications,
   type PublicMachineSpecifications,
@@ -44,7 +44,7 @@ function rows(
 // Retained for the versioned DTO's legacy allow-listed field. New detail UI
 // uses the typed machine/model boundary below.
 export function buildPublicSpecificationRows(
-  machine: PublicMachineDetailV2,
+  machine: PublicMachineDetailV3,
 ): PublicSpecificationRow[] {
   return Object.entries(legacyTrustedTechnicalLabels).flatMap(
     ([key, label]) => {
@@ -55,14 +55,14 @@ export function buildPublicSpecificationRows(
 }
 
 export function specificationsForMachine(
-  machine: PublicMachineDetailV2,
+  machine: PublicMachineDetailV3,
 ): PublicMachineSpecifications {
   const summary = machine.summary;
   return buildPublicMachineSpecifications({
     machine: {
       chip: summary.chip,
       ram: summary.ramGb === null ? null : `${summary.ramGb} GB`,
-      storage: summary.ssdGb === null ? null : `${summary.ssdGb} GB`,
+      storage: `${summary.storage.capacityGb} GB ${summary.storage.type === "ssd" ? "SSD" : summary.storage.type === "fusion" ? "Fusion Drive" : "HDD"}`,
       color: summary.color,
     },
     exactModelIdentifier: machine.modelSpecKey,
@@ -71,18 +71,20 @@ export function specificationsForMachine(
 
 export function buildSpecificationSummary(
   specifications: PublicMachineSpecifications,
+  machineFamily: "macbook" | "imac" | "mac-mini" = "macbook",
 ): PublicSpecificationRow[] {
   return rows([
     row("Chip", specifications.machine.chip),
     row("RAM", specifications.machine.ram),
-    row("SSD", specifications.machine.storage),
-    row("Màn hình", specifications.model?.displaySize),
+    row("Lưu trữ", specifications.machine.storage),
+    machineFamily === "mac-mini" ? null : row("Màn hình", specifications.model?.displaySize),
     row("Màu sắc", specifications.machine.color),
   ]);
 }
 
 export function buildSpecificationGroups(
   specifications: PublicMachineSpecifications,
+  machineFamily: "macbook" | "imac" | "mac-mini" = "macbook",
 ): PublicSpecificationGroup[] {
   const machine = specifications.machine;
   const model = specifications.model;
@@ -94,10 +96,10 @@ export function buildSpecificationGroups(
         row("CPU", machine.cpu),
         row("GPU", machine.gpu),
         row("RAM", machine.ram),
-        row("SSD", machine.storage),
+        row("Lưu trữ", machine.storage),
       ]),
     },
-    {
+    machineFamily === "mac-mini" ? null : {
       title: "Màn hình",
       rows: rows([
         row("Kích thước", model?.displaySize),
@@ -117,13 +119,13 @@ export function buildSpecificationGroups(
       title: "Thiết kế và tiện ích",
       rows: rows([
         row("Màu sắc", machine.color),
-        row("Bàn phím", machine.keyboardLayout),
-        row("Camera", model?.camera),
-        row("Touch ID", model?.touchId),
+        machineFamily === "macbook" ? row("Bàn phím", machine.keyboardLayout) : null,
+        machineFamily === "mac-mini" ? null : row("Camera", model?.camera),
+        machineFamily === "macbook" ? row("Touch ID", model?.touchId) : null,
         row("Khối lượng", model?.weight),
-        row("Bộ sạc tương thích", model?.compatibleCharger),
+        machineFamily === "macbook" ? row("Bộ sạc tương thích", model?.compatibleCharger) : null,
         row("Hệ điều hành hiện tại", machine.currentOs),
       ]),
     },
-  ].filter((group) => group.rows.length > 0);
+  ].filter((group): group is PublicSpecificationGroup => group !== null && group.rows.length > 0);
 }

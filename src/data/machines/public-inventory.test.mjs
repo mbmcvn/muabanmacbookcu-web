@@ -36,6 +36,7 @@ import {
   formatMachineCardDisplayName,
   formatMachineCardSpecs,
   getMachineCardBatteryFact,
+  getMachineCardFamilyFact,
 } from "../../app/(sales)/may-dang-co/_components/machine-card-presentation.ts";
 import {
   buildMachineEvidence,
@@ -85,9 +86,11 @@ function row(code = "MBMC-A001", overrides = {}) {
     status: "new_in_stock",
     deleted_at: null,
     model_text: "MacBook Air M2 2022 13 inch",
+    machine_family: "macbook",
     chip: "Apple M2",
     ram_gb: 8,
     ssd_gb: 256,
+    storage_type: "ssd",
     color: "Midnight",
     retail_price_expected: 15_800_000,
     battery_health: 92,
@@ -153,7 +156,7 @@ test("multiple eligible rows become exact public summaries", () => {
     ["MBMC-A001", "MBMC-A002"],
   );
   assert.equal(
-    items.every((x) => x.schemaVersion === "public-machine-summary.v1"),
+    items.every((x) => x.schemaVersion === "public-machine-summary.v2"),
     true,
   );
 });
@@ -248,7 +251,7 @@ test("price filters and sorting use DTO money deterministically", () => {
 test("detail resolves only an eligible immutable public slug", () => {
   assert.equal(
     publicDetailBySlug([row()], "mbmc-a001")?.schemaVersion,
-    "public-machine-detail.v2",
+    "public-machine-detail.v3",
   );
   assert.equal(publicDetailBySlug([row()], "unknown"), null);
   assert.equal(
@@ -2091,7 +2094,7 @@ test("public hero inventory sticky and support surfaces share canonical naming",
     "M1 Pro · 16GB · 1TB SSD · Bạc",
   );
   assert.match(card, /formatPublicMachineDisplayName\(machine\.displayName\)/);
-  assert.match(card, /formatPublicMachineSpecs\(/);
+  assert.match(card, /formatMachineCardSpecs\(/);
   assert.match(hero, /formatPublicMachineDisplayName\(summary\.displayName\)/);
   assert.match(hero, /formatPublicMachineSpecs\(/);
   assert.match(
@@ -2104,7 +2107,7 @@ test("public hero inventory sticky and support surfaces share canonical naming",
   );
   assert.match(
     sticky,
-    /formatPublicMachineSpecs\(\{[\s\S]*?chip: summary\.chip,[\s\S]*?ramGb: summary\.ramGb,[\s\S]*?storageGb: summary\.ssdGb,[\s\S]*?\}\)/,
+    /formatPublicMachineSpecs\(\{[\s\S]*?chip: summary\.chip,[\s\S]*?ramGb: summary\.ramGb,[\s\S]*?storageGb: summary\.storage\.capacityGb,[\s\S]*?\}\)/,
   );
   assert.match(sticky, /public-machine-sticky-specs/);
   assert.match(sticky, /public-machine-sticky-price/);
@@ -2138,7 +2141,7 @@ test("mobile sticky shows canonical identity, price, and compact contact action"
   );
   assert.match(
     stickyMarkup,
-    /formatPublicMachineSpecs\(\{[\s\S]*?chip: summary\.chip,[\s\S]*?ramGb: summary\.ramGb,[\s\S]*?storageGb: summary\.ssdGb,[\s\S]*?\}\)/,
+    /formatPublicMachineSpecs\(\{[\s\S]*?chip: summary\.chip,[\s\S]*?ramGb: summary\.ramGb,[\s\S]*?storageGb: summary\.storage\.capacityGb,[\s\S]*?\}\)/,
   );
   assert.doesNotMatch(stickyMarkup, /formatPublicMachineSpecs\([^)]*color/);
   assert.doesNotMatch(
@@ -3288,5 +3291,81 @@ test("active repository and raw parser do not load legacy prose columns", () => 
   );
   for (const legacy of ["expert_summary", "suitable_for", "not_suitable_for"])
     assert.doesNotMatch(repository + parser, new RegExp(`\\b${legacy}\\b`));
-  assert.match(parser, /projectPublicMachineV2\(candidate\)/);
+  assert.match(parser, /projectPublicMachineV3\(candidate\)/);
+});
+
+function familyFixture(code, machineFamily, modelText, storageType, overrides = {}) {
+  return row(code, {
+    model_text: modelText,
+    machine_family: machineFamily,
+    storage_type: storageType,
+    battery_health: machineFamily === "macbook" ? 92 : null,
+    battery_cycle: machineFamily === "macbook" ? 120 : null,
+    ...overrides,
+  });
+}
+
+test("V3 golden fixtures preserve MacBook Air and Pro card/detail semantics", () => {
+  const machines = publicSummaries([
+    familyFixture("MBMC-AIR", "macbook", "MacBook Air M2 2022 13 inch", "ssd"),
+    familyFixture("MBMC-PRO", "macbook", "MacBook Pro M1 Pro 2021 16 inch", "ssd", { ram_gb: 16, ssd_gb: 512 }),
+  ]);
+  assert.deepEqual(machines.map(({ code, productLine, storage, familyFacts }) => ({ code, productLine, storage, familyFacts })), [
+    { code: "MBMC-AIR", productLine: "macbook-air", storage: { capacityGb: 256, type: "ssd" }, familyFacts: { machineFamily: "macbook", batteryHealthPercent: 92, cycleCount: 120, displaySizeInches: null } },
+    { code: "MBMC-PRO", productLine: "macbook-pro", storage: { capacityGb: 512, type: "ssd" }, familyFacts: { machineFamily: "macbook", batteryHealthPercent: 92, cycleCount: 120, displaySizeInches: null } },
+  ]);
+  const detail = publicDetailBySlug([familyFixture("MBMC-AIR", "macbook", "MacBook Air M2 2022 13 inch", "ssd")], "mbmc-air");
+  assert.equal(detail?.schemaVersion, "public-machine-detail.v3");
+  assert.equal(detail?.summary.displayName, "MacBook Air M2 2022 13 inch");
+});
+
+test("multi-family inventory filters and storage-aware search use canonical V3 facts", () => {
+  const machines = publicSummaries([
+    familyFixture("MBMC-AIR", "macbook", "MacBook Air M2", "ssd"),
+    familyFixture("MBMC-PRO", "macbook", "MacBook Pro M2 Pro", "ssd"),
+    familyFixture("MBMC-IMAC-S", "imac", "iMac 24 inch", "ssd"),
+    familyFixture("MBMC-IMAC-F", "imac", "iMac 27 inch", "fusion"),
+    familyFixture("MBMC-IMAC-H", "imac", "iMac 21 inch", "hdd"),
+    familyFixture("MBMC-MINI", "mac-mini", "Mac mini M2", "ssd"),
+  ]);
+  const normalized = normalizePublicInventory(machines);
+  const withFamily = (family) => ({ ...emptyInventoryFacets(), family: [family] });
+  assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("macbook")).map((x) => x.machine.code), ["MBMC-AIR", "MBMC-PRO"]);
+  assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("imac")).map((x) => x.machine.code), ["MBMC-IMAC-F", "MBMC-IMAC-H", "MBMC-IMAC-S"]);
+  assert.deepEqual(filterNormalizedPublicInventory(normalized, "fusion drive", emptyInventoryFacets()).map((x) => x.machine.code), ["MBMC-IMAC-F"]);
+  assert.deepEqual(filterNormalizedPublicInventory(normalized, "hdd", emptyInventoryFacets()).map((x) => x.machine.code), ["MBMC-IMAC-H"]);
+});
+
+test("desktop family card/detail facts suppress battery and label storage accurately", () => {
+  const imac = publicDetailBySlug([familyFixture("MBMC-IMAC", "imac", "iMac 27 inch", "fusion")], "mbmc-imac");
+  const mini = publicDetailBySlug([familyFixture("MBMC-MINI", "mac-mini", "Mac mini M2", "ssd")], "mbmc-mini");
+  assert.deepEqual(imac?.summary.familyFacts, { machineFamily: "imac", displaySizeInches: null });
+  assert.deepEqual(mini?.summary.familyFacts, { machineFamily: "mac-mini" });
+  assert.deepEqual(getMachineCardFamilyFact({ machineFamily: "imac", displaySizeInches: 24 }), { label: "Màn hình", value: "24 inch" });
+  assert.equal(getMachineCardFamilyFact({ machineFamily: "mac-mini" }), null);
+  assert.equal(formatMachineCardSpecs({ chip: "Intel i5", ramGb: 16, storageGb: 1024, storageType: "fusion", color: null }), "Intel i5 · 16GB · 1TB Fusion Drive");
+  assert.equal(formatMachineCardSpecs({ chip: "Intel i5", ramGb: 8, storageGb: 1000, storageType: "hdd", color: null }), "Intel i5 · 8GB · 1000GB HDD");
+  assert.equal(buildMachineEvidence(decisionInput({ machineFamily: "imac" })).some((fact) => /Pin|sạc/.test(fact.label)), false);
+  assert.match(buildMachineEvidence(decisionInput({ machineFamily: "imac" })).find((fact) => fact.label === "Phụ kiện đi kèm")?.value ?? "", /Dây nguồn/);
+});
+
+test("desktop Machine Explanation omits inapplicable battery blocks without changing snapshot transport", () => {
+  const input = familyFixture("MBMC-IMAC", "imac", "iMac 24 inch", "ssd", {
+    machine_explanation: { audience: "general", status: "ready", blocks: [
+      { domain: "battery", stance: "guidance", text: "Battery guidance" },
+      { domain: "storage", stance: "guidance", text: "Storage guidance" },
+    ], notes: [] },
+  });
+  assert.deepEqual(publicDetailBySlug([input], "mbmc-imac")?.machineExplanation?.blocks, [
+    { domain: "storage", stance: "guidance", text: "Storage guidance" },
+  ]);
+});
+
+test("privacy validation fails closed for sensitive public text and private image URLs", () => {
+  const sensitive = familyFixture("MBMC-PRIVATE", "macbook", "MacBook Air M2", "ssd");
+  sensitive.machine_editorials = { ...sensitive.machine_editorials, public_condition_summary: "Liên hệ 0901234567" };
+  assert.equal(reason(projectPublicCandidates([sensitive])[0], "privacy_invalid"), true);
+  const privateUrl = familyFixture("MBMC-URL", "macbook", "MacBook Air M2", "ssd");
+  privateUrl.machine_images = [{ ...privateUrl.machine_images[0], public_url: "https://localhost/private.webp" }];
+  assert.equal(reason(projectPublicCandidates([privateUrl])[0], "privacy_invalid"), true);
 });

@@ -281,6 +281,8 @@ test("matcher has no commercial or raw operational dependency", async () => {
 test("server integration reuses the existing public inventory loader", async () => {
   const source = await readFile(new URL("./inventory-matcher.server.ts", import.meta.url), "utf8");
   assert.match(source, /getAvailableMachines/);
-  assert.match(source, /matchPublicInventory\(profile, publicMachines\)/);
+  assert.match(source, /publicMachines\.flatMap/);
+  assert.match(source, /machine\.machineFamily === "macbook"/);
+  assert.match(source, /legacyMacBookSummary\(machine\)/);
   assert.equal(/supabase|from\(["']machines|\bsales\b|payments|machine_publications/i.test(source), false);
 });

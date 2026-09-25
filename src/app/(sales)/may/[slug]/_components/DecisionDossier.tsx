@@ -1,4 +1,4 @@
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import { PassportDossier } from "./PassportDossier";
 import { PublicSpecifications } from "./PublicSpecifications";
 import { MachineSuitableAudiences } from "./MachineSuitableAudiences";
@@ -14,7 +14,7 @@ import { MachineVerification } from "./MachineVerification";
 export function DecisionDossier({
   machine,
 }: {
-  machine: PublicMachineDetailV2;
+  machine: PublicMachineDetailV3;
 }) {
   return (
     <div className="decision-dossier" aria-label="Hồ sơ và tình trạng thực tế">

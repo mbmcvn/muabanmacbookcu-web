@@ -1,14 +1,18 @@
 import type {
   PublicMachineDetailV1,
   PublicMachineDetailV2,
+  PublicMachineDetailV3,
   PublicMachinePassportV1,
   PublicMachineSummaryV1,
+  PublicMachineSummaryV2,
 } from "./contracts.ts";
 import {
   assemblePublicMachineDetailV1,
   assemblePublicMachineDetailV2,
+  assemblePublicMachineDetailV3,
   assemblePublicMachinePassportV1,
   assemblePublicMachineSummaryV1,
+  assemblePublicMachineSummaryV2,
 } from "./assemblers.server.ts";
 import {
   validatePublicMachineEligibility,
@@ -19,6 +23,7 @@ import {
   type PublicMachineProjectionInput,
 } from "./kernel.server.ts";
 import { validateProjectionPrivacy } from "./privacy.server.ts";
+import { validatePublicMachineFamilyApplicability, type FamilyApplicabilityReason } from "./family-applicability.ts";
 
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
@@ -44,6 +49,10 @@ export type PublicMachineProjectionV2Result =
       detail: PublicMachineDetailV2;
       passport: PublicMachinePassportV1;
     };
+
+export type PublicMachineProjectionV3Result =
+  | { eligible: false; reasons: (ProjectionDenialReason | FamilyApplicabilityReason)[] }
+  | { eligible: true; summary: PublicMachineSummaryV2; detail: PublicMachineDetailV3; passport: PublicMachinePassportV1 };
 
 export function projectPublicMachineV1(
   input: PublicMachineProjectionInput,
@@ -78,6 +87,32 @@ export function projectPublicMachineV2(
     eligible: true,
     summary: assemblePublicMachineSummaryV1(eligibility.kernel),
     detail: assemblePublicMachineDetailV2(eligibility.kernel),
+    passport: assemblePublicMachinePassportV1(eligibility.kernel),
+  });
+}
+
+export function projectPublicMachineV3(
+  input: PublicMachineProjectionInput,
+): PublicMachineProjectionV3Result {
+  const normalized = normalizePublicMachineFacts(input);
+  const privacy = validateProjectionPrivacy(normalized);
+  if (!privacy.valid) return { eligible: false, reasons: [privacy.reason] };
+  const eligibility = validatePublicMachineEligibility(normalized);
+  if (!eligibility.eligible) return eligibility;
+  const applicability = validatePublicMachineFamilyApplicability({
+    machineFamily: normalized.machineFamily,
+    storageType: normalized.storageType,
+    storageCapacityGb: normalized.ssdGb,
+    displaySizeInches: normalized.screenSizeInches,
+    batteryHealthPercent: normalized.batteryHealthPercent,
+    cycleCount: normalized.cycleCount,
+    displayName: normalized.displayName,
+  });
+  if (!applicability.valid) return { eligible: false, reasons: applicability.reasons };
+  return deepFreeze({
+    eligible: true,
+    summary: assemblePublicMachineSummaryV2(eligibility.kernel, applicability.productLine),
+    detail: assemblePublicMachineDetailV3(eligibility.kernel, applicability.productLine),
     passport: assemblePublicMachinePassportV1(eligibility.kernel),
   });
 }

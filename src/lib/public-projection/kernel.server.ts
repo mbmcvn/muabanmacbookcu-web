@@ -6,7 +6,9 @@ import type {
   PublicSuitableAudienceV0,
   PublicImageVariants,
   PublicReservationKind,
+  PublicMachineFamily,
 } from "./contracts.ts";
+import type { PublicStorageType } from "./family-applicability.ts";
 import type {
   MachineVerificationItem,
   PublicMachineVerification,
@@ -76,6 +78,8 @@ export type PublicMachineProjectionInput = {
   modelSpecKey?: string | null;
   verifications?: MachineVerificationItem[];
   family: "Air" | "Pro" | "Unknown";
+  machineFamily?: PublicMachineFamily | null;
+  storageType?: PublicStorageType | null;
   year?: number | null;
   screenSizeInches?: number | null;
   chip: string | null;
@@ -93,6 +97,10 @@ export type PublicMachineProjectionInput = {
   machineExplanation?: PublicMachineExplanationV0 | null;
   images: PublicImageInput[];
   privacyValid: boolean;
+  privacyValidation?: {
+    status: "privacy_passed" | "privacy_failed" | "privacy_not_evaluated";
+    issues: Array<{ field: string; reason: string }>;
+  };
   [privateProperty: string]: unknown;
 };
 
@@ -114,6 +122,8 @@ export type NormalizedPublicMachineFacts = {
   modelSpecKey: string | null;
   verifications: PublicMachineVerification[];
   family: "Air" | "Pro" | "Unknown";
+  machineFamily: PublicMachineFamily | null;
+  storageType: PublicStorageType | null;
   year: number | null;
   screenSizeInches: number | null;
   chip: string | null;
@@ -147,6 +157,8 @@ export type PublicProjectionKernel = {
   modelSpecKey: string | null;
   verifications: PublicMachineVerification[];
   family: "Air" | "Pro" | "Unknown";
+  machineFamily: PublicMachineFamily | null;
+  storageType: PublicStorageType | null;
   year: number | null;
   screenSizeInches: number | null;
   chip: string;
@@ -221,6 +233,8 @@ export function normalizePublicMachineFacts(
     modelSpecKey: input.modelSpecKey ?? null,
     verifications: publicMachineVerifications(input.verifications ?? []),
     family: input.family,
+    machineFamily: input.machineFamily ?? null,
+    storageType: input.storageType ?? null,
     year: input.year ?? null,
     screenSizeInches: input.screenSizeInches ?? null,
     chip: input.chip,

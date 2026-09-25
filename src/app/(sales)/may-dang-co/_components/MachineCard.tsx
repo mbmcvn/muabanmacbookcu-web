@@ -6,16 +6,16 @@ import {
   useContactChannel,
   withContactChannel,
 } from "@/hooks/useContactChannel";
-import type { PublicMachineSummaryV1 } from "@/models";
+import type { PublicMachineSummaryV2 } from "@/models";
 import {
   formatCurrencyVnd,
   formatMachineAvailability,
   formatPublicMachineDisplayName,
-  formatPublicMachineSpecs,
 } from "@/lib/presentation";
 import {
   formatMachineCardCondition,
-  getMachineCardBatteryFact,
+  formatMachineCardSpecs,
+  getMachineCardFamilyFact,
 } from "./machine-card-presentation";
 import { CopyMachineCardLink } from "./CopyMachineCardLink";
 
@@ -23,25 +23,24 @@ export function MachineCard({
   machine,
   headingAs: Heading = "h2",
 }: {
-  machine: PublicMachineSummaryV1;
+  machine: PublicMachineSummaryV2;
   headingAs?: "h2" | "h3";
 }) {
   const { channel } = useContactChannel();
   const price = formatCurrencyVnd(machine.price);
   const displayName = formatPublicMachineDisplayName(machine.displayName);
-  const specs = formatPublicMachineSpecs({
+  const specs = formatMachineCardSpecs({
     chip: machine.chip,
     ramGb: machine.ramGb,
-    storageGb: machine.ssdGb,
+    storageGb: machine.storage.capacityGb,
+    storageType: machine.storage.type,
     color: machine.color,
   });
-  const battery = getMachineCardBatteryFact(
-    machine.batteryHealthPercent,
-    machine.cycleCount,
-  );
+  const familyFact = getMachineCardFamilyFact(machine.familyFacts);
   const condition = formatMachineCardCondition({
-    batteryHealthPercent: machine.batteryHealthPercent,
-    cycleCount: machine.cycleCount,
+    machineFamily: machine.machineFamily,
+    batteryHealthPercent: machine.familyFacts.machineFamily === "macbook" ? machine.familyFacts.batteryHealthPercent : null,
+    cycleCount: machine.familyFacts.machineFamily === "macbook" ? machine.familyFacts.cycleCount : null,
     cosmeticGrade: machine.cosmeticGrade,
   });
 
@@ -80,10 +79,10 @@ export function MachineCard({
             <p className="machine-card-condition">{condition}</p>
           ) : null}
           <dl className="decision-facts">
-            {battery ? (
+            {familyFact ? (
               <div>
-                <dt>{battery.label}</dt>
-                <dd>{battery.value}</dd>
+                <dt>{familyFact.label}</dt>
+                <dd>{familyFact.value}</dd>
               </div>
             ) : null}
             <div>

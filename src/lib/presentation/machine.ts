@@ -81,12 +81,13 @@ export function formatPublicMachineSpecs(input: {
   chip: string | null;
   ramGb: number | null;
   storageGb: number | null;
+  storageType?: "ssd" | "fusion" | "hdd";
   color?: string | null;
 }): string {
   return [
     input.chip,
     input.ramGb === null ? null : `${input.ramGb}GB`,
-    input.storageGb === null ? null : `${formatCompactStorage(input.storageGb)} SSD`,
+    input.storageGb === null ? null : `${formatCompactStorage(input.storageGb)} ${input.storageType === "fusion" ? "Fusion Drive" : input.storageType === "hdd" ? "HDD" : "SSD"}`,
     input.color ?? null,
   ].filter((value): value is string => Boolean(value)).join(" · ");
 }

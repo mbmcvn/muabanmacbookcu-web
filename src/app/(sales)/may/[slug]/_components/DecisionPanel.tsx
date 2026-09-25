@@ -1,6 +1,6 @@
 "use client";
 
-import type { PublicMachineDetailV2 } from "@/models";
+import type { PublicMachineDetailV3 } from "@/models";
 import { phoneContact } from "@/config/contact";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { CopyMachineLink } from "@/components/contact/CopyMachineLink";
@@ -11,17 +11,18 @@ import {
   formatPublicMachineSpecs,
 } from "@/lib/presentation";
 
-export function configuration(machine: PublicMachineDetailV2): string {
+export function configuration(machine: PublicMachineDetailV3): string {
   const summary = machine.summary;
   return formatPublicMachineSpecs({
     chip: summary.chip,
     ramGb: summary.ramGb,
-    storageGb: summary.ssdGb,
+    storageGb: summary.storage.capacityGb,
+    storageType: summary.storage.type,
     color: summary.color,
   });
 }
 
-export function DecisionPanel({ machine }: { machine: PublicMachineDetailV2 }) {
+export function DecisionPanel({ machine }: { machine: PublicMachineDetailV3 }) {
   const summary = machine.summary;
   const displayName = formatPublicMachineDisplayName(summary.displayName);
   const reserved = summary.availability === "reserved";

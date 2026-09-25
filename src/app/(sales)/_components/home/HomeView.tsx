@@ -1,4 +1,4 @@
-import type { PublicMachineSummaryV1 } from "@/models";
+import type { PublicMachineSummaryV2 } from "@/models";
 import type { PublicInventoryLoadState } from "@/data/machines/public-inventory-load-state";
 import type { HomepageStoryDTO } from "@/data/handover/homepage-story";
 import { ClosingDecisionCta } from "./ClosingDecisionCta";
@@ -17,7 +17,7 @@ export function HomeView({
   machineState,
   homepageStories,
 }: {
-  machineState: PublicInventoryLoadState<PublicMachineSummaryV1>;
+  machineState: PublicInventoryLoadState<PublicMachineSummaryV2>;
   homepageStories: HomepageStoryDTO[];
 }) {
   return (

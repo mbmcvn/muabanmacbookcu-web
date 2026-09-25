@@ -1,9 +1,9 @@
-import type { PublicMachineSummaryV1 } from "../../lib/public-projection/contracts.ts";
+import type { PublicMachineSummaryV2 } from "../../lib/public-projection/contracts.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { buildReferralShareUrl } from "../../lib/contact-routing.ts";
 
 export const priceFacetValues = ["under-15", "15-18", "over-18"] as const;
-export const familyFacetValues = ["air", "pro"] as const;
+export const familyFacetValues = ["macbook", "imac", "mac-mini", "air", "pro"] as const;
 export const chipFacetValues = [
   "intel",
   "m1",
@@ -45,7 +45,7 @@ export interface InventoryUrlState {
 }
 
 export interface NormalizedPublicMachine {
-  machine: PublicMachineSummaryV1;
+  machine: PublicMachineSummaryV2;
   searchable: string;
   price: PriceFacet;
   family: FamilyFacet | null;
@@ -101,33 +101,29 @@ function normalizePriceFacet(amount: number): PriceFacet {
 }
 
 export function normalizePublicInventory(
-  machines: PublicMachineSummaryV1[],
+  machines: PublicMachineSummaryV2[],
 ): NormalizedPublicMachine[] {
   return machines.map((machine) => ({
     machine,
     searchable: [
       machine.displayName,
       machine.code,
-      machine.family,
+      machine.machineFamily,
+      machine.productLine,
       machine.chip,
       machine.ramGb === null ? "" : `${machine.ramGb}gb ram`,
-      machine.ssdGb === null
-        ? ""
-        : `${machine.ssdGb}gb ssd ${formatCompactStorage(machine.ssdGb)} ssd`,
+      `${machine.storage.capacityGb}gb ${machine.storage.type} ${formatCompactStorage(machine.storage.capacityGb)} ${machine.storage.type === "fusion" ? "fusion drive" : machine.storage.type}`,
       machine.color,
     ]
       .join(" ")
       .toLocaleLowerCase("vi"),
     price: normalizePriceFacet(machine.price.amount),
-    family:
-      machine.family === "Air"
-        ? "air"
-        : machine.family === "Pro"
-          ? "pro"
-          : null,
+    family: machine.productLine === "macbook-air" ? "air" : machine.productLine === "macbook-pro" ? "pro" : machine.machineFamily,
     chip: normalizeChipFacet(machine.chip),
     ram: normalizeRamFacet(machine.ramGb),
-    screen: normalizeScreenFacet(machine.displayName),
+    screen: "displaySizeInches" in machine.familyFacts && machine.familyFacts.displaySizeInches !== null
+      ? machine.familyFacts.displaySizeInches <= 14 ? "compact" : "large"
+      : normalizeScreenFacet(machine.displayName),
   }));
 }
 
@@ -147,7 +143,9 @@ function matchesFacets(
   return (
     (facets.price === null || item.price === facets.price) &&
     (!facets.family.length ||
-      (item.family !== null && facets.family.includes(item.family))) &&
+      (item.family !== null && facets.family.some((family) =>
+        family === item.family || (family === "macbook" && (item.family === "air" || item.family === "pro"))
+      ))) &&
     (!facets.chip.length ||
       (item.chip !== null && facets.chip.includes(item.chip))) &&
     (!facets.ram.length ||
@@ -310,7 +308,7 @@ export function inventoryShareLabel(facets: InventoryFacets): string {
   ];
   if (!selected.length || selected.length > 3) return "Sao chép liên kết";
   const family = facets.family.map((value) =>
-    value === "air" ? "Air" : "Pro",
+    value === "air" ? "Air" : value === "pro" ? "Pro" : value === "macbook" ? "MacBook" : value === "imac" ? "iMac" : "Mac mini",
   );
   const chip: Record<ChipFacet, string> = {
     intel: "Intel",
@@ -356,7 +354,7 @@ export type PublicInventoryFilter =
 export type PublicInventorySort = InventorySort;
 
 export function filterAndSortPublicInventory(
-  machines: PublicMachineSummaryV1[],
+  machines: PublicMachineSummaryV2[],
   query: string,
   filter: PublicInventoryFilter,
   sort: PublicInventorySort,
