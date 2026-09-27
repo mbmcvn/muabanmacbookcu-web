@@ -1,6 +1,13 @@
 import type { PublicMachineSummaryV2 } from "../../lib/public-projection/contracts.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { buildReferralShareUrl } from "../../lib/contact-routing.ts";
+import {
+  imacDisplayFacetValues,
+  imacDisplayVariantForModelSpecKey,
+  type ImacDisplayFacet,
+} from "./imac-display-variant.ts";
+
+export { imacDisplayFacetValues };
 
 export const priceFacetValues = [
   "under-12",
@@ -8,7 +15,7 @@ export const priceFacetValues = [
   "15-18",
   "over-18",
 ] as const;
-export const familyFacetValues = ["macbook", "imac", "mac-mini", "air", "pro"] as const;
+export const familyFacetValues = ["air", "pro", "imac", "mini"] as const;
 export const chipFacetValues = [
   "intel",
   "m1",
@@ -19,6 +26,8 @@ export const chipFacetValues = [
 ] as const;
 export const ramFacetValues = ["8", "16", "32-plus"] as const;
 export const screenFacetValues = ["compact", "large"] as const;
+export const storageTypeFacetValues = ["ssd", "fusion", "hdd"] as const;
+export const storageFacetValues = ["256", "512", "1024-plus"] as const;
 export const inventorySortValues = [
   "relevance",
   "newest",
@@ -31,16 +40,21 @@ export type FamilyFacet = (typeof familyFacetValues)[number];
 export type ChipFacet = (typeof chipFacetValues)[number];
 export type RamFacet = (typeof ramFacetValues)[number];
 export type ScreenFacet = (typeof screenFacetValues)[number];
+export type StorageTypeFacet = (typeof storageTypeFacetValues)[number];
+export type StorageFacet = (typeof storageFacetValues)[number];
 export type InventorySort = (typeof inventorySortValues)[number];
-export type MultiFacetGroup = "family" | "chip" | "ram" | "screen";
-export type FacetGroup = "price" | MultiFacetGroup;
+export type MultiFacetGroup = "chip" | "ram" | "screen" | "display" | "storageType" | "storage";
+export type FacetGroup = "price" | "family" | MultiFacetGroup;
 
 export interface InventoryFacets {
   price: PriceFacet | null;
-  family: FamilyFacet[];
+  family: FamilyFacet | null;
   chip: ChipFacet[];
   ram: RamFacet[];
   screen: ScreenFacet[];
+  display: ImacDisplayFacet[];
+  storageType: StorageTypeFacet[];
+  storage: StorageFacet[];
 }
 
 export interface InventoryUrlState {
@@ -53,19 +67,60 @@ export interface NormalizedPublicMachine {
   machine: PublicMachineSummaryV2;
   searchable: string;
   price: PriceFacet;
-  family: FamilyFacet | null;
+  family: FamilyFacet;
   chip: ChipFacet | null;
   ram: RamFacet | null;
   screen: ScreenFacet | null;
+  display: ImacDisplayFacet | null;
+  storageType: StorageTypeFacet;
+  storage: StorageFacet;
 }
 
 export const emptyInventoryFacets = (): InventoryFacets => ({
   price: null,
-  family: [],
+  family: null,
   chip: [],
   ram: [],
   screen: [],
+  display: [],
+  storageType: [],
+  storage: [],
 });
+
+export function selectMachineFamily(
+  facets: InventoryFacets,
+  family: FamilyFacet | null,
+): InventoryFacets {
+  return {
+    ...facets,
+    family,
+    screen: [],
+    display: [],
+    storageType: [],
+    storage: [],
+  };
+}
+
+export function applicableInventoryFacetGroups(
+  family: FamilyFacet | null,
+): readonly FacetGroup[] {
+  const common: FacetGroup[] = ["price", "family", "chip", "ram"];
+  if (family === "air" || family === "pro") return [...common, "screen"];
+  if (family === "imac") return [...common, "display", "storageType"];
+  if (family === "mini") return [...common, "storage"];
+  return common;
+}
+
+function sanitizeFamilyScopedFacets(facets: InventoryFacets): InventoryFacets {
+  return {
+    ...facets,
+    screen:
+      facets.family === "air" || facets.family === "pro" ? facets.screen : [],
+    display: facets.family === "imac" ? facets.display : [],
+    storageType: facets.family === "imac" ? facets.storageType : [],
+    storage: facets.family === "mini" ? facets.storage : [],
+  };
+}
 
 function includesValue<T extends string>(
   values: readonly T[],
@@ -92,6 +147,21 @@ export function normalizeRamFacet(ramGb: number | null): RamFacet | null {
   return ramGb !== null && ramGb >= 32 ? "32-plus" : null;
 }
 
+function normalizeFamilyFacet(
+  machineFamily: PublicMachineSummaryV2["machineFamily"],
+  productLine: PublicMachineSummaryV2["productLine"],
+): FamilyFacet {
+  if (machineFamily === "macbook")
+    return productLine === "macbook-air" ? "air" : "pro";
+  return machineFamily === "imac" ? "imac" : "mini";
+}
+
+function normalizeStorageFacet(capacityGb: number): StorageFacet {
+  if (capacityGb <= 256) return "256";
+  if (capacityGb <= 512) return "512";
+  return "1024-plus";
+}
+
 export function normalizeScreenFacet(displayName: string): ScreenFacet | null {
   const match = displayName.match(/\b(13|14|15|16)(?:[\s-]*(?:inch|in|"))\b/i);
   if (!match) return null;
@@ -107,7 +177,7 @@ function normalizePriceFacet(amount: number): PriceFacet {
 }
 
 export function normalizePublicInventory(
-  machines: PublicMachineSummaryV2[],
+  machines: Array<PublicMachineSummaryV2 & { modelSpecKey?: string | null }>,
 ): NormalizedPublicMachine[] {
   return machines.map((machine) => ({
     machine,
@@ -124,12 +194,18 @@ export function normalizePublicInventory(
       .join(" ")
       .toLocaleLowerCase("vi"),
     price: normalizePriceFacet(machine.price.amount),
-    family: machine.productLine === "macbook-air" ? "air" : machine.productLine === "macbook-pro" ? "pro" : machine.machineFamily,
+    family: normalizeFamilyFacet(machine.machineFamily, machine.productLine),
     chip: normalizeChipFacet(machine.chip),
     ram: normalizeRamFacet(machine.ramGb),
     screen: "displaySizeInches" in machine.familyFacts && machine.familyFacts.displaySizeInches !== null
       ? machine.familyFacts.displaySizeInches <= 14 ? "compact" : "large"
       : normalizeScreenFacet(machine.displayName),
+    display:
+      machine.machineFamily === "imac"
+        ? imacDisplayVariantForModelSpecKey(machine.modelSpecKey)
+        : null,
+    storageType: machine.storage.type,
+    storage: normalizeStorageFacet(machine.storage.capacityGb),
   }));
 }
 
@@ -148,16 +224,17 @@ function matchesFacets(
 ): boolean {
   return (
     (facets.price === null || item.price === facets.price) &&
-    (!facets.family.length ||
-      (item.family !== null && facets.family.some((family) =>
-        family === item.family || (family === "macbook" && (item.family === "air" || item.family === "pro"))
-      ))) &&
+    (facets.family === null || item.family === facets.family) &&
     (!facets.chip.length ||
       (item.chip !== null && facets.chip.includes(item.chip))) &&
     (!facets.ram.length ||
       (item.ram !== null && facets.ram.includes(item.ram))) &&
     (!facets.screen.length ||
-      (item.screen !== null && facets.screen.includes(item.screen)))
+      (item.screen !== null && facets.screen.includes(item.screen))) &&
+    (!facets.display.length ||
+      (item.display !== null && facets.display.includes(item.display))) &&
+    (!facets.storageType.length || facets.storageType.includes(item.storageType)) &&
+    (!facets.storage.length || facets.storage.includes(item.storage))
   );
 }
 
@@ -203,14 +280,32 @@ export function countFacetOption(
 ): number {
   const simulated: InventoryFacets = {
     ...facets,
-    family: [...facets.family],
     chip: [...facets.chip],
     ram: [...facets.ram],
     screen: [...facets.screen],
+    display: [...facets.display],
+    storageType: [...facets.storageType],
+    storage: [...facets.storage],
   };
   if (group === "price") simulated.price = option as PriceFacet;
+  else if (group === "family") return filterNormalizedPublicInventory(
+    items,
+    query,
+    selectMachineFamily(simulated, option as FamilyFacet),
+  ).length;
   else simulated[group] = [option] as never;
   return filterNormalizedPublicInventory(items, query, simulated).length;
+}
+
+export function countFamilyOption(
+  items: NormalizedPublicMachine[],
+  query: string,
+  facets: InventoryFacets,
+  family: FamilyFacet,
+): number {
+  return filterNormalizedPublicInventory(items, query, {
+    ...selectMachineFamily(facets, family),
+  }).length;
 }
 
 export function toggleMultiFacet<T extends MultiFacetGroup>(
@@ -231,6 +326,7 @@ export function removeFacetOption(
   option: string,
 ): InventoryFacets {
   if (group === "price") return { ...facets, price: null };
+  if (group === "family") return selectMachineFamily(facets, null);
   return {
     ...facets,
     [group]: facets[group].filter((value) => value !== option),
@@ -252,16 +348,24 @@ export function parseInventoryUrlState(
   ];
   const price = params.get("price") ?? "";
   const sort = params.get("sort") ?? "";
+  const rawFamily = params.get("family") ?? "";
+  const compatibilityFamily = rawFamily === "mac-mini" ? "mini" : null;
+  const family = includesValue(familyFacetValues, rawFamily)
+    ? rawFamily
+    : compatibilityFamily;
   return {
     query: params.get("q")?.trim() ?? "",
     sort: includesValue(inventorySortValues, sort) ? sort : "relevance",
-    facets: {
+    facets: sanitizeFamilyScopedFacets({
       price: includesValue(priceFacetValues, price) ? price : null,
-      family: parseList("family", familyFacetValues),
+      family,
       chip: parseList("chip", chipFacetValues),
       ram: parseList("ram", ramFacetValues),
       screen: parseList("screen", screenFacetValues),
-    },
+      display: parseList("display", imacDisplayFacetValues),
+      storageType: parseList("storageType", storageTypeFacetValues),
+      storage: parseList("storage", storageFacetValues),
+    }),
   };
 }
 
@@ -269,7 +373,8 @@ export function serializeInventoryUrlState(state: InventoryUrlState): string {
   const params = new URLSearchParams();
   if (state.query.trim()) params.set("q", state.query.trim());
   if (state.facets.price) params.set("price", state.facets.price);
-  for (const group of ["family", "chip", "ram", "screen"] as const) {
+  if (state.facets.family) params.set("family", state.facets.family);
+  for (const group of ["chip", "ram", "screen", "display", "storageType", "storage"] as const) {
     if (state.facets[group].length)
       params.set(group, state.facets[group].join(","));
   }
@@ -307,15 +412,18 @@ export async function copyInventoryShareUrl(
 export function inventoryShareLabel(facets: InventoryFacets): string {
   const selected = [
     ...(facets.price ? [facets.price] : []),
-    ...facets.family,
+    ...(facets.family ? [facets.family] : []),
     ...facets.chip,
     ...facets.ram,
     ...facets.screen,
+    ...facets.display,
+    ...facets.storageType,
+    ...facets.storage,
   ];
   if (!selected.length || selected.length > 3) return "Sao chép liên kết";
-  const family = facets.family.map((value) =>
-    value === "air" ? "Air" : value === "pro" ? "Pro" : value === "macbook" ? "MacBook" : value === "imac" ? "iMac" : "Mac mini",
-  );
+  const family = facets.family
+    ? [{ air: "Air", pro: "Pro", imac: "iMac", mini: "Mac mini" }[facets.family]]
+    : [];
   const chip: Record<ChipFacet, string> = {
     intel: "Intel",
     m1: "M1",
@@ -340,6 +448,20 @@ export function inventoryShareLabel(facets: InventoryFacets): string {
     ),
     ...facets.screen.map((value) =>
       value === "compact" ? '13–14"' : '15–16"',
+    ),
+    ...facets.display.map((value) =>
+      ({
+        "21.5": '21.5"',
+        "21.5-4k": '21.5" 4K',
+        "24-4.5k": '24" 4.5K',
+        "27-5k": '27" 5K',
+      })[value],
+    ),
+    ...facets.storageType.map((value) =>
+      value === "fusion" ? "Fusion Drive" : value.toUpperCase(),
+    ),
+    ...facets.storage.map((value) =>
+      value === "1024-plus" ? "1TB+" : `${value}GB`,
     ),
   ];
   const leading = [...family, ...facets.chip.map((value) => chip[value])].join(
@@ -372,8 +494,12 @@ export function filterAndSortPublicInventory(
   if (filter === "12–15 triệu") facets.price = "12-15";
   if (filter === "15–18 triệu") facets.price = "15-18";
   if (filter === "Trên 18 triệu") facets.price = "over-18";
-  if (filter === "MacBook Air") facets.family = ["air"];
-  if (filter === "MacBook Pro") facets.family = ["pro"];
+  if (filter === "MacBook Air") {
+    facets.family = "air";
+  }
+  if (filter === "MacBook Pro") {
+    facets.family = "pro";
+  }
   if (filter === "16GB RAM") facets.ram = ["16"];
   return sortNormalizedPublicInventory(
     filterNormalizedPublicInventory(

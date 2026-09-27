@@ -18,8 +18,11 @@ export function DesiredSpecDemand({
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"spec" | "contact">("spec");
   const [family, setFamily] = useState<"" | "air" | "pro">(
-    (state.facets.family.length === 1 ? state.facets.family[0] : "") as
-      "" | "air" | "pro",
+    state.facets.family === "air"
+      ? "air"
+      : state.facets.family === "pro"
+        ? "pro"
+        : "",
   );
   const [chip, setChip] = useState("");
   const [ram, setRam] = useState(

@@ -8,8 +8,10 @@ import {
   publicSummaries,
 } from "./project-public-candidates.ts";
 import {
+  applicableInventoryFacetGroups,
   buildInventoryShareUrl,
   countFacetOption,
+  countFamilyOption,
   copyInventoryShareUrl,
   emptyInventoryFacets,
   filterAndSortPublicInventory,
@@ -21,10 +23,12 @@ import {
   normalizeScreenFacet,
   parseInventoryUrlState,
   removeFacetOption,
+  selectMachineFamily,
   serializeInventoryUrlState,
   sortNormalizedPublicInventory,
   toggleMultiFacet,
 } from "./public-inventory-query.ts";
+import { imacDisplayVariantForModelSpecKey } from "./imac-display-variant.ts";
 import { loadPublicInventoryState } from "./public-inventory-load-state.ts";
 import {
   nextOpenFilter,
@@ -1237,7 +1241,7 @@ test("facet groups combine with AND and options within one group combine with OR
   const items = normalizePublicInventory(facetedMachines());
   const facets = {
     ...emptyInventoryFacets(),
-    family: ["pro"],
+    family: "pro",
     chip: ["m1-pro-max", "m2"],
     ram: ["16"],
   };
@@ -1327,7 +1331,7 @@ test("facet counts retain other groups and exclude selections from their own gro
   const items = normalizePublicInventory(facetedMachines());
   const facets = {
     ...emptyInventoryFacets(),
-    family: ["pro"],
+    family: "pro",
     chip: ["m1-pro-max"],
     ram: ["16"],
   };
@@ -1353,7 +1357,7 @@ test("facet options with zero count remain rendered disabled while selected opti
 test("facet toggles and active-chip removal change only their own option", () => {
   let facets = toggleMultiFacet(emptyInventoryFacets(), "chip", "m1");
   facets = toggleMultiFacet(facets, "chip", "m2");
-  facets = { ...facets, family: ["pro"] };
+  facets = { ...facets, family: "pro" };
   assert.deepEqual(removeFacetOption(facets, "chip", "m1"), {
     ...facets,
     chip: ["m2"],
@@ -1368,7 +1372,7 @@ test("clear all returns the default facet state", () => {
   const active = {
     ...emptyInventoryFacets(),
     price: "over-18",
-    family: ["pro"],
+    family: "pro",
     chip: ["m2"],
     ram: ["16"],
     screen: ["large"],
@@ -1376,17 +1380,20 @@ test("clear all returns the default facet state", () => {
   assert.notDeepEqual(active, emptyInventoryFacets());
   assert.deepEqual(emptyInventoryFacets(), {
     price: null,
-    family: [],
+    family: null,
     chip: [],
     ram: [],
     screen: [],
+    display: [],
+    storageType: [],
+    storage: [],
   });
 });
 
 test("URL state round-trips stable values and safely drops invalid values", () => {
   const parsed = parseInventoryUrlState(
     new URLSearchParams(
-      "q=M1+Pro&price=12-15&family=pro,bad&chip=m1-pro-max,private&ram=16&screen=large&sort=price-desc",
+      "q=M1+Pro&price=12-15&family=pro&chip=m1-pro-max,private&ram=16&screen=large&sort=price-desc",
     ),
   );
   assert.deepEqual(parsed, {
@@ -1394,10 +1401,13 @@ test("URL state round-trips stable values and safely drops invalid values", () =
     sort: "price-desc",
     facets: {
       price: "12-15",
-      family: ["pro"],
+      family: "pro",
       chip: ["m1-pro-max"],
       ram: ["16"],
       screen: ["large"],
+      display: [],
+      storageType: [],
+      storage: [],
     },
   });
   assert.equal(
@@ -1406,9 +1416,156 @@ test("URL state round-trips stable values and safely drops invalid values", () =
   );
 });
 
+test("legacy Air and Pro URLs remain valid compact family selections", () => {
+  for (const family of ["air", "pro"]) {
+    const state = parseInventoryUrlState(
+      new URLSearchParams(`family=${family}`),
+    );
+    assert.equal(state.facets.family, family);
+    assert.equal(
+      serializeInventoryUrlState(state),
+      `?family=${family}`,
+    );
+  }
+});
+
+test("compact family query contract covers every machine line and all machines", () => {
+  for (const family of ["air", "pro", "imac", "mini"]) {
+    const state = parseInventoryUrlState(new URLSearchParams(`family=${family}`));
+    assert.equal(state.facets.family, family);
+    assert.equal(serializeInventoryUrlState(state), `?family=${family}`);
+  }
+  const all = parseInventoryUrlState(new URLSearchParams());
+  assert.equal(all.facets.family, null);
+  assert.equal(serializeInventoryUrlState(all), "");
+});
+
+test("each machine line exposes only its applicable facet set", () => {
+  assert.deepEqual(applicableInventoryFacetGroups(null), [
+    "price", "family", "chip", "ram",
+  ]);
+  for (const family of ["air", "pro"])
+    assert.deepEqual(applicableInventoryFacetGroups(family), [
+      "price", "family", "chip", "ram", "screen",
+    ]);
+  assert.deepEqual(applicableInventoryFacetGroups("imac"), [
+    "price", "family", "chip", "ram", "display", "storageType",
+  ]);
+  assert.deepEqual(applicableInventoryFacetGroups("mini"), [
+    "price", "family", "chip", "ram", "storage",
+  ]);
+});
+
+test("changing machine line preserves cross-family facets and clears scoped facets", () => {
+  const pro = {
+    ...emptyInventoryFacets(),
+    price: "15-18",
+    family: "pro",
+    chip: ["m2"],
+    ram: ["16"],
+    screen: ["large"],
+    storageType: ["ssd"],
+    storage: ["512"],
+  };
+  assert.deepEqual(selectMachineFamily(pro, "imac"), {
+    ...emptyInventoryFacets(),
+    price: "15-18",
+    family: "imac",
+    chip: ["m2"],
+    ram: ["16"],
+  });
+  assert.deepEqual(selectMachineFamily(pro, "mini"), {
+    ...emptyInventoryFacets(),
+    price: "15-18",
+    family: "mini",
+    chip: ["m2"],
+    ram: ["16"],
+  });
+  for (const family of [null, "air", "pro", "imac", "mini"])
+    assert.deepEqual(selectMachineFamily(pro, family), {
+      ...emptyInventoryFacets(),
+      price: "15-18",
+      family,
+      chip: ["m2"],
+      ram: ["16"],
+    });
+  assert.equal(
+    parseInventoryUrlState(
+      new URLSearchParams("family=imac,mini"),
+    ).facets.family,
+    null,
+  );
+  assert.deepEqual(
+    parseInventoryUrlState(new URLSearchParams("family=all")).facets,
+    emptyInventoryFacets(),
+  );
+  assert.doesNotMatch(inventoryShareLabel(pro), /undefined/);
+});
+
+test("chip and RAM refine compact family URLs in deterministic order", () => {
+  const baseState = {
+    query: "",
+    sort: "relevance",
+    facets: emptyInventoryFacets(),
+  };
+  const cases = [
+    { chip: ["m1"], ram: [], expected: "?family=air&chip=m1" },
+    { chip: [], ram: ["8"], expected: "?family=air&ram=8" },
+    {
+      chip: ["m1"],
+      ram: ["8"],
+      expected: "?family=air&chip=m1&ram=8",
+    },
+  ];
+  for (const { chip, ram, expected } of cases) {
+    const facets = selectMachineFamily(
+      { ...emptyInventoryFacets(), chip, ram },
+      "air",
+    );
+    assert.equal(serializeInventoryUrlState({ ...baseState, facets }), expected);
+  }
+
+  const familyFirst = selectMachineFamily(emptyInventoryFacets(), "pro");
+  assert.equal(
+    serializeInventoryUrlState({
+      ...baseState,
+      facets: { ...familyFirst, chip: ["m1"], ram: ["8"] },
+    }),
+    "?family=pro&chip=m1&ram=8",
+  );
+});
+
+test("family switches retain chip and RAM but discard stale size and storage", () => {
+  const air = {
+    ...emptyInventoryFacets(),
+    family: "air",
+    chip: ["m1"],
+    ram: ["8"],
+    screen: ["compact"],
+  };
+  const imac = selectMachineFamily(air, "imac");
+  assert.deepEqual(imac, {
+    ...emptyInventoryFacets(),
+    family: "imac",
+    chip: ["m1"],
+    ram: ["8"],
+  });
+
+  const mini = selectMachineFamily(
+    { ...imac, screen: ["large"], storageType: ["fusion"] },
+    "mini",
+  );
+  assert.deepEqual(mini, {
+    ...emptyInventoryFacets(),
+    family: "mini",
+    chip: ["m1"],
+    ram: ["8"],
+  });
+});
+
 test("result count and sorting remain correct after faceted filtering", () => {
   const items = normalizePublicInventory(facetedMachines());
-  const facets = { ...emptyInventoryFacets(), family: ["pro"], ram: ["16"] };
+  const facets = { ...emptyInventoryFacets(), family: "pro", ram: ["16"] };
   const filtered = filterNormalizedPublicInventory(items, "", facets);
   const sorted = sortNormalizedPublicInventory(filtered, "price-desc");
   assert.equal(filtered.length, 2);
@@ -1427,7 +1584,6 @@ test("filter dropdown uses one canonical state for open, switch, and toggle-clos
 test("price selection closes while multi-select chip selection stays open", () => {
   assert.equal(selectionKeepsFilterOpen("price"), false);
   assert.equal(selectionKeepsFilterOpen("chip"), true);
-  assert.equal(selectionKeepsFilterOpen("family"), true);
   assert.equal(selectionKeepsFilterOpen("ram"), true);
   assert.equal(selectionKeepsFilterOpen("screen"), true);
 });
@@ -1661,7 +1817,7 @@ test("mobile filter controls form a two-row three-column grid including sort", (
     css,
     /\.facet-groups \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
   );
-  assert.match(filters, /\["price", "family", "chip", "ram", "screen"\]/);
+  assert.match(filters, /applicableInventoryFacetGroups\(facets\.family\)/);
   assert.match(filters, /mobile-sort-control/);
   assert.match(filters, /Sắp xếp/);
 });
@@ -3051,7 +3207,7 @@ test("inventory share URL preserves canonical filter order and referral owner on
     sort: "relevance",
     facets: {
       ...emptyInventoryFacets(),
-      family: ["air"],
+      family: "air",
       chip: ["m2"],
       ram: ["8"],
     },
@@ -3068,6 +3224,20 @@ test("inventory share URL preserves canonical filter order and referral owner on
     inventoryShareLabel(state.facets),
     "Sao chép liên kết Air M2 • 8GB",
   );
+});
+
+test("copy-link URLs use one compact family parameter for every machine line", () => {
+  for (const family of ["air", "pro", "imac", "mini"]) {
+    const state = {
+      query: "",
+      sort: "relevance",
+      facets: { ...emptyInventoryFacets(), family },
+    };
+    assert.equal(
+      buildInventoryShareUrl("https://mbmc.vn", state, null),
+      `https://mbmc.vn/may-dang-co?family=${family}`,
+    );
+  }
 });
 
 test("inventory share URL supports no filters and canonical query merging", () => {
@@ -3091,7 +3261,10 @@ test("inventory clipboard helper reports success and failure safely", async () =
   const state = {
     query: "",
     sort: "relevance",
-    facets: { ...emptyInventoryFacets(), family: ["air"] },
+    facets: {
+      ...emptyInventoryFacets(),
+      family: "air",
+    },
   };
   let copied = "";
   assert.equal(
@@ -3105,7 +3278,10 @@ test("inventory clipboard helper reports success and failure safely", async () =
     ),
     true,
   );
-  assert.equal(copied, "https://mbmc.vn/may-dang-co?family=air&ref=2MDE");
+  assert.equal(
+    copied,
+    "https://mbmc.vn/may-dang-co?family=air&ref=2MDE",
+  );
   assert.equal(
     await copyInventoryShareUrl("https://mbmc.vn", state, "2MDE", async () => {
       throw new Error("denied");
@@ -3332,6 +3508,73 @@ function familyFixture(code, machineFamily, modelText, storageType, overrides = 
   });
 }
 
+test("iMac display variants resolve only from canonical model spec keys", () => {
+  const variants = [
+    ["imac-21-5-intel-i5-2017", "21.5"],
+    ["imac-21-5-4k-intel-i5-2017", "21.5-4k"],
+    ["imac-24-45k-4port-m1-2021", "24-4.5k"],
+    ["imac-27-5k-intel-i7-2020", "27-5k"],
+  ];
+  for (const [key, expected] of variants)
+    assert.equal(imacDisplayVariantForModelSpecKey(key), expected);
+  assert.notEqual(
+    imacDisplayVariantForModelSpecKey(variants[0][0]),
+    imacDisplayVariantForModelSpecKey(variants[1][0]),
+  );
+  assert.equal(imacDisplayVariantForModelSpecKey("iMac 27 inch 4K"), null);
+});
+
+test("iMac display facet counts and results use canonical inventory facts", () => {
+  const fixtures = [
+    ["MBMC-IMAC-215", "imac-21-5-intel-i5-2017"],
+    ["MBMC-IMAC-215-4K", "imac-21-5-4k-intel-i5-2017"],
+    ["MBMC-IMAC-24", "imac-24-45k-4port-m1-2021"],
+    ["MBMC-IMAC-27", "imac-27-5k-intel-i7-2020"],
+  ];
+  const summaries = publicSummaries(
+    fixtures.map(([code, modelSpecKey]) =>
+      familyFixture(code, "imac", "Canonical iMac inventory item", "ssd", {
+        model_spec_key: modelSpecKey,
+      }),
+    ),
+  ).map((machine) => ({
+    ...machine,
+    modelSpecKey: fixtures.find(([code]) => code === machine.code)?.[1] ?? null,
+  }));
+  const normalized = normalizePublicInventory(summaries);
+  const imac = { ...emptyInventoryFacets(), family: "imac" };
+  for (const display of ["21.5", "21.5-4k", "24-4.5k", "27-5k"]) {
+    assert.equal(countFacetOption(normalized, "", imac, "display", display), 1);
+    assert.equal(
+      filterNormalizedPublicInventory(normalized, "", {
+        ...imac,
+        display: [display],
+      }).length,
+      1,
+    );
+  }
+  assert.equal(
+    serializeInventoryUrlState({
+      query: "",
+      sort: "relevance",
+      facets: { ...imac, display: ["27-5k"] },
+    }),
+    "?family=imac&display=27-5k",
+  );
+  assert.deepEqual(
+    parseInventoryUrlState(
+      new URLSearchParams("family=imac&screen=large&display=21.5-4k"),
+    ).facets.display,
+    ["21.5-4k"],
+  );
+  assert.deepEqual(
+    parseInventoryUrlState(
+      new URLSearchParams("family=imac&screen=large&display=21.5-4k"),
+    ).facets.screen,
+    [],
+  );
+});
+
 test("V3 golden fixtures preserve MacBook Air and Pro card/detail semantics", () => {
   const machines = publicSummaries([
     familyFixture("MBMC-AIR", "macbook", "MacBook Air M2 2022 13 inch", "ssd"),
@@ -3356,18 +3599,28 @@ test("multi-family inventory filters and storage-aware search use canonical V3 f
     familyFixture("MBMC-MINI", "mac-mini", "Mac mini M2", "ssd"),
   ]);
   const normalized = normalizePublicInventory(machines);
-  const withFamily = (family) => ({ ...emptyInventoryFacets(), family: [family] });
-  assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("macbook")).map((x) => x.machine.code), ["MBMC-AIR", "MBMC-PRO"]);
+  const withFamily = (family) => ({ ...emptyInventoryFacets(), family });
+  assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("air")).map((x) => x.machine.code), ["MBMC-AIR"]);
+  assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("pro")).map((x) => x.machine.code), ["MBMC-PRO"]);
   assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("imac")).map((x) => x.machine.code), ["MBMC-IMAC-F", "MBMC-IMAC-H", "MBMC-IMAC-S"]);
+  assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("mini")).map((x) => x.machine.code), ["MBMC-MINI"]);
   assert.deepEqual(filterNormalizedPublicInventory(normalized, "fusion drive", emptyInventoryFacets()).map((x) => x.machine.code), ["MBMC-IMAC-F"]);
   assert.deepEqual(filterNormalizedPublicInventory(normalized, "hdd", emptyInventoryFacets()).map((x) => x.machine.code), ["MBMC-IMAC-H"]);
   assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "air"), 1);
   assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "pro"), 1);
-  assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "imac"), 3);
-  assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "mac-mini"), 1);
+  assert.equal(countFamilyOption(normalized, "", emptyInventoryFacets(), "imac"), 3);
+  assert.equal(countFamilyOption(normalized, "", emptyInventoryFacets(), "mini"), 1);
+
+  const impossible = selectMachineFamily(
+    { ...emptyInventoryFacets(), chip: ["intel"], ram: ["32-plus"] },
+    "imac",
+  );
+  assert.deepEqual(impossible.chip, ["intel"]);
+  assert.deepEqual(impossible.ram, ["32-plus"]);
+  assert.equal(filterNormalizedPublicInventory(normalized, "", impossible).length, 0);
 });
 
-test("inventory family filter and heading present all canonical Mac lines", () => {
+test("Dòng máy is the only family selector and exposes all compact machine lines", () => {
   const filters = readFileSync(
     new URL(
       "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
@@ -3384,7 +3637,13 @@ test("inventory family filter and heading present all canonical Mac lines", () =
   );
   for (const line of ["MacBook Air", "MacBook Pro", "iMac", "Mac mini"])
     assert.match(filters, new RegExp(`label: "${line}"`));
-  assert.doesNotMatch(filters, /\{ value: "macbook", label: "MacBook" \}/);
+  assert.doesNotMatch(filters, /productLine/);
+  assert.doesNotMatch(filters, /Dòng máy · \$\{selected\.length\}/);
+  const explorer = readFileSync(
+    new URL("../../app/(sales)/may-dang-co/_components/InventoryExplorer.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(explorer, /machine-family-filters|<nav/);
   assert.match(intro, /<h1>Mac đang có<\/h1>/);
   assert.doesNotMatch(intro, /MacBook đang có/);
 });

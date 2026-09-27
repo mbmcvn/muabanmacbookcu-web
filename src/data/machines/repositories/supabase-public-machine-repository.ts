@@ -156,9 +156,16 @@ async function loadPublicMachineCandidates(operation: "list" | "getBySlug") {
 
 export const supabasePublicMachineRepository: PublicMachineRepository = {
   async list() {
-    return (await loadPublicMachineCandidates("list")).projections
+    const { rows, projections } = await loadPublicMachineCandidates("list");
+    const modelSpecKeyByCode = new Map(
+      rows.map((row) => [row.machine_id, row.model_spec_key ?? null]),
+    );
+    return projections
       .filter((result) => result.eligible)
-      .map((result) => result.summary)
+      .map((result) => ({
+        ...result.summary,
+        modelSpecKey: modelSpecKeyByCode.get(result.summary.code) ?? null,
+      }))
       .toSorted(
         (left, right) =>
           Date.parse(right.publishedAt ?? "") -

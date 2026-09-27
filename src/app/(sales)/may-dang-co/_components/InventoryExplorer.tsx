@@ -3,22 +3,26 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PublicMachineSummaryV2 } from "@/models";
 import {
+  applicableInventoryFacetGroups,
   chipFacetValues,
   countFacetOption,
   emptyInventoryFacets,
-  familyFacetValues,
   filterNormalizedPublicInventory,
   normalizePublicInventory,
   parseInventoryUrlState,
   priceFacetValues,
+  familyFacetValues,
+  imacDisplayFacetValues,
   ramFacetValues,
   removeFacetOption,
   screenFacetValues,
+  selectMachineFamily,
+  storageFacetValues,
+  storageTypeFacetValues,
   serializeInventoryUrlState,
   sortNormalizedPublicInventory,
   type FacetGroup,
   type InventoryUrlState,
-  type FamilyFacet,
   type MultiFacetGroup,
 } from "@/data/machines/public-inventory-query";
 import { InventoryEmptyState } from "./InventoryEmptyState";
@@ -87,15 +91,18 @@ export function InventoryExplorer({
   );
   const counts = useMemo(() => {
     const next: FacetCountMap = {};
-    const groups = {
+    const optionsByGroup = {
       price: priceFacetValues,
       family: familyFacetValues,
       chip: chipFacetValues,
       ram: ramFacetValues,
       screen: screenFacetValues,
+      display: imacDisplayFacetValues,
+      storageType: storageTypeFacetValues,
+      storage: storageFacetValues,
     } as const;
-    for (const [group, options] of Object.entries(groups)) {
-      for (const option of options) {
+    for (const group of applicableInventoryFacetGroups(state.facets.family)) {
+      for (const option of optionsByGroup[group]) {
         next[`${group}:${option}`] = countFacetOption(
           normalized,
           state.query,
@@ -111,31 +118,6 @@ export function InventoryExplorer({
 
   return (
     <>
-      <nav className="machine-family-filters" aria-label="Lọc theo loại máy">
-        {([
-          { value: null, label: "Tất cả" },
-          { value: "macbook", label: "MacBook" },
-          { value: "imac", label: "iMac" },
-          { value: "mac-mini", label: "Mac mini" },
-        ] satisfies Array<{ value: FamilyFacet | null; label: string }>).map((option) => {
-          const selected = option.value === null
-            ? state.facets.family.length === 0
-            : state.facets.family.length === 1 && state.facets.family[0] === option.value;
-          return (
-            <button
-              key={option.label}
-              type="button"
-              aria-pressed={selected}
-              onClick={() => commit({
-                ...state,
-                facets: { ...state.facets, family: option.value ? [option.value] : [] },
-              })}
-            >
-              {option.label}
-            </button>
-          );
-        })}
-      </nav>
       <div className="inventory-controls">
         <label className="search-field" htmlFor="inventory-search">
           <span className="visually-hidden">Tìm trong danh sách máy</span>
@@ -157,6 +139,12 @@ export function InventoryExplorer({
           showModernChip={showModernChip}
           onPriceChange={(price) =>
             commit({ ...state, facets: { ...state.facets, price } })
+          }
+          onFamilyChange={(family) =>
+            commit({
+              ...state,
+              facets: selectMachineFamily(state.facets, family),
+            })
           }
           onMultiChange={(group: MultiFacetGroup, values: string[]) =>
             commit({

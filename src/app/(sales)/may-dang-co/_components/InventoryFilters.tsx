@@ -14,6 +14,7 @@ import {
   type FilterControlGroup,
   type OpenFilter,
 } from "./inventory-filter-interaction";
+import { applicableInventoryFacetGroups } from "@/data/machines/public-inventory-query";
 
 export const facetOptions = {
   price: [
@@ -26,7 +27,7 @@ export const facetOptions = {
     { value: "air", label: "MacBook Air" },
     { value: "pro", label: "MacBook Pro" },
     { value: "imac", label: "iMac" },
-    { value: "mac-mini", label: "Mac mini" },
+    { value: "mini", label: "Mac mini" },
   ],
   chip: [
     { value: "intel", label: "Intel" },
@@ -45,6 +46,22 @@ export const facetOptions = {
     { value: "compact", label: 'Gọn nhẹ · 13–14"' },
     { value: "large", label: 'Màn lớn · 15–16"' },
   ],
+  display: [
+    { value: "21.5", label: "21.5 inch" },
+    { value: "21.5-4k", label: "21.5 inch · 4K" },
+    { value: "24-4.5k", label: "24 inch · 4.5K" },
+    { value: "27-5k", label: "27 inch · 5K" },
+  ],
+  storageType: [
+    { value: "ssd", label: "SSD" },
+    { value: "fusion", label: "Fusion Drive" },
+    { value: "hdd", label: "HDD" },
+  ],
+  storage: [
+    { value: "256", label: "256GB" },
+    { value: "512", label: "512GB" },
+    { value: "1024-plus", label: "1TB+" },
+  ],
 } as const;
 
 const groupLabels: Record<FacetGroup, string> = {
@@ -53,6 +70,9 @@ const groupLabels: Record<FacetGroup, string> = {
   chip: "Chip",
   ram: "RAM",
   screen: "Kích thước",
+  display: "Màn hình",
+  storageType: "Loại bộ nhớ",
+  storage: "Bộ nhớ",
 };
 
 const mobileGroupLabels: Record<FacetGroup, string> = {
@@ -61,6 +81,9 @@ const mobileGroupLabels: Record<FacetGroup, string> = {
   chip: "Chip",
   ram: "RAM",
   screen: "Màn hình",
+  display: "Màn hình",
+  storageType: "Loại nhớ",
+  storage: "Bộ nhớ",
 };
 
 const mobileOptionLabels: Record<string, string> = {
@@ -70,14 +93,18 @@ const mobileOptionLabels: Record<string, string> = {
   "over-18": ">18tr",
   air: "Air",
   pro: "Pro",
-  macbook: "MacBook",
-  imac: "iMac",
-  "mac-mini": "Mac mini",
+  mini: "Mac mini",
+  fusion: "Fusion",
+  "1024-plus": "1TB+",
   "m1-pro-max": "M1 Pro+",
   "m2-pro-max": "M2 Pro+",
   "m3-plus": "M3+",
   compact: '13–14"',
   large: '15–16"',
+  "21.5": '21.5"',
+  "21.5-4k": '21.5" 4K',
+  "24-4.5k": '24" 4.5K',
+  "27-5k": '27" 5K',
 };
 
 const sortOptions: readonly {
@@ -99,6 +126,7 @@ function optionKey(group: FacetGroup, value: string) {
 
 function selectedValues(facets: InventoryFacets, group: FacetGroup): string[] {
   if (group === "price") return facets.price ? [facets.price] : [];
+  if (group === "family") return facets.family ? [facets.family] : [];
   return facets[group];
 }
 
@@ -141,6 +169,7 @@ export function InventoryFilters({
   counts,
   showModernChip,
   onPriceChange,
+  onFamilyChange,
   onMultiChange,
   onSortChange,
   onRemove,
@@ -152,6 +181,7 @@ export function InventoryFilters({
   counts: FacetCountMap;
   showModernChip: boolean;
   onPriceChange: (value: InventoryFacets["price"]) => void;
+  onFamilyChange: (value: InventoryFacets["family"]) => void;
   onMultiChange: (group: MultiFacetGroup, values: string[]) => void;
   onSortChange: (value: InventorySort) => void;
   onRemove: (group: FacetGroup, value: string) => void;
@@ -164,7 +194,7 @@ export function InventoryFilters({
   const triggerRefs = useRef<
     Partial<Record<FilterControlGroup, HTMLButtonElement>>
   >({});
-  const groups = ["price", "family", "chip", "ram", "screen"] as const;
+  const groups = applicableInventoryFacetGroups(facets.family);
   const active = groups.flatMap((group) => {
     const options = facetOptions[group] as readonly {
       value: string;
@@ -219,7 +249,10 @@ export function InventoryFilters({
             facetOptions[group] as readonly { value: string; label: string }[]
           ).filter(
             (option) =>
-              showModernChip || group !== "chip" || option.value !== "m3-plus",
+              (showModernChip || group !== "chip" || option.value !== "m3-plus") &&
+              (group !== "display" ||
+                (counts[optionKey(group, option.value)] ?? 0) > 0 ||
+                selected.includes(option.value)),
           );
           const panelId = `facet-panel-${group}`;
           return (
@@ -254,6 +287,7 @@ export function InventoryFilters({
                       aria-pressed={!selected.length}
                       onClick={() => {
                         if (group === "price") onPriceChange(null);
+                        else if (group === "family") onFamilyChange(null);
                         else onMultiChange(group, []);
                         closeFilter(true);
                       }}
@@ -277,6 +311,13 @@ export function InventoryFilters({
                               isSelected
                                 ? null
                                 : (option.value as InventoryFacets["price"]),
+                            );
+                            closeFilter(true);
+                          } else if (group === "family") {
+                            onFamilyChange(
+                              isSelected
+                                ? null
+                                : (option.value as InventoryFacets["family"]),
                             );
                             closeFilter(true);
                           } else {
