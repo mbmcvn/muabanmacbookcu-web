@@ -4,7 +4,7 @@ import { InventoryPageView } from "./_components/InventoryPageView";
 import { InventoryUnavailable } from "./_components/InventoryUnavailable";
 import { loadPublicInventoryState } from "@/data/machines/public-inventory-load-state";
 
-export const metadata: Metadata = { title: "Máy đang có", description: "Danh sách MacBook cũ đang có tại MBMC, kèm cấu hình và tình trạng công khai." };
+export const metadata: Metadata = { title: "Mac đang có", description: "Danh sách Mac cũ đang có tại MBMC, kèm cấu hình và tình trạng công khai." };
 export const revalidate = 60;
 
 async function loadPublicMachines() {

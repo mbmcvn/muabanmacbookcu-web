@@ -17,16 +17,16 @@ import {
 
 export const facetOptions = {
   price: [
-    { value: "under-15", label: "Dưới 15 triệu" },
+    { value: "under-12", label: "Dưới 12 triệu" },
+    { value: "12-15", label: "12–15 triệu" },
     { value: "15-18", label: "15–18 triệu" },
     { value: "over-18", label: "Trên 18 triệu" },
   ],
   family: [
-    { value: "macbook", label: "MacBook" },
-    { value: "imac", label: "iMac" },
-    { value: "mac-mini", label: "Mac mini" },
     { value: "air", label: "MacBook Air" },
     { value: "pro", label: "MacBook Pro" },
+    { value: "imac", label: "iMac" },
+    { value: "mac-mini", label: "Mac mini" },
   ],
   chip: [
     { value: "intel", label: "Intel" },
@@ -64,7 +64,8 @@ const mobileGroupLabels: Record<FacetGroup, string> = {
 };
 
 const mobileOptionLabels: Record<string, string> = {
-  "under-15": "<15tr",
+  "under-12": "<12tr",
+  "12-15": "12–15tr",
   "15-18": "15–18tr",
   "over-18": ">18tr",
   air: "Air",

@@ -2,7 +2,12 @@ import type { PublicMachineSummaryV2 } from "../../lib/public-projection/contrac
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { buildReferralShareUrl } from "../../lib/contact-routing.ts";
 
-export const priceFacetValues = ["under-15", "15-18", "over-18"] as const;
+export const priceFacetValues = [
+  "under-12",
+  "12-15",
+  "15-18",
+  "over-18",
+] as const;
 export const familyFacetValues = ["macbook", "imac", "mac-mini", "air", "pro"] as const;
 export const chipFacetValues = [
   "intel",
@@ -95,7 +100,8 @@ export function normalizeScreenFacet(displayName: string): ScreenFacet | null {
 }
 
 function normalizePriceFacet(amount: number): PriceFacet {
-  if (amount < 15_000_000) return "under-15";
+  if (amount < 12_000_000) return "under-12";
+  if (amount < 15_000_000) return "12-15";
   if (amount <= 18_000_000) return "15-18";
   return "over-18";
 }
@@ -322,7 +328,8 @@ export function inventoryShareLabel(facets: InventoryFacets): string {
     ...(facets.price
       ? [
           {
-            "under-15": "<15 triệu",
+            "under-12": "<12 triệu",
+            "12-15": "12–15 triệu",
             "15-18": "15–18 triệu",
             "over-18": ">18 triệu",
           }[facets.price],
@@ -345,7 +352,8 @@ export function inventoryShareLabel(facets: InventoryFacets): string {
 // Kept for callers and regression tests using the original single quick-filter API.
 export type PublicInventoryFilter =
   | "Tất cả"
-  | "Dưới 15 triệu"
+  | "Dưới 12 triệu"
+  | "12–15 triệu"
   | "15–18 triệu"
   | "Trên 18 triệu"
   | "MacBook Air"
@@ -360,7 +368,8 @@ export function filterAndSortPublicInventory(
   sort: PublicInventorySort,
 ) {
   const facets = emptyInventoryFacets();
-  if (filter === "Dưới 15 triệu") facets.price = "under-15";
+  if (filter === "Dưới 12 triệu") facets.price = "under-12";
+  if (filter === "12–15 triệu") facets.price = "12-15";
   if (filter === "15–18 triệu") facets.price = "15-18";
   if (filter === "Trên 18 triệu") facets.price = "over-18";
   if (filter === "MacBook Air") facets.family = ["air"];

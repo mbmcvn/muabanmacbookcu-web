@@ -232,11 +232,11 @@ test("search covers model, chip, RAM and SSD configuration", () => {
 test("price filters and sorting use DTO money deterministically", () => {
   const items = publicSummaries([
     row("MBMC-HIGH", { retail_price_expected: 19_000_000 }),
-    row("MBMC-LOW", { retail_price_expected: 12_000_000 }),
+    row("MBMC-LOW", { retail_price_expected: 11_000_000 }),
     row("MBMC-MID", { retail_price_expected: 16_000_000 }),
   ]);
   assert.deepEqual(
-    filterAndSortPublicInventory(items, "", "Dưới 15 triệu", "relevance").map(
+    filterAndSortPublicInventory(items, "", "Dưới 12 triệu", "relevance").map(
       (x) => x.code,
     ),
     ["MBMC-LOW"],
@@ -1267,6 +1267,33 @@ test("price is single-select with documented inclusive middle boundaries", () =>
   assert.equal(typeof at18.price, "string");
 });
 
+test("price facets use non-overlapping 12m, 15m, and 18m boundaries", () => {
+  const items = normalizePublicInventory(
+    publicSummaries([
+      row("MBMC-UNDER-12", { retail_price_expected: 11_999_999 }),
+      row("MBMC-AT-12", { retail_price_expected: 12_000_000 }),
+      row("MBMC-BELOW-15", { retail_price_expected: 14_999_999 }),
+      row("MBMC-AT-15", { retail_price_expected: 15_000_000 }),
+      row("MBMC-AT-18", { retail_price_expected: 18_000_000 }),
+      row("MBMC-OVER-18", { retail_price_expected: 18_000_001 }),
+    ]),
+  );
+  const codesFor = (price) =>
+    filterNormalizedPublicInventory(items, "", {
+      ...emptyInventoryFacets(),
+      price,
+    }).map((item) => item.machine.code);
+
+  assert.deepEqual(codesFor("under-12"), ["MBMC-UNDER-12"]);
+  assert.deepEqual(codesFor("12-15"), ["MBMC-AT-12", "MBMC-BELOW-15"]);
+  assert.deepEqual(codesFor("15-18"), ["MBMC-AT-15", "MBMC-AT-18"]);
+  assert.deepEqual(codesFor("over-18"), ["MBMC-OVER-18"]);
+  assert.equal(countFacetOption(items, "", emptyInventoryFacets(), "price", "under-12"), 1);
+  assert.equal(countFacetOption(items, "", emptyInventoryFacets(), "price", "12-15"), 2);
+  assert.equal(countFacetOption(items, "", emptyInventoryFacets(), "price", "15-18"), 2);
+  assert.equal(countFacetOption(items, "", emptyInventoryFacets(), "price", "over-18"), 1);
+});
+
 test("chip normalization distinguishes Intel, base, Pro/Max, and modern generations", () => {
   assert.equal(normalizeChipFacet("Intel Core i7"), "intel");
   assert.equal(normalizeChipFacet("M1"), "m1");
@@ -1359,14 +1386,14 @@ test("clear all returns the default facet state", () => {
 test("URL state round-trips stable values and safely drops invalid values", () => {
   const parsed = parseInventoryUrlState(
     new URLSearchParams(
-      "q=M1+Pro&family=pro,bad&chip=m1-pro-max,private&ram=16&screen=large&sort=price-desc",
+      "q=M1+Pro&price=12-15&family=pro,bad&chip=m1-pro-max,private&ram=16&screen=large&sort=price-desc",
     ),
   );
   assert.deepEqual(parsed, {
     query: "M1 Pro",
     sort: "price-desc",
     facets: {
-      price: null,
+      price: "12-15",
       family: ["pro"],
       chip: ["m1-pro-max"],
       ram: ["16"],
@@ -1375,7 +1402,7 @@ test("URL state round-trips stable values and safely drops invalid values", () =
   });
   assert.equal(
     serializeInventoryUrlState(parsed),
-    "?q=M1+Pro&family=pro&chip=m1-pro-max&ram=16&screen=large&sort=price-desc",
+    "?q=M1+Pro&price=12-15&family=pro&chip=m1-pro-max&ram=16&screen=large&sort=price-desc",
   );
 });
 
@@ -3334,6 +3361,32 @@ test("multi-family inventory filters and storage-aware search use canonical V3 f
   assert.deepEqual(filterNormalizedPublicInventory(normalized, "", withFamily("imac")).map((x) => x.machine.code), ["MBMC-IMAC-F", "MBMC-IMAC-H", "MBMC-IMAC-S"]);
   assert.deepEqual(filterNormalizedPublicInventory(normalized, "fusion drive", emptyInventoryFacets()).map((x) => x.machine.code), ["MBMC-IMAC-F"]);
   assert.deepEqual(filterNormalizedPublicInventory(normalized, "hdd", emptyInventoryFacets()).map((x) => x.machine.code), ["MBMC-IMAC-H"]);
+  assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "air"), 1);
+  assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "pro"), 1);
+  assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "imac"), 3);
+  assert.equal(countFacetOption(normalized, "", emptyInventoryFacets(), "family", "mac-mini"), 1);
+});
+
+test("inventory family filter and heading present all canonical Mac lines", () => {
+  const filters = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryFilters.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const intro = readFileSync(
+    new URL(
+      "../../app/(sales)/may-dang-co/_components/InventoryIntro.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  for (const line of ["MacBook Air", "MacBook Pro", "iMac", "Mac mini"])
+    assert.match(filters, new RegExp(`label: "${line}"`));
+  assert.doesNotMatch(filters, /\{ value: "macbook", label: "MacBook" \}/);
+  assert.match(intro, /<h1>Mac đang có<\/h1>/);
+  assert.doesNotMatch(intro, /MacBook đang có/);
 });
 
 test("desktop family card/detail facts suppress battery and label storage accurately", () => {
