@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
-import { MBMC_DESKTOP_DOWNLOAD_URL } from "@/config/public-destinations";
+import { CURRENT_MBMC_DESKTOP_RELEASE } from "@/config/desktop-releases";
+import { DesktopReleaseDownload } from "./DesktopReleaseDownload";
 import styles from "./software.module.css";
 
 export const metadata: Metadata = {
@@ -11,8 +12,6 @@ export const metadata: Metadata = {
     "Tải MBMC Desktop và khám phá các module hỗ trợ kiểm tra, bảo trì và sử dụng MacBook.",
   alternates: { canonical: "/phan-mem" },
 };
-
-const downloadFilename = "MBMC-Desktop-V1.0-Beta-Universal.zip";
 
 const modules = [
   {
@@ -68,14 +67,6 @@ const usageSteps = [
   "Nhập mã hiển thị",
   "Bắt đầu kiểm tra máy",
 ] as const;
-
-function DownloadIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14" />
-    </svg>
-  );
-}
 
 function ModuleIcon({ icon }: { icon: (typeof modules)[number]["icon"] }) {
   if (icon === "checker") {
@@ -149,22 +140,18 @@ export default function SoftwareHubPage() {
             riêng cho người dùng Mac trong một ứng dụng thống nhất.
           </p>
           <ul className={styles.desktopMetadata} aria-label="Yêu cầu hệ thống">
-            <li>macOS 13 trở lên</li>
-            <li>Universal: Apple Silicon + Intel</li>
-            <li>Version 1.0 Beta</li>
+            <li>macOS {CURRENT_MBMC_DESKTOP_RELEASE.minMacOS}</li>
+            <li>{CURRENT_MBMC_DESKTOP_RELEASE.architecture}</li>
+            <li>
+              v{CURRENT_MBMC_DESKTOP_RELEASE.version} (
+              {CURRENT_MBMC_DESKTOP_RELEASE.build})
+            </li>
+            {CURRENT_MBMC_DESKTOP_RELEASE.notarized ? (
+              <li>Apple notarized</li>
+            ) : null}
           </ul>
           <div className={styles.desktopActions}>
-            <a
-              className={styles.downloadAction}
-              href={MBMC_DESKTOP_DOWNLOAD_URL}
-              download
-            >
-              <DownloadIcon />
-              <span>
-                <strong>Tải MBMC Desktop</strong>
-                <small>{downloadFilename}</small>
-              </span>
-            </a>
+            <DesktopReleaseDownload />
           </div>
         </div>
 

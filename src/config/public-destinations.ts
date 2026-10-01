@@ -1,7 +1,7 @@
 const DEFAULT_OPERATIONAL_ORIGIN = "https://app.mbmc.vn";
 
 export const MBMC_DESKTOP_DOWNLOAD_URL =
-  "https://download.mbmc.vn/mbmc-desktop/MBMC-Desktop-V1.0-Beta-Universal.zip";
+  "https://download.mbmc.vn/mbmc-desktop/MBMC-Desktop-1.0.0-3.dmg";
 
 function operationalOrigin(): string {
   const configured = process.env.MBMC_OPERATIONAL_API_BASE_URL?.trim();

@@ -1,15 +1,18 @@
 import Image from "next/image";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
-import { MBMC_DESKTOP_DOWNLOAD_URL } from "@/config/public-destinations";
+import { CURRENT_MBMC_DESKTOP_RELEASE } from "@/config/desktop-releases";
+import { DesktopReleaseDownload } from "@/app/(sales)/phan-mem/DesktopReleaseDownload";
 import styles from "./Home.module.css";
 
 const accessCode = "mbmc.vn";
-const downloadFilename = "MBMC-Desktop-V1.0-Beta-Universal.zip";
-
 const metadata = [
   { icon: "beta", label: "Public Beta" },
-  { icon: "device", label: "macOS 13+" },
-  { icon: "chip", label: "Apple Silicon + Intel" },
+  {
+    icon: "device",
+    label: `macOS ${CURRENT_MBMC_DESKTOP_RELEASE.minMacOS}`,
+  },
+  { icon: "chip", label: CURRENT_MBMC_DESKTOP_RELEASE.architecture },
+  { icon: "beta", label: "Apple notarized" },
 ] as const;
 
 const features = [
@@ -30,14 +33,6 @@ const features = [
     description: "Hoàn thành bài kiểm tra và nhận báo cáo có thể tra cứu lại.",
   },
 ] as const;
-
-function DownloadIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14" />
-    </svg>
-  );
-}
 
 function KeyIcon() {
   return (
@@ -129,17 +124,7 @@ export function MbmcDesktopSpotlight() {
             ràng.
           </p>
           <div className={styles.actions}>
-            <a
-              className={`${styles.primaryAction} ${styles.desktopDownloadAction}`}
-              href={MBMC_DESKTOP_DOWNLOAD_URL}
-              download
-            >
-              <DownloadIcon />
-              <span>
-                <strong>Tải MBMC Desktop</strong>
-                <small>{downloadFilename}</small>
-              </span>
-            </a>
+            <DesktopReleaseDownload className={styles.homeReleaseDownload} />
           </div>
           <ul className={styles.desktopSpotlightMetadata} aria-label="Yêu cầu">
             {metadata.map((item) => (
