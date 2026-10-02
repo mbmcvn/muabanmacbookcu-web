@@ -70,7 +70,6 @@ import {
 import { MBMC_ZALO_URL } from "../../config/contact.ts";
 import { formatCompactStorage } from "../../lib/presentation/machine.ts";
 import { selectHomepageMachines } from "../../app/(sales)/_components/home/homepage-machine-selection.ts";
-import { buildPublicLimitations } from "../../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts";
 import { machinePolicyAnalyticsPayload } from "../../lib/analytics/machine-policy.ts";
 import {
   loadPublicMachinePolicySummary,
@@ -379,7 +378,7 @@ test("verification component renders compact successful rows only", () => {
   );
   assert.ok(
     dossier.indexOf("<MachineVerification") <
-      dossier.indexOf("<VerifiedPublicInformation"),
+      dossier.indexOf("<MachineEvidenceGrid"),
   );
 });
 test("detail DTO allow-list contains the verification collection without private fields", () => {
@@ -2724,79 +2723,32 @@ test("canonical suitable audiences are separate from specifications and omit leg
     /MachineExplanation|ExpertSummary|Đánh giá từ MBMC/,
   );
 });
-test("verified information stays visible and limitations use a closed native disclosure", () => {
-  const base = publicDetailBySlug([row("MBMC-LIMITS")], "mbmc-limits");
-  assert.ok(base);
-  assert.deepEqual(buildPublicLimitations(base), [
+test("public detail keeps one Passport identity and omits redundant confirmation UI", () => {
+  const componentDir = new URL("../../app/(sales)/may/[slug]/_components/", import.meta.url);
+  const sources = ["DecisionDossier.tsx", "PublicMachineDetailView.tsx", "PassportDossier.tsx"]
+    .map((file) => readFileSync(new URL(file, componentDir), "utf8"));
+  const [dossier, view, passport] = sources;
+  assert.equal((dossier.match(/<PassportDossier\b/g) ?? []).length, 1);
+  assert.match(passport, /MBMC Passport/);
+  assert.match(passport, /Hồ sơ nhận diện công khai/);
+  assert.match(passport, /passport\.code/);
+  assert.match(passport, /formatPublicMachineDisplayName\(machine\.summary\.displayName\)/);
+  assert.match(passport, /passport\.publicStatus/);
+  assert.match(passport, /machine\.summary\.reservationKind/);
+  assert.match(passport, /formatPublicDate\(passport\.firstPublishedAt\)/);
+  for (const removed of [
+    "VerifiedPublicInformation", "PublicInformationLimitations", "buildPublicLimitations",
+    "Đã xác minh trong hồ sơ công khai", "Thông tin cần xác nhận thêm",
     "Hồ sơ công khai hiện chưa có kết quả kiểm định.",
     "Hồ sơ công khai hiện chưa có thông tin bảo hành đã được xác định.",
     "Hồ sơ công khai hiện chưa có dữ liệu xác minh nguồn gốc.",
     "Hồ sơ công khai hiện chưa có kết luận về tình trạng sửa chữa.",
-  ]);
-  const source = readFileSync(
-    new URL(
-      "../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",
-      import.meta.url,
-    ),
-    "utf8",
-  );
-  assert.match(source, /Đã xác minh trong hồ sơ công khai/);
-  assert.match(
-    source,
-    /<section[\s\S]*aria-labelledby="verified-information-heading"/,
-  );
-  assert.match(
-    source,
-    /<details[\s\S]*className="public-information-disclosure supporting-information-row"[\s\S]*id="thong-tin-can-xac-nhan-them"/,
-  );
-  assert.match(
-    source,
-    /<summary className="public-information-disclosure__summary">/,
-  );
-  assert.doesNotMatch(source, /<details[^>]*\sopen(?:=|\s|>)/);
-  assert.match(source, /Thông tin cần xác nhận thêm/);
-  assert.match(
-    source,
-    /Chưa có \{limitations\.length\} nhóm thông tin xác nhận trong hồ sơ\s+ công khai/,
-  );
-  assert.doesNotMatch(source, /Giới hạn của hồ sơ công khai/);
-  assert.match(source, /không phải kết luận kiểm định toàn diện/);
-  assert.doesNotMatch(
-    source,
-    /chưa từng sửa|không có bảo hành|không rõ nguồn gốc/i,
-  );
-});
-
-test("limitations disclosure derives its count, omits empty state, and renders every item", () => {
-  const base = publicDetailBySlug([row("MBMC-DISCLOSURE")], "mbmc-disclosure");
-  assert.ok(base);
-  const limitations = buildPublicLimitations(base);
-  assert.equal(limitations.length, 4);
-  const source = readFileSync(
-    new URL(
-      "../../app/(sales)/may/[slug]/_components/PublicInformationStatus.tsx",
-      import.meta.url,
-    ),
-    "utf8",
-  );
-  assert.match(source, /if \(!limitations\.length\) return null/);
-  assert.match(source, /limitations\.length/);
-  assert.match(
-    source,
-    /<div className="public-information-disclosure__content">[\s\S]*limitations\.map\(\(limitation\) => \([\s\S]*<li key=\{limitation\}>\{limitation\}<\/li>[\s\S]*\)\)[\s\S]*<\/div>/,
-  );
-  const css = readFileSync(
-    new URL("../../app/globals.css", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    css,
-    /\.public-information-disclosure__content \{ position: static;/,
-  );
-  assert.doesNotMatch(
-    css,
-    /\.dossier-status-pair > \.public-information-status \{[^}]*height:\s*100%/,
-  );
+    "ho-so-cong-khai",
+  ]) assert.equal(sources.join("\n").includes(removed), false, removed);
+  for (const component of ["MachineVerification", "MachineEvidenceGrid", "DetailedImages", "PublicSpecifications"])
+    assert.ok(dossier.includes("<" + component));
+  for (const component of ["PublicMachineGallery", "MachinePolicySummary", "PoliciesAndSupport"])
+    assert.ok(view.includes("<" + component));
 });
 
 test("unsupported fullbox wording is removed when the public included-items record has no box", () => {
@@ -2899,7 +2851,7 @@ test("Passport is a current identity record after supporting information without
   assert.doesNotMatch(passport, /passport\.timeline|passport\.facts|<ol/);
 });
 
-test("dossier chips use consistent semantic icons without changing anchors", () => {
+test("remaining dossier chips use consistent semantic icons and valid anchors", () => {
   const view = readFileSync(
     new URL(
       "../../app/(sales)/may/[slug]/_components/PublicMachineDetailView.tsx",
@@ -2908,7 +2860,6 @@ test("dossier chips use consistent semantic icons without changing anchors", () 
     "utf8",
   );
   for (const [anchor, icon, label] of [
-    ["#ho-so-cong-khai", "trust", "Đã biết và chưa biết"],
     ["#thong-tin-ho-tro", "condition", "Tình trạng thực tế"],
     ["#passport-cong-khai", "passport", "Passport"],
   ]) {

@@ -53,10 +53,6 @@ export function PublicMachineDetailView({
             {hasSuitableAudiences ? (
               <a href="#danh-gia-phu-hop">Độ phù hợp</a>
             ) : null}
-            <a href="#ho-so-cong-khai">
-              <MachineDetailIcon name="trust" />
-              Đã biết và chưa biết
-            </a>
             <a href="#thong-tin-ho-tro">
               <MachineDetailIcon name="condition" />
               Tình trạng thực tế

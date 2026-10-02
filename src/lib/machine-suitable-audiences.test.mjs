@@ -191,10 +191,10 @@ test("visible Decision Dossier omits legacy prose and detailed explanation", () 
       dossier.indexOf("<MachineVerification"),
   );
 });
-test("active detail presentation has no legacy recommendation predicate", () => {
+test("active detail dossier has no legacy recommendation predicate", () => {
   const presentation = readFileSync(
     new URL(
-      "../app/(sales)/may/[slug]/_components/decision-dossier-presentation.ts",
+      "../app/(sales)/may/[slug]/_components/DecisionDossier.tsx",
       import.meta.url,
     ),
     "utf8",
