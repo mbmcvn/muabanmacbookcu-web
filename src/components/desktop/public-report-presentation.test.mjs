@@ -71,12 +71,19 @@ test("Display evidence renders through existing grouped diagnostics", () => {
   assert.match(html, /Cần chú ý/);
 });
 
-test("multiple regions retain normalized geometry, numbering and supplied colors", () => {
+test("ordered regions share exactly one schematic with factual test-color metadata", () => {
   const html = renderDisplay(evidence());
   assert.match(html, /left:10%;top:20%;width:30%;height:40%/);
   assert.match(html, /left:70%;top:80%;width:20%;height:10%/);
-  assert.match(html, /Khu vực 1/);
-  assert.match(html, /Khu vực 2/);
+  assert.match(html, /2 khu vực được đánh dấu/);
+  assert.equal((html.match(/data-display-schematic="true"/g) ?? []).length, 1);
+  assert.equal((html.match(/role="img"/g) ?? []).length, 1);
+  const screen = html.slice(html.indexOf('data-display-schematic="true"'), html.indexOf('</div>'));
+  assert.deepEqual([...screen.matchAll(/data-display-region="(\d+)"/g)].map(match => match[1]), ["1", "2"]);
+  assert.match(html, /Khu vực 1 · Nền kiểm tra: Đỏ/);
+  assert.match(html, /Khu vực 2 · Nền kiểm tra: Đen/);
+  assert.ok(html.indexOf("Khu vực 1 ·") < html.indexOf("Khu vực 2 ·"));
+  assert.ok(html.indexOf("</div>") < html.indexOf("Khu vực 1 ·"));
   assert.match(html, /background-color:red/);
   assert.match(html, /background-color:black/);
 });
@@ -104,7 +111,7 @@ test("Display marks introduce no defect semantics or raw evidence", () => {
   const value = evidence();
   value.internal = "RAW_PRIVATE_SENTINEL";
   const html = renderDisplay(value);
-  assert.doesNotMatch(html, /điểm chết|hở sáng|mức độ|nghiêm trọng|thay màn|sửa màn|chẩn đoán|RAW_PRIVATE|regionId|coordinateSpace|<pre|application\/json/i);
+  assert.doesNotMatch(html, /điểm chết|hở sáng|vết ố|đè màn|nguyên nhân|mức độ|nghiêm trọng|thay màn|sửa màn|chẩn đoán|RAW_PRIVATE|regionId|coordinateSpace|<pre|application\/json/i);
   assert.match(html, /Khu vực đã được đánh dấu trong bài kiểm tra/);
 });
 
@@ -141,6 +148,11 @@ test("schematics stay inside the available mobile width", () => {
   const css = readFileSync("src/components/desktop/PublicDisplayEvidence.module.css", "utf8");
   assert.match(css, /\.evidence[^}]*min-width: 0[^}]*max-width: 100%/);
   assert.match(css, /\.screen[^}]*width: 100%[^}]*overflow: hidden/);
+  assert.match(css, /\.compact \.figure[^}]*width: min\(100%, 24rem\)/);
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(css, /overflow-wrap: anywhere/);
+  const html = renderToStaticMarkup(createElement(Display, { evidence: evidence(), variant: "compact" }));
+  assert.match(html, /data-display-variant="compact"/);
 });
 
 test("existing authority, battery, SSD and grouped findings stay visible with Display evidence", () => {
@@ -160,4 +172,46 @@ test("existing authority, battery, SSD and grouped findings stay visible with Di
   assert.match(html, /Quan sát màn hình/);
   assert.match(html, /Chưa xác định/);
   assert.match(html, /Khu vực đã được đánh dấu/);
+});
+
+test("Display warning and failed findings embed compact evidence inside the issue card", () => {
+  for (const outcome of ["warning", "failed"]) {
+    const value = report();
+    value.schema_version = "mbmc.desktop-device-check.v4";
+    value.diagnostics[0].outcome = outcome;
+    value.diagnostics[0].displayEvidence = evidence();
+    value.diagnostics[0].findings = [{ finding_id: "display_visual", title: { vi: "Quan sát màn hình" }, outcome, outcome_label: { vi: "Kết quả được cung cấp" }, summary: null }];
+    value.issues = [{ diagnostic_id: "display", finding_id: "display_visual", title: { vi: "Quan sát màn hình" }, outcome, outcome_label: { vi: "Kết quả được cung cấp" } }];
+    value.undetermined = [];
+    const before = structuredClone(value);
+    const html = renderReport(value);
+    const issues = html.slice(html.indexOf('id="issues-title"'), html.indexOf('id="detail-title"'));
+    const card = issues.match(/<li\b[\s\S]*?<\/li>/)?.[0];
+    assert.ok(card);
+    assert.match(card, /data-display-variant="compact"/);
+    assert.match(card, /data-display-schematic="true"/);
+    assert.equal((issues.match(/data-display-schematic="true"/g) ?? []).length, 1);
+    const details = html.slice(html.indexOf('id="detail-title"'));
+    assert.match(details, /data-display-variant="detail"/);
+    assert.equal((details.match(/data-display-schematic="true"/g) ?? []).length, 1);
+    assert.match(issues, /Khu vực 1 · Nền kiểm tra: Đỏ/);
+    assert.match(issues, /Khu vực 2 · Nền kiểm tra: Đen/);
+    assert.doesNotMatch(issues, /điểm chết|vết ố|đè màn|mức độ|nguyên nhân|sửa chữa/i);
+    assert.deepEqual(value, before);
+
+    delete value.diagnostics[0].displayEvidence;
+    const withoutEvidence = renderReport(value);
+    assert.doesNotMatch(withoutEvidence, /data-display-schematic|data-display-variant/);
+  }
+});
+
+test("unknown Display findings and unrelated issue cards do not gain compact evidence", () => {
+  const value = report();
+  value.diagnostics[0].displayEvidence = evidence();
+  value.issues = [{ diagnostic_id: "battery", finding_id: null, title: { vi: "Pin" }, outcome: "warning", outcome_label: { vi: "Cần chú ý" } }];
+  value.undetermined = [{ diagnostic_id: "display", finding_id: "display_visual", title: { vi: "Quan sát màn hình" }, outcome: "unknown", outcome_label: { vi: "Chưa xác định" } }];
+  const html = renderReport(value);
+  const highlights = html.slice(html.indexOf('id="issues-title"'), html.indexOf('id="detail-title"'));
+  assert.doesNotMatch(highlights, /data-display-schematic|data-display-variant="compact"/);
+  assert.match(html.slice(html.indexOf('id="detail-title"')), /data-display-variant="detail"/);
 });

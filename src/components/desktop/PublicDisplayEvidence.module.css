@@ -1,5 +1,11 @@
 .evidence { min-width: 0; max-width: 100%; margin-top: 1.25rem; overflow-wrap: anywhere; }
+.compact { margin-top: .75rem; font-size: .875rem; }
 .figure { min-width: 0; max-width: 100%; margin: 1rem 0 0; }
-.screen { position: relative; width: 100%; max-width: 100%; overflow: hidden; border: 5px solid #262626; border-radius: .5rem; }
+.compact .figure { width: min(100%, 24rem); margin-top: .75rem; }
+.screen { position: relative; width: 100%; max-width: 100%; overflow: hidden; border: 5px solid #262626; border-radius: .5rem; background: #1e293b; }
 .region { position: absolute; outline: 2px solid #ffb300; outline-offset: -2px; }
 .number { position: absolute; top: 0; left: 0; padding: 0 .2rem; border: 1px solid #111; background: #fff; color: #111; font-size: .75rem; line-height: 1.3; }
+.metadata { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; min-width: 0; margin: .75rem 0 0; padding: 0; list-style: none; }
+.metadata li { min-width: 0; }
+.swatch { display: inline-block; width: .75rem; height: .75rem; margin-left: .35rem; border: 1px solid #94a3b8; border-radius: 50%; vertical-align: middle; }
+@media (min-width: 640px) { .metadata { grid-template-columns: repeat(2, minmax(0, 1fr)); } .compact .metadata { grid-template-columns: minmax(0, 1fr); } }

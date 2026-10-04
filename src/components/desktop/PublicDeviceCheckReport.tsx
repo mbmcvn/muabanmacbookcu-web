@@ -106,7 +106,7 @@ function HighlightList({
         return (
           <li
             key={`${item.diagnostic_id}:${item.finding_id ?? "parent"}`}
-            className={`rounded-2xl border p-4 ${statusStyle[item.outcome]}`}
+            className={`min-w-0 rounded-2xl border p-4 ${statusStyle[item.outcome]}`}
           >
             <div className="flex items-start justify-between gap-4">
               <p className="font-bold">{item.title.vi}</p>
@@ -118,6 +118,11 @@ function HighlightList({
               <p className="mt-2 text-xs opacity-75">{parent.title.vi}</p>
             )}
             {summary && <p className="mt-2 text-sm">{summary}</p>}
+            {tone === "issue" &&
+              (item.outcome === "warning" || item.outcome === "failed") &&
+              parent?.diagnostic_id === "display" && parent.displayEvidence && (
+                <PublicDisplayEvidence evidence={parent.displayEvidence} variant="compact" />
+              )}
             {tone === "unknown" && (
               <span className="sr-only">Kết quả chưa xác định</span>
             )}
