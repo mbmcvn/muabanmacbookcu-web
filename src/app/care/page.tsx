@@ -1,4 +1,6 @@
 import { InvalidCareLookupError, lookupCare } from "@/data/care/public-inspection.server";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageState } from "@/components/ui/PageState";
 import { CareLookupForm, CareLookupSummary, CareReportList } from "./CareLookupResults";
 import styles from "./lookup.module.css";
@@ -26,18 +28,22 @@ export default async function CareLookupPage({ searchParams }: { searchParams: P
       : "Không tìm thấy máy hoặc báo cáo kiểm tra công khai.";
 
   return (
-    <main className={styles.page}>
-      <header className={styles.intro}>
-        <p className={styles.eyebrow}>MBMC Care</p>
-        <h1>Tra cứu Care</h1>
-        <p>Nhập Serial hoặc MBMC Machine ID để xem hồ sơ máy và báo cáo kiểm tra công khai.</p>
-      </header>
-      <CareLookupForm lookup={typeof lookup === "string" ? lookup : ""} />
-      {lookup && !result && <PageState className={styles.empty} role="status" description={message} />}
-      {result && <>
-        <CareLookupSummary result={result} />
-        <CareReportList reports={result.reports} />
-      </>}
-    </main>
+    <>
+      <SiteHeader />
+      <main className={styles.page}>
+        <header className={styles.intro}>
+          <p className={styles.eyebrow}>MBMC Care</p>
+          <h1>Tra cứu Care</h1>
+          <p>Nhập Serial hoặc MBMC Machine ID để xem hồ sơ máy và báo cáo kiểm tra công khai.</p>
+        </header>
+        <CareLookupForm lookup={typeof lookup === "string" ? lookup : ""} />
+        {lookup && !result && <PageState className={styles.empty} role="status" description={message} />}
+        {result && <>
+          <CareLookupSummary result={result} />
+          <CareReportList reports={result.reports} />
+        </>}
+      </main>
+      <SiteFooter />
+    </>
   );
 }

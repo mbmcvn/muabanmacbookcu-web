@@ -58,3 +58,17 @@
   .arrow { grid-column: 2; grid-row: 1 / 3; }
   .reportId { white-space: normal; overflow-wrap: anywhere; }
 }
+
+.warranty { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.warrantyStatus { display: flex; align-items: center; gap: .5rem; margin: 0; font-size: .9rem; font-weight: 600; }
+.warrantyDot { width: .5rem; height: .5rem; flex: 0 0 auto; border-radius: 50%; }
+.warrantyStatus[data-warranty-status="active"] { color: var(--accent); }
+.warrantyStatus[data-warranty-status="active"] .warrantyDot { background: var(--accent); }
+.warrantyStatus[data-warranty-status="expired"] { color: #9b3830; }
+.warrantyStatus[data-warranty-status="expired"] .warrantyDot { background: #9b3830; }
+.warrantyAbsent { margin: 0; color: var(--muted); font-size: .85rem; }
+.warrantyDetails { display: grid; gap: .5rem; max-width: 28rem; margin: .85rem 0 0; font-size: .85rem; }
+.warrantyDetails > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
+.warrantyDetails dt { color: var(--muted); }
+.warrantyDetails dd { min-width: 0; margin: 0; font-weight: 550; overflow-wrap: anywhere; }
+@media (max-width: 400px) { .warrantyDetails > div { grid-template-columns: minmax(0, 1fr); gap: .2rem; } }

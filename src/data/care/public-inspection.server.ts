@@ -8,14 +8,20 @@ export async function getPublicInspectionReport(id: string): Promise<PublicDeskt
   if (!response.ok) throw new Error("Report temporarily unavailable");
   return response.json();
 }
-export type CareLookupResult = { machine_id: string | null; machine_path: string | null; reports: Array<{report_id: string; accepted_at: string; display_name: string; report_path: string}> };
+export type CareLookupWarranty = { status: "active" | "expired" | null; expiresAt: string | null; durationLabel: string | null };
+export type CareLookupResult = { warranty?: CareLookupWarranty | null; machine_id: string | null; machine_path: string | null; reports: Array<{report_id: string; accepted_at: string; display_name: string; report_path: string}> };
 export class InvalidCareLookupError extends Error {}
 
 function isCareLookupResult(value: unknown): value is CareLookupResult {
   if (!value || typeof value !== "object") return false;
   const result = value as CareLookupResult;
   const nullableString = (field: unknown) => field === null || typeof field === "string";
-  return nullableString(result.machine_id) &&
+  const warranty = result.warranty;
+  const validWarranty = warranty == null || (typeof warranty === "object" &&
+    (warranty.status === null || warranty.status === "active" || warranty.status === "expired") &&
+    nullableString(warranty.durationLabel) &&
+    (warranty.expiresAt === null || (typeof warranty.expiresAt === "string" && Number.isFinite(Date.parse(warranty.expiresAt)))));
+  return validWarranty && nullableString(result.machine_id) &&
     nullableString(result.machine_path) &&
     (result.machine_id === null ? result.machine_path === null : typeof result.machine_path === "string") &&
     Array.isArray(result.reports) && result.reports.every(report =>

@@ -20,12 +20,12 @@ function load(path) {
   }).outputText;
   new Function("require", "module", "exports", source)((name) => {
     if (name === "server-only") return {};
-    if (name === "next/navigation") return { notFound: () => { throw new Error("not_found"); } };
+    if (name === "next/navigation") return { usePathname: () => "/care", notFound: () => { throw new Error("not_found"); } };
     if (name === "next/link") return function TestLink({ children, ...props }) { return createElement("a", props, children); };
     if (name.endsWith(".css")) return { __esModule: true, default: new Proxy({}, { get: (_, key) => key }) };
     if (name.startsWith("@/") || name.startsWith(".")) {
       const base = name.startsWith("@/") ? resolve("src", name.slice(2)) : resolve(dirname(path), name);
-      return load(existsSync(`${base}.ts`) ? `${base}.ts` : `${base}.tsx`);
+      return load(/\.tsx?$/.test(base) ? base : existsSync(`${base}.ts`) ? `${base}.ts` : `${base}.tsx`);
     }
     return require(name);
   }, compiledModule, compiledModule.exports);
@@ -188,4 +188,66 @@ test("lookup layout contains narrow screens and long public identifiers", () => 
   assert.match(css, /text-overflow: ellipsis/);
   assert.match(css, /@media \(max-width: 640px\)/);
   assert.match(css, /\.reportId[^}]*white-space: normal[^}]*overflow-wrap: anywhere/);
+});
+
+test("active and expired warranty use supplied status, expiry, duration and semantic dots", async () => {
+  for (const [status, label, expiry] of [["active", "Còn bảo hành", "2026-11-15T05:00:00Z"], ["expired", "Hết bảo hành", "2026-09-15T05:00:00Z"]]) {
+    globalThis.fetch = async () => Response.json({ machine_id: "MBMC-NSXS", machine_path: "/care/MBMC-NSXS", reports: [], warranty: { status, expiresAt: expiry, durationLabel: "1 tháng" } });
+    const html = await render("MBMC-NSXS");
+    assert.match(html, new RegExp(`data-warranty-status="${status}"`));
+    assert.match(html, new RegExp(label));
+    assert.match(html, /class="warrantyDot" aria-hidden="true"/);
+    assert.match(html, /Hạn bảo hành/);
+    assert.match(html, status === "active" ? /15\/11\/2026/ : /15\/09\/2026/);
+    assert.match(html, /Thời gian bảo hành/);
+    assert.match(html, /1 tháng/);
+    assert.match(html, /href="\/care\/MBMC-NSXS"/);
+  }
+});
+
+test("absent warranty source never invents status, dates, duration or a dot", async () => {
+  for (const warranty of [undefined, null, { status: null, expiresAt: null, durationLabel: null }]) {
+    globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports: [], warranty });
+    const html = await render();
+    assert.match(html, /Thông tin bảo hành chưa được công bố\./);
+    assert.doesNotMatch(html, /data-warranty-status|class="warrantyDot"|Còn bảo hành|Hết bảo hành|1 tháng/);
+  }
+});
+
+test("warranty presentation does not recalculate server status from browser dates", async () => {
+  globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports: [], warranty: { status: "expired", expiresAt: "2030-11-15T05:00:00Z", durationLabel: null } });
+  const html = await render();
+  assert.match(html, /Hết bảo hành/);
+  assert.doesNotMatch(html, /Còn bảo hành/);
+  assert.match(html, /Chưa có thông tin/);
+});
+
+test("malformed optional warranty fields preserve the infrastructure-error state", async () => {
+  for (const warranty of [{ status: "guessed", expiresAt: null, durationLabel: null }, { status: "active", expiresAt: "bad", durationLabel: null }, { status: "active", expiresAt: null, durationLabel: 1 }]) {
+    globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports: [], warranty });
+    const html = await render();
+    assert.match(html, unavailable);
+    assert.doesNotMatch(html, notFound);
+    assert.doesNotMatch(html, /data-warranty-status/);
+  }
+});
+
+test("Care reuses the shared public header and footer without assigning a false active nav item", async () => {
+  globalThis.fetch = async () => Response.json({ error: "not_found" }, { status: 404 });
+  const html = await render();
+  assert.match(html, /<header class="site-header">/);
+  assert.match(html, /<footer class="site-footer">/);
+  assert.equal((html.match(/<main\b/g) ?? []).length, 1);
+  assert.doesNotMatch(html, /aria-current="page"/);
+  const nav = html.match(/<nav class="desktop-navigation"[\s\S]*?<\/nav>/)?.[0];
+  assert.ok(nav);
+  assert.doesNotMatch(nav, /href="\/care"/);
+  assert.match(html, notFound);
+});
+
+test("semantic warranty colors and narrow-screen date/value layout are contained", () => {
+  const css = readFileSync("src/app/care/lookup.module.css", "utf8");
+  assert.match(css, /data-warranty-status="active"[^}]*background: var\(--accent\)/);
+  assert.match(css, /data-warranty-status="expired"[^}]*background: #9b3830/);
+  assert.match(css, /@media \(max-width: 400px\)[^}]*grid-template-columns: minmax\(0, 1fr\)/);
 });

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CareLookupResult } from "@/data/care/public-inspection.server";
+import type { CareLookupResult, CareLookupWarranty } from "@/data/care/public-inspection.server";
 import { PageState } from "@/components/ui/PageState";
 import styles from "./lookup.module.css";
 
@@ -30,6 +30,29 @@ export function CareLookupForm({ lookup }: { lookup: string }) {
   );
 }
 
+function CareWarranty({ warranty }: { warranty?: CareLookupWarranty | null }) {
+  const status = warranty?.status;
+  const expiresAt = warranty?.expiresAt;
+  return (
+    <section className={styles.warranty} aria-label="Bảo hành của máy">
+      {status ? (
+        <p className={styles.warrantyStatus} data-warranty-status={status}>
+          <span className={styles.warrantyDot} aria-hidden="true" />
+          {status === "active" ? "Còn bảo hành" : "Hết bảo hành"}
+        </p>
+      ) : <p className={styles.warrantyAbsent}>Thông tin bảo hành chưa được công bố.</p>}
+      {warranty && (
+        <dl className={styles.warrantyDetails}>
+          <div><dt>Hạn bảo hành</dt><dd>{expiresAt ? (
+            <time dateTime={expiresAt}>{new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(expiresAt))}</time>
+          ) : "Chưa có thông tin"}</dd></div>
+          <div><dt>Thời gian bảo hành</dt><dd>{warranty.durationLabel ?? "Chưa có thông tin"}</dd></div>
+        </dl>
+      )}
+    </section>
+  );
+}
+
 export function CareLookupSummary({ result }: { result: CareLookupResult }) {
   const name = result.reports[0]?.display_name;
   return (
@@ -45,6 +68,7 @@ export function CareLookupSummary({ result }: { result: CareLookupResult }) {
         <div><dt>Serial</dt><dd>Serial đã được ẩn</dd></div>
         {result.machine_id && <div><dt>MBMC Machine ID</dt><dd className={styles.machineId}>{result.machine_id}</dd></div>}
       </dl>
+      {result.machine_id && <CareWarranty warranty={result.warranty} />}
       {result.machine_id && result.machine_path ? (
         <Link className={styles.passportLink} href={result.machine_path}>
           Xem Care của máy <span aria-hidden="true">→</span>
