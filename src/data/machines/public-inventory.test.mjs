@@ -589,22 +589,20 @@ test("public policy hub owns all five canonical destinations", () => {
   );
   assert.match(css, /\.policy-hub-card:focus-visible/);
 });
-test("desktop and mobile navigation share one canonical accessible link source", () => {
+test("desktop and mobile navigation share one canonical Mac submenu and other link source", () => {
   const source = readFileSync(
     new URL("../../components/layout/SiteHeader.tsx", import.meta.url),
     "utf8",
   );
   for (const label of [
     "Chọn MacBook",
-    "Máy đang có",
+    "Mac đang có",
     "Khách hàng",
     "Chính sách",
     "Bán máy cho MBMC",
   ])
     assert.match(source, new RegExp(`label: "${label}"`));
   for (const [label, compactLabel] of [
-    ["Chọn MacBook", "Chọn Mac"],
-    ["Máy đang có", "Máy sẵn"],
     ["Bán máy cho MBMC", "Bán lại Mac"],
   ])
     assert.match(
@@ -616,7 +614,7 @@ test("desktop and mobile navigation share one canonical accessible link source",
     /href: withContactChannel\("\/people", channel\),\s*label: "Khách hàng",\s*icon: "people",/,
   );
   assert.ok(
-    source.indexOf('label: "Máy đang có"') <
+    source.indexOf('label: "Mac đang có"') <
       source.indexOf('label: "Khách hàng"'),
   );
   assert.ok(

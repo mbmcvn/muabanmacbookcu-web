@@ -857,3 +857,22 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-machine-sticky-price { font-size: .76rem; }
   .public-machine-sticky a { min-height: 2.55rem; padding-inline: .6rem; font-size: .78rem; }
 }
+
+.mac-navigation { position: relative; min-width: 0; }
+.mac-navigation-trigger { display: flex; align-items: center; gap: .45rem; min-height: 2.75rem; padding: 0; border: 0; background: transparent; color: #494945; cursor: pointer; }
+.mac-navigation-trigger:hover, .mac-navigation-trigger[data-active="true"] { color: var(--accent); }
+.mac-navigation-chevron { font-size: .9rem; transition: transform .15s ease; }
+.mac-navigation-trigger[aria-expanded="true"] .mac-navigation-chevron { transform: rotate(180deg); }
+.mac-navigation-submenu { position: absolute; top: 100%; left: 0; width: min(20rem, calc(100vw - 2rem)); padding: .5rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--surface); box-shadow: 0 .5rem 1.5rem rgb(24 24 23 / 8%); }
+.mac-navigation-submenu[hidden] { display: none; }
+.desktop-navigation .mac-navigation-submenu a, .mobile-header-menu .mac-navigation-submenu a { display: grid; gap: .2rem; min-width: 0; padding: .65rem .75rem; border-radius: .4rem; white-space: normal; }
+.mac-navigation-submenu a:hover, .mac-navigation-submenu a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+.mac-navigation-submenu small { color: var(--muted); font-size: .75rem; line-height: 1.5; }
+.mac-navigation--mobile .mac-navigation-trigger { width: 100%; justify-content: space-between; min-height: 2.9rem; padding: .55rem .7rem; border-radius: .45rem; }
+.mac-navigation--mobile .mac-navigation-submenu { position: static; width: 100%; padding: 0 0 .3rem .6rem; border: 0; background: transparent; box-shadow: none; }
+.inventory-chooser-callout { display: flex; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; margin: 0 0 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--accent-soft); }
+.inventory-chooser-callout > div { min-width: 0; }
+.inventory-chooser-callout h2 { margin: 0 0 .25rem; font-size: 1rem; font-weight: 600; }
+.inventory-chooser-callout p { margin: 0; color: var(--muted); font-size: .875rem; }
+.inventory-chooser-callout a { flex: 0 0 auto; color: var(--accent); font-size: .875rem; font-weight: 600; text-decoration: none; }
+@media (max-width: 40rem) { .inventory-chooser-callout { align-items: start; flex-direction: column; padding: 1rem; } }

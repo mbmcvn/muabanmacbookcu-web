@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { MacNavigation, isNavigationPathCurrent } from "./MacNavigation";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { contactChannels } from "@/config/contact";
 import {
@@ -107,19 +108,11 @@ export function SiteHeader() {
     () => setMenuState({ open: false, pathname }),
     [pathname],
   );
+  const macLinks = [
+    { href: withContactChannel("/may-dang-co", channel), label: "Mac đang có", description: "Xem những máy đang sẵn sàng bán" },
+    { href: withContactChannel("/chon-macbook", channel), label: "Chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
+  ];
   const links: readonly HeaderLink[] = [
-    {
-      href: withContactChannel("/chon-macbook", channel),
-      label: "Chọn MacBook",
-      compactLabel: "Chọn Mac",
-      icon: "selector",
-    },
-    {
-      href: withContactChannel("/may-dang-co", channel),
-      label: "Máy đang có",
-      compactLabel: "Máy sẵn",
-      icon: "inventory",
-    },
     {
       href: withContactChannel("/people", channel),
       label: "Khách hàng",
@@ -174,17 +167,9 @@ export function SiteHeader() {
     };
   }, [closeMenu, menuOpen]);
 
-  const isCurrent = (href: string) => {
-    if (!href.startsWith("/")) return false;
-    const path = href.split("?")[0];
-    return (
-      pathname === path || (path !== "/" && pathname.startsWith(`${path}/`))
-    );
-  };
-
   const renderLink = (link: HeaderLink, mobile = false) => {
     const className = link.contact ? "header-contact" : undefined;
-    const current = isCurrent(link.href) ? "page" : undefined;
+    const current = isNavigationPathCurrent(pathname, link.href) ? "page" : undefined;
     const content = mobile ? (
       <>
         <HeaderNavIcon name={link.icon} />
@@ -237,6 +222,7 @@ export function SiteHeader() {
           MBMC
         </Link>
         <nav className="desktop-navigation" aria-label="Điều hướng chính">
+          <MacNavigation links={macLinks} pathname={pathname} />
           {links.map((link) => renderLink(link))}
         </nav>
         <div
@@ -273,6 +259,7 @@ export function SiteHeader() {
               className="mobile-header-menu"
               aria-label="Điều hướng chính trên di động"
             >
+              <MacNavigation links={macLinks} pathname={pathname} mobile onNavigate={closeMenu} />
               {links
                 .filter((link) => !link.contact)
                 .map((link) => renderLink(link, true))}
