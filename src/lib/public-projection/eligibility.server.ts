@@ -1,3 +1,4 @@
+import { selectPublicMachineCover } from "./kernel.server.ts";
 import { publicSuitableAudiencesV0 } from "./public-suitable-audiences-v0.ts";
 import type {
   NormalizedPublicMachineFacts,
@@ -44,7 +45,7 @@ export function validatePublicMachineEligibility(
   const reasons: ProjectionDenialReason[] = [];
   const publication = facts.publication;
   const editorial = facts.editorial;
-  const covers = facts.images.filter((image) => image.isCover);
+  const cover = selectPublicMachineCover(facts.images);
 
   if (!publication || publication.status !== "published") {
     reasons.push("publication_not_published");
@@ -79,7 +80,7 @@ export function validatePublicMachineEligibility(
   ) {
     reasons.push("invalid_retail_price");
   }
-  if (covers.length !== 1) reasons.push("invalid_public_cover");
+  if (!cover) reasons.push("invalid_public_cover");
   if (!isNonBlank(editorial?.publicConditionSummary)) {
     reasons.push("missing_condition_summary");
   }
@@ -128,7 +129,7 @@ export function validatePublicMachineEligibility(
         height: image.height,
         ...(image.variants ? { variants: { ...image.variants } } : {}),
       })),
-      coverIndex: facts.images.indexOf(covers[0]),
+      coverIndex: facts.images.indexOf(cover!),
       batteryHealthPercent: facts.batteryHealthPercent,
       cycleCount: facts.cycleCount,
       cosmeticGrade: facts.cosmeticGrade,

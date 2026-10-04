@@ -1,3 +1,5 @@
+import Image from "next/image";
+import type { CareMachinePresentation } from "@/data/care/care-machine-presentation.server";
 import Link from "next/link";
 import type { CareLookupResult, CareLookupWarranty } from "@/data/care/public-inspection.server";
 import { PageState } from "@/components/ui/PageState";
@@ -53,18 +55,24 @@ function CareWarranty({ warranty }: { warranty?: CareLookupWarranty | null }) {
   );
 }
 
-export function CareLookupSummary({ result }: { result: CareLookupResult }) {
+export function CareLookupSummary({ result, machine = null }: { result: CareLookupResult; machine?: CareMachinePresentation | null }) {
   const name = result.reports[0]?.display_name;
   return (
     <section className={styles.summary} aria-labelledby="care-summary-title">
       <div className={styles.summaryHeading}>
         <div>
           <p className={styles.eyebrow}>Hồ sơ công khai</p>
-          <h2 id="care-summary-title">{name || "Hồ sơ máy MBMC"}</h2>
+          <h2 id="care-summary-title">{result.machine_id ? "Hồ sơ máy MBMC" : name || "Hồ sơ máy MBMC"}</h2>
         </div>
         <p className={styles.reportCount}>{result.reports.length} báo cáo công khai</p>
       </div>
+      <div className={result.machine_id ? styles.machineBody : undefined}>
+        {result.machine_id && <div className={styles.machinePhoto}>
+          {machine?.image ? <Image src={machine.image.url} alt={machine.image.alt} fill sizes="(max-width: 640px) calc(100vw - 4rem), 350px" style={{ objectFit: "contain" }} /> : <p className={styles.photoPlaceholder}>Chưa có ảnh công khai</p>}
+        </div>}
+        <div className={styles.machineMetadata}>
       <dl className={styles.identity}>
+        {result.machine_id && machine?.displayName && <div><dt>Model</dt><dd>{machine.displayName}</dd></div>}
         <div><dt>Serial</dt><dd>Serial đã được ẩn</dd></div>
         {result.machine_id && <div><dt>MBMC Machine ID</dt><dd className={styles.machineId}>{result.machine_id}</dd></div>}
       </dl>
@@ -79,6 +87,8 @@ export function CareLookupSummary({ result }: { result: CareLookupResult }) {
           <p>Chiếc máy này chưa được gắn MBMC Machine ID trong hệ thống. Vẫn hiển thị các báo cáo kiểm tra công khai theo Serial.</p>
         </div>
       )}
+        </div>
+      </div>
     </section>
   );
 }

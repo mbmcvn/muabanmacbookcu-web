@@ -1,4 +1,5 @@
 import { InvalidCareLookupError, lookupCare } from "@/data/care/public-inspection.server";
+import { getCareMachinePresentation } from "@/data/care/care-machine-presentation.server";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageState } from "@/components/ui/PageState";
@@ -21,6 +22,7 @@ export default async function CareLookupPage({ searchParams }: { searchParams: P
       }
     }
   }
+  const machine = result?.machine_id ? await getCareMachinePresentation(result.machine_id) : null;
   const message = unavailable
     ? "Không thể tra cứu lúc này. Vui lòng thử lại."
     : invalid
@@ -39,7 +41,7 @@ export default async function CareLookupPage({ searchParams }: { searchParams: P
         <CareLookupForm lookup={typeof lookup === "string" ? lookup : ""} />
         {lookup && !result && <PageState className={styles.empty} role="status" description={message} />}
         {result && <>
-          <CareLookupSummary result={result} />
+          <CareLookupSummary result={result} machine={machine} />
           <CareReportList reports={result.reports} />
         </>}
       </main>

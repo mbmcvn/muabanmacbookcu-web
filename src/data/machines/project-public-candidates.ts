@@ -70,7 +70,7 @@ const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
 const PHONE_PATTERN = /(?:\+?\d[\s().-]*){9,}/;
 const SERIAL_PATTERN = /\b(?:serial|s\/n|sn)\s*[:#-]?\s*[a-z0-9]{8,16}\b|\b(?=[A-Z0-9]{10,12}\b)(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]+\b/i;
-function publicUrlIsValid(value: string | null): boolean {
+export function publicUrlIsValid(value: string | null): boolean {
   if (!value) return false;
   try {
     const url = new URL(value);
@@ -80,7 +80,7 @@ function publicUrlIsValid(value: string | null): boolean {
     return url.protocol === "https:" && !url.username && !url.password && !privateHost && !sensitiveQuery;
   } catch { return false; }
 }
-function privacyValid(row: UnknownRow): boolean {
+export function publicCandidatePrivacyValid(row: UnknownRow): boolean {
   const editorial = oneRow(row.machine_editorials);
   const publication = oneRow(row.machine_publications);
   const publicText = [
@@ -193,7 +193,7 @@ export function canonicalPublicImages(value: unknown): PublicImageInput[] {
     const existing = byUrl.get(url);
     if (!existing || (next.isCover && !existing.isCover)) byUrl.set(url, next);
   }
-  return [...byUrl.values()].toSorted(
+  return [...byUrl.values()].sort(
     (a, b) =>
       (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id.localeCompare(b.id),
   );
@@ -369,7 +369,7 @@ export function normalizePublicCandidate(
       : null,
     machineExplanation: normalizeMachineExplanation(value.machine_explanation),
     images: canonicalPublicImages(value.machine_images),
-    privacyValid: privacyValid(value),
+    privacyValid: publicCandidatePrivacyValid(value),
   };
 }
 

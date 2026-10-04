@@ -72,3 +72,13 @@
 .warrantyDetails dt { color: var(--muted); }
 .warrantyDetails dd { min-width: 0; margin: 0; font-weight: 550; overflow-wrap: anywhere; }
 @media (max-width: 400px) { .warrantyDetails > div { grid-template-columns: minmax(0, 1fr); gap: .2rem; } }
+
+.machineBody { display: grid; grid-template-columns: minmax(0, 36fr) minmax(0, 64fr); gap: 1.5rem; align-items: center; margin-top: 1.5rem; }
+.machinePhoto { position: relative; aspect-ratio: 4 / 3; min-width: 0; border-radius: .65rem; background: var(--background); overflow: hidden; }
+.photoPlaceholder { display: grid; place-items: center; height: 100%; margin: 0; padding: 1rem; color: var(--subtle); font-size: .85rem; text-align: center; }
+.machineMetadata { min-width: 0; }
+.machineBody .identity { display: grid; gap: .65rem; margin-top: 0; }
+.machineBody .identity > div { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: .75rem; align-items: baseline; }
+.machineBody .identity dd { margin: 0; }
+@media (max-width: 640px) { .machineBody { grid-template-columns: minmax(0, 1fr); gap: 1rem; } }
+@media (max-width: 400px) { .machineBody .identity > div { grid-template-columns: minmax(0, 1fr); gap: .2rem; } }

@@ -221,6 +221,12 @@ export function filterPublicMachineImages(
     );
 }
 
+// Inventory and exact Care presentation share the same unambiguous primary rule.
+export function selectPublicMachineCover(images: NormalizedPublicImage[]): NormalizedPublicImage | null {
+  const covers = images.filter(image => image.isCover);
+  return covers.length === 1 ? covers[0] : null;
+}
+
 export function normalizePublicMachineFacts(
   input: PublicMachineProjectionInput,
 ): NormalizedPublicMachineFacts {

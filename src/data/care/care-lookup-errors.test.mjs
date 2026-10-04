@@ -9,6 +9,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 // Exercise the real server reader and /care page against mocked HTTP responses.
 const require = createRequire(import.meta.url);
+let publicMachine = null;
+let machineReadFails = false;
+let machineReads = 0;
+const machineQuery = [];
 const modules = new Map();
 function load(path) {
   path = resolve(path);
@@ -17,10 +21,21 @@ function load(path) {
   modules.set(path, compiledModule);
   const source = ts.transpileModule(readFileSync(path, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true, target: ts.ScriptTarget.ES2020 },
-  }).outputText;
+  }).outputText.replaceAll(".toSorted(", ".slice().sort(");
   new Function("require", "module", "exports", source)((name) => {
+    if (name === "@/lib/supabase/server") return { createServerSupabaseClient: () => {
+      const query = {
+        from: (table) => { machineReads++; machineQuery.push(["from", table]); return query; },
+        select: (fields) => { machineQuery.push(["select", fields]); return query; },
+        eq: (...args) => { machineQuery.push(["eq", ...args]); return query; },
+        in: (...args) => { machineQuery.push(["in", ...args]); return query; },
+        is: (...args) => { machineQuery.push(["is", ...args]); return query; },
+        limit: async (count) => { machineQuery.push(["limit", count]); if (machineReadFails) throw new Error("PRIVATE_INVENTORY_FAILURE"); return { data: Array.isArray(publicMachine) ? publicMachine : publicMachine ? [publicMachine] : [], error: null }; },
+      }; return query;
+    } };
     if (name === "server-only") return {};
     if (name === "next/navigation") return { usePathname: () => "/care", notFound: () => { throw new Error("not_found"); } };
+    if (name === "next/image") return function TestImage({ fill, sizes, ...props }) { void fill; return createElement("img", { ...props, sizes }); };
     if (name === "next/link") return function TestLink({ children, ...props }) { return createElement("a", props, children); };
     if (name.endsWith(".css")) return { __esModule: true, default: new Proxy({}, { get: (_, key) => key }) };
     if (name.startsWith("@/") || name.startsWith(".")) {
@@ -250,4 +265,137 @@ test("semantic warranty colors and narrow-screen date/value layout are contained
   assert.match(css, /data-warranty-status="active"[^}]*background: var\(--accent\)/);
   assert.match(css, /data-warranty-status="expired"[^}]*background: #9b3830/);
   assert.match(css, /@media \(max-width: 400px\)[^}]*grid-template-columns: minmax\(0, 1fr\)/);
+});
+
+
+test("resolved Machine uses its approved cover derivative, public model, and unchanged Care/warranty", async () => {
+  publicMachine = careMachine("new_in_stock");
+  globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports: publicReports(), warranty: { status: "active", expiresAt: "2026-11-15T05:00:00Z", durationLabel: "1 tháng" } });
+  const html = await render();
+  assert.equal((html.match(/<img /g) ?? []).length, 1);
+  assert.match(html, /src="https:\/\/img.mbmc.vn\/machines\/one\/card.webp"/);
+  assert.match(html, /alt="Ảnh đại diện MacBook Air M2"/);
+  assert.match(html, /<dt>Model<\/dt><dd>MacBook Air M2<\/dd>/);
+  assert.match(html, /MBMC-001/);
+  assert.match(html, /href="\/care\/MBMC-001"/);
+  assert.match(html, /Còn bảo hành/);
+  assert.match(html, /1 tháng/);
+  assert.doesNotMatch(html, /PRIVATE_|original.webp/);
+  publicMachine = null;
+});
+
+test("unavailable public Machine projection keeps a deliberate placeholder and never infers model from reports", async () => {
+  globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports: publicReports() });
+  for (const value of [null, { ...careMachine("sold"), machine_id: "MBMC-OTHER" }]) {
+    publicMachine = value;
+    const html = await render();
+    assert.match(html, /class="machinePhoto"/);
+    assert.match(html, /Chưa có ảnh công khai/);
+    assert.doesNotMatch(html, /<img |<dt>Model<\/dt>|Wrong machine/);
+    assert.match(html, /Thông tin bảo hành chưa được công bố/);
+  }
+  machineReadFails = true;
+  const html = await render();
+  assert.match(html, /Chưa có ảnh công khai/);
+  assert.doesNotMatch(html, unavailable);
+  assert.doesNotMatch(html, /PRIVATE_INVENTORY_FAILURE/);
+  machineReadFails = false;
+  publicMachine = null;
+});
+
+test("serial-only report result does not read inventory or invent a Machine image", async () => {
+  const before = machineReads;
+  globalThis.fetch = async () => Response.json({ machine_id: null, machine_path: null, reports: publicReports() });
+  const html = await render("C02ABC123456");
+  assert.equal(machineReads, before);
+  assert.doesNotMatch(html, /class="machinePhoto"|<img |<dt>Model<\/dt>/);
+  assert.match(html, /Chưa có MBMC Machine ID/);
+});
+
+test("representative photo has contained 4:3 frame and mobile single-column metadata", () => {
+  const css = readFileSync("src/app/care/lookup.module.css", "utf8");
+  assert.match(css, /\.machinePhoto \{[^}]*aspect-ratio: 4 \/ 3[^}]*min-width: 0[^}]*overflow: hidden/);
+  assert.match(css, /minmax\(0, 36fr\) minmax\(0, 64fr\)/);
+  assert.match(css, /@media \(max-width: 640px\) \{ \.machineBody \{ grid-template-columns: minmax\(0, 1fr\)/);
+  const component = readFileSync("src/app/care/CareLookupResults.tsx", "utf8");
+  assert.match(component, /objectFit: "contain"/);
+});
+
+
+function careMachine(status = "sold") {
+  return {
+    machine_id: "MBMC-001", status, deleted_at: null, model_text: "MacBook Air M2",
+    machine_family: "macbook", storage_type: "ssd", chip: "M2", ram_gb: 8, ssd_gb: 256, color: "Midnight", retail_price_expected: 15000000,
+    public_availability: { state_valid: true, availability: "available", reservation_kind: null },
+    machine_publications: { status: "published", slug: "mbmc-one", approved_by: "staff", approved_at: "2026-01-01T00:00:00Z", published_by: "staff", published_at: "2026-01-01T00:00:00Z", approved_editorial_revision: 1, published_editorial_revision: 1 },
+    machine_editorials: { revision: 1, public_condition_summary: "Tốt", included_items: {}, reviewed_by: "staff", reviewed_at: "2026-01-01T00:00:00Z" },
+    machine_images: [{ id: "internal-image-id", public_url: "https://img.mbmc.vn/machines/one/original.webp", image_type: "cover", image_stage: "listing", visibility: "public", sort_order: 1, is_cover: true, processing_status: "ready", derivatives: { card: { url: "https://img.mbmc.vn/machines/one/card.webp", width: 640, height: 640, mime_type: "image/webp" } }, object_key: "PRIVATE_STORAGE_KEY" }],
+    serial: "PRIVATE_SERIAL", internal_id: "PRIVATE_ID",
+  };
+}
+
+const carePresentation = load("src/data/care/care-machine-presentation.server.ts");
+const inventoryProjection = load("src/data/machines/project-public-candidates.ts");
+
+test("sold Machine has exact Care thumbnail while the same fully published row stays out of inventory", async () => {
+  const sold = careMachine("sold");
+  sold.machine_id = "MBMC-NSXS";
+  publicMachine = sold;
+  machineQuery.length = 0;
+  const presentation = await carePresentation.getCareMachinePresentation("MBMC-NSXS");
+  assert.equal(presentation.image.url, "https://img.mbmc.vn/machines/one/card.webp");
+  assert.deepEqual(Object.keys(presentation), ["displayName", "image"]);
+  assert.deepEqual(Object.keys(presentation.image), ["url", "alt"]);
+  assert.doesNotMatch(JSON.stringify(presentation), /PRIVATE_|internal-image-id|serial|status|object_key/);
+  assert.deepEqual(inventoryProjection.publicSummaries([sold]), []);
+  const stocked = { ...sold, status: "new_in_stock" };
+  assert.equal(inventoryProjection.publicSummaries([stocked]).length, 1);
+  assert.deepEqual(carePresentation.projectCareMachinePresentation("MBMC-NSXS", stocked), presentation);
+  assert.ok(machineQuery.some(call => JSON.stringify(call) === JSON.stringify(["eq", "machine_id", "MBMC-NSXS"])));
+  assert.ok(machineQuery.some(call => JSON.stringify(call) === JSON.stringify(["in", "status", ["new_in_stock", "sold"]])));
+  assert.ok(machineQuery.some(call => JSON.stringify(call) === JSON.stringify(["limit", 2])));
+  assert.doesNotMatch(JSON.stringify(machineQuery), /ilike|serial|search/);
+  globalThis.fetch = async () => Response.json({ machine_id: "MBMC-NSXS", machine_path: "/care/MBMC-NSXS", reports: [] });
+  assert.match(await render("MBMC-NSXS"), /src="https:\/\/img.mbmc.vn\/machines\/one\/card.webp"/);
+  publicMachine = null;
+});
+
+test("Care never returns private, raw, provenance or unsafe image URLs; absent image keeps safe identity", () => {
+  for (const override of [{ visibility: "private" }, { image_stage: "raw" }, { image_type: "proof" }, { image_type: "bill" }, { public_url: "https://private.local/photo.jpg", derivatives: null }, { public_url: "https://img.mbmc.vn/machines/photo.webp?signature=SECRET", derivatives: null }]) {
+    const row = careMachine();
+    Object.assign(row.machine_images[0], override);
+    assert.equal(carePresentation.projectCareMachinePresentation("MBMC-001", row).image, null);
+  }
+  const row = careMachine(); row.machine_images = [];
+  assert.deepEqual(carePresentation.projectCareMachinePresentation("MBMC-001", row), { displayName: "MacBook Air M2", image: null });
+  row.model_text = "serial: C02ABCDE1234";
+  assert.equal(carePresentation.projectCareMachinePresentation("MBMC-001", row).displayName, null);
+});
+
+test("Care exact identity rejects mismatches, noncanonical IDs and unsupported states before presentation", async () => {
+  const before = machineReads;
+  for (const id of ["mbmc-001", "MBMC-001%", "C02ABCDE1234", "MBMC-"]) assert.equal(await carePresentation.getCareMachinePresentation(id), null);
+  assert.equal(machineReads, before);
+  for (const overrides of [{ machine_id: "MBMC-OTHER" }, { status: "draft" }, { deleted_at: "2026-01-01" }]) assert.equal(carePresentation.projectCareMachinePresentation("MBMC-001", { ...careMachine(), ...overrides }), null);
+});
+
+test("Care uses canonical cover rather than first sorted photo; ambiguous covers fail closed", () => {
+  const row = careMachine();
+  row.machine_images.push({ ...row.machine_images[0], id: "first-commercial", public_url: "https://img.mbmc.vn/machines/one/first.webp", sort_order: 0, is_cover: false, image_type: "exterior", derivatives: null });
+  assert.equal(carePresentation.projectCareMachinePresentation("MBMC-001", row).image.url, "https://img.mbmc.vn/machines/one/card.webp");
+  row.machine_images[1].is_cover = true;
+  assert.equal(carePresentation.projectCareMachinePresentation("MBMC-001", row).image, null);
+});
+
+
+test("exact Care presentation rejects ambiguous rows and retains placeholder when a resolved Machine has no image", async () => {
+  publicMachine = [careMachine(), careMachine()];
+  assert.equal(await carePresentation.getCareMachinePresentation("MBMC-001"), null);
+  publicMachine = careMachine(); publicMachine.machine_images = [];
+  globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports: [] });
+  const html = await render();
+  assert.match(html, /Chưa có ảnh công khai/);
+  assert.match(html, /<dt>Model<\/dt><dd>MacBook Air M2<\/dd>/);
+  assert.doesNotMatch(html, /<img /);
+  publicMachine = null;
 });
