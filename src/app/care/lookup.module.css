@@ -72,3 +72,9 @@
 .machineBody .identity dd { margin: 0; }
 @media (max-width: 640px) { .machineBody { grid-template-columns: minmax(0, 1fr); gap: 1rem; } }
 @media (max-width: 400px) { .machineBody .identity > div { grid-template-columns: minmax(0, 1fr); gap: .2rem; } }
+
+.searchModule { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; gap: 2rem; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.searchModule .intro { margin-bottom: 0; }
+.searchModule .intro h1 { font-size: clamp(2.25rem, 4vw, 3.25rem); }
+.searchModule .intro > p:last-child { max-width: 34ch; font-size: .9375rem; }
+@media (max-width: 56rem) { .searchModule { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; } }

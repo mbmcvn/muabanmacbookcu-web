@@ -199,7 +199,7 @@ test("lookup layout contains narrow screens and long public identifiers", () => 
   const css = readFileSync("src/app/care/lookup.module.css", "utf8") + readFileSync("src/components/care/CareLookupForm.module.css", "utf8");
   assert.match(css, /width: min\(64rem, calc\(100% - 2rem\)\)/);
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\)/);
-  assert.match(css, /\.field input[^}]*width: 100%[^}]*min-width: 0/);
+  assert.match(css, /\.inputArea input[^}]*width: 100%[^}]*min-width: 0/);
   assert.match(css, /text-overflow: ellipsis/);
   assert.match(css, /@media \(max-width: 640px\)/);
   assert.match(css, /\.reportId[^}]*white-space: normal[^}]*overflow-wrap: anywhere/);

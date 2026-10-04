@@ -33,12 +33,14 @@ export default async function CareLookupPage({ searchParams }: { searchParams: P
     <>
       <SiteHeader />
       <main className={styles.page}>
-        <header className={styles.intro}>
-          <p className={styles.eyebrow}>MBMC Care</p>
-          <h1>Tra cứu Care</h1>
-          <p>Nhập Serial hoặc MBMC Machine ID để xem hồ sơ máy và báo cáo kiểm tra công khai.</p>
-        </header>
-        <CareLookupForm lookup={typeof lookup === "string" ? lookup : ""} />
+        <div className={styles.searchModule}>
+          <header className={styles.intro}>
+            <p className={styles.eyebrow}>MBMC CARE</p>
+            <h1>Tra cứu Care</h1>
+            <p>Mở hồ sơ máy, bảo hành và báo cáo kiểm tra công khai bằng Serial hoặc MBMC Machine ID.</p>
+          </header>
+          <CareLookupForm lookup={typeof lookup === "string" ? lookup : ""} />
+        </div>
         {lookup && !result && <PageState className={styles.empty} role="status" description={message} />}
         {result && <>
           <CareLookupSummary result={result} machine={machine} />

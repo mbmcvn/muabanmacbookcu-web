@@ -43,7 +43,7 @@ test("Care entry renders directly after the unchanged hero and before all existi
   assert.match(hero, /href="\/chon-macbook"/);
   assert.match(hero, /href="\/may-dang-co"/);
   assert.match(html, /MBMC CARE/);
-  assert.match(html, /Tra cứu hồ sơ máy, bảo hành và báo cáo kiểm tra công khai\./);
+  assert.match(html, /Mở hồ sơ máy, bảo hành và báo cáo kiểm tra công khai bằng Serial hoặc MBMC Machine ID\./);
 });
 
 test("homepage native GET form preserves serial, Machine ID, shorthand and URL-encoded input", () => {
@@ -51,7 +51,7 @@ test("homepage native GET form preserves serial, Machine ID, shorthand and URL-e
   const formProps = entry.props.children[1].props;
   for (const value of ["C02ABCDE1234", "MBMC-NSXS", "NSXS", " nsxs ", "MBMC & +/#? tiếng Việt"]) {
     const form = CareLookupForm({ ...formProps, lookup: value });
-    const input = form.props.children[0].props.children[1];
+    const input = form.props.children[1].props.children[0].props.children[1];
     assert.equal(input.props.defaultValue, value);
     assert.equal(input.props.name, "lookup");
     assert.equal(input.props.maxLength, undefined);
@@ -70,8 +70,9 @@ test("homepage native GET form preserves serial, Machine ID, shorthand and URL-e
 
 test("empty input uses native required validation and accessible keyboard submission without complex UI", () => {
   const form = CareLookupForm(HomeCareEntry().props.children[1].props);
-  const [label, button, helper] = form.props.children;
-  const input = label.props.children[1];
+  const [label, control, helper] = form.props.children;
+  const input = control.props.children[0].props.children[1];
+  const button = control.props.children[1];
   assert.equal(input.props.defaultValue, "");
   assert.equal(input.props.required, true);
   assert.equal(form.props.noValidate, undefined);
@@ -79,8 +80,8 @@ test("empty input uses native required validation and accessible keyboard submis
   assert.equal(button.props.type, "submit");
   assert.equal(label.props.htmlFor, input.props.id);
   assert.equal(input.props["aria-describedby"], helper.props.id);
-  assert.equal(input.props.placeholder, "Serial / MBMC Machine ID / 4 ký tự");
-  assert.match(render(form), /<label[^>]*>.*Serial \/ MBMC Machine ID \/ 4 ký tự/);
+  assert.equal(input.props.placeholder, "Nhập Serial, MBMC-NSXS hoặc NSXS");
+  assert.match(render(form), /<label[^>]*>.*Serial \/ MBMC Machine ID/);
 });
 
 test("entry and shared form have no API, normalization or client lookup state; Care retains its original input cap", () => {
@@ -97,12 +98,41 @@ test("entry and shared form have no API, normalization or client lookup state; C
 
 test("entry layout is compact and mobile-contained, sharing Care field/button styles and visible focus", () => {
   const css = readFileSync(directory + "HomeCareEntry.module.css", "utf8");
-  assert.match(css, /grid-template-columns: minmax\(0, .9fr\) minmax\(0, 1.1fr\)/);
+  assert.match(css, /grid-template-columns: minmax\(0, 2fr\) minmax\(0, 3fr\)/);
   assert.match(css, /\.entry \.form[^}]*min-width: 0[^}]*margin: 0/);
   assert.match(css, /@media \(max-width: 56rem\)[^}]*grid-template-columns: minmax\(0, 1fr\)/);
   const shared = readFileSync("src/components/care/CareLookupForm.module.css", "utf8");
-  assert.match(shared, /\.field input[^}]*width: 100%[^}]*min-width: 0/);
+  assert.match(shared, /\.inputArea input[^}]*width: 100%[^}]*min-width: 0/);
   assert.match(shared, /input:focus-visible/);
   assert.match(shared, /@media \(max-width: 640px\)[^}]*grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(shared, /\.submit \{ width: 100%;/);
+});
+
+
+test("homepage and Care use the same grouped editorial control, label, placeholder and quiet helper", () => {
+  const { CareLookupForm: CarePageForm } = load("src/app/care/CareLookupResults.tsx");
+  for (const element of [createElement(HomeCareEntry), createElement(CarePageForm, { lookup: " nsxs " })]) {
+    const html = render(element);
+    assert.equal((html.match(/<form /g) ?? []).length, 1);
+    assert.equal((html.match(/type="submit"/g) ?? []).length, 1);
+    assert.match(html, /method="get"/);
+    assert.match(html, /action="\/care"/);
+    assert.match(html, /class="control"/);
+    assert.match(html, /class="searchIcon" aria-hidden="true" focusable="false"/);
+    assert.match(html, /placeholder="Nhập Serial, MBMC-NSXS hoặc NSXS"/);
+    assert.match(html, /Dùng Serial trên máy, MBMC Machine ID hoặc 4 ký tự cuối của mã\./);
+  }
+  assert.match(render(createElement(CarePageForm, { lookup: " nsxs " })), /value=" nsxs "/);
+});
+
+test("grouped input and button share height; surfaces stay quiet and Care avoids nested cards", () => {
+  const css = readFileSync("src/components/care/CareLookupForm.module.css", "utf8");
+  assert.match(css, /\.inputArea input[^}]*min-height: 3\.75rem/);
+  assert.match(css, /\.submit \{[^}]*min-height: 3\.75rem/);
+  assert.match(css, /\.control:focus-within[^}]*border-color: var\(--accent\)/);
+  assert.match(css, /\.submit:focus-visible/);
+  assert.doesNotMatch(css, /gradient|box-shadow|border-strong/);
+  const pageCss = readFileSync("src/app/care/lookup.module.css", "utf8");
+  assert.match(pageCss, /\.searchModule[^}]*minmax\(0, 2fr\) minmax\(0, 3fr\)/);
+  assert.doesNotMatch(pageCss.match(/\.searchModule \{[^}]*\}/)[0], /background|border-radius|box-shadow/);
 });

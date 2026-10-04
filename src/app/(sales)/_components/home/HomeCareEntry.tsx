@@ -7,12 +7,9 @@ export function HomeCareEntry() {
       <div className={styles.copy}>
         <p className={styles.eyebrow}>MBMC CARE</p>
         <h2 id="home-care-title">Tra cứu Care</h2>
-        <p>Tra cứu hồ sơ máy, bảo hành và báo cáo kiểm tra công khai.</p>
+        <p>Mở hồ sơ máy, bảo hành và báo cáo kiểm tra công khai bằng Serial hoặc MBMC Machine ID.</p>
       </div>
-      <CareLookupForm id="home-care-lookup" className={styles.form}
-        label="Serial / MBMC Machine ID / 4 ký tự"
-        placeholder="Serial / MBMC Machine ID / 4 ký tự"
-        helper="Bạn có thể dùng Serial trên thiết bị, MBMC Machine ID hoặc 4 ký tự cuối của mã." />
+      <CareLookupForm id="home-care-lookup" className={styles.form} />
     </section>
   );
 }

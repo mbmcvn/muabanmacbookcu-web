@@ -1,7 +1,7 @@
-.entry { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 1rem 2rem; margin-block: 1.5rem; padding: 1.25rem 1.5rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--accent-soft); }
+.entry { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; gap: 1.5rem clamp(1.5rem, 3vw, 3rem); margin-block: 2rem; padding: clamp(1.5rem, 3vw, 2rem); border: 1px solid var(--border); border-radius: .75rem; background: #fafbf8; }
 .copy { min-width: 0; }
-.eyebrow { margin: 0 0 .3rem; color: var(--accent); font-size: .7rem; font-weight: 700; letter-spacing: .1em; }
-.copy h2 { margin: 0 0 .35rem; font-size: 1.35rem; font-weight: 600; letter-spacing: -.025em; }
-.copy > p:last-child { margin: 0; color: var(--muted); font-size: .875rem; }
+.eyebrow { margin: 0 0 .5rem; color: var(--accent); font-size: .7rem; font-weight: 700; letter-spacing: .1em; }
+.copy h2 { margin: 0 0 .65rem; font-size: clamp(1.5rem, 2.5vw, 1.75rem); font-weight: 600; letter-spacing: -.025em; }
+.copy > p:last-child { margin: 0; max-width: 34ch; color: var(--muted); font-size: .875rem; line-height: 1.7; }
 .entry .form { min-width: 0; margin: 0; }
-@media (max-width: 56rem) { .entry { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 1rem; } }
+@media (max-width: 56rem) { .entry { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; padding: 1.25rem; } }
