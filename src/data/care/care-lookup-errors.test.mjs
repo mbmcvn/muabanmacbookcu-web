@@ -130,3 +130,62 @@ test("overlong input is invalid locally; no input shows no error", async () => {
   assert.doesNotMatch(html, notFound);
   assert.doesNotMatch(html, invalid);
 });
+
+const publicReports = () => [
+  { report_id: "dcr_newestabcdefghijklmnopqr", accepted_at: "2026-10-04T02:00:00Z", display_name: "MacBook Air 13-inch M2 2022", report_path: "/care/report/dcr_newestabcdefghijklmnopqr" },
+  { report_id: "dcr_olderabcdefghijklmnopqrs", accepted_at: "2026-09-01T00:00:00Z", display_name: "MacBook Air 13-inch M2 2022", report_path: "/care/report/dcr_olderabcdefghijklmnopqrs" },
+];
+
+test("serial lookup shows one summary, neutral missing Machine ID, and ordered canonical report rows", async () => {
+  const reports = publicReports();
+  const result = { machine_id: null, machine_path: null, reports };
+  globalThis.fetch = async () => Response.json(result);
+  const html = await render("C02ABC123456");
+  assert.match(html, /Chưa có MBMC Machine ID/);
+  assert.match(html, /Chiếc máy này chưa được gắn MBMC Machine ID trong hệ thống\. Vẫn hiển thị các báo cáo kiểm tra công khai theo Serial\./);
+  assert.match(html, /2 báo cáo công khai/);
+  assert.match(html, /Danh sách báo cáo kiểm tra công khai/);
+  assert.match(html, /Tiếp nhận · GMT\+7/);
+  assert.match(html, /<time dateTime="2026-10-04T02:00:00Z"/);
+  for (const report of reports) assert.match(html, new RegExp(`href="${report.report_path}"`));
+  assert.ok(html.indexOf(reports[0].report_id) < html.indexOf(reports[1].report_id));
+  assert.doesNotMatch(html, notFound);
+  assert.doesNotMatch(html, /passed|đạt kiểm tra|status-dot/i);
+  const summary = html.slice(html.indexOf('aria-labelledby="care-summary-title"'), html.indexOf('aria-labelledby="care-reports-title"'));
+  assert.match(summary, /MacBook Air 13-inch M2 2022/);
+  assert.match(summary, /Serial đã được ẩn/);
+  assert.doesNotMatch(summary, /C02ABC123456/);
+  // Exact query persistence is confined to the editable user-supplied input.
+  assert.match(html, /name="lookup"[^>]*value="C02ABC123456"/);
+});
+
+test("resolved Machine with no reports shows identity, Care link and a neutral report empty state", async () => {
+  globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports: [] });
+  const html = await render();
+  assert.match(html, /MBMC Machine ID/);
+  assert.match(html, /href="\/care\/MBMC-001"/);
+  assert.match(html, /Xem Care của máy/);
+  assert.match(html, /Chưa có báo cáo kiểm tra công khai cho máy này\./);
+  assert.doesNotMatch(html, notFound);
+  assert.doesNotMatch(html, /Chưa có MBMC Machine ID/);
+  assert.doesNotMatch(html, /MacBook Air|Đang bảo hành|status-dot/);
+});
+
+test("summary ignores private serial/internal fields and never changes API report order", async () => {
+  const reports = publicReports().reverse();
+  globalThis.fetch = async () => Response.json({ machine_id: "MBMC-001", machine_path: "/care/MBMC-001", reports, serial: "PRIVATE_FULL_SERIAL", internal_id: "PRIVATE_INTERNAL_ID" });
+  const html = await render();
+  assert.doesNotMatch(html, /PRIVATE_FULL_SERIAL|PRIVATE_INTERNAL_ID/);
+  assert.match(html, /Serial đã được ẩn/);
+  assert.ok(html.indexOf(reports[0].report_id) < html.indexOf(reports[1].report_id));
+});
+
+test("lookup layout contains narrow screens and long public identifiers", () => {
+  const css = readFileSync("src/app/care/lookup.module.css", "utf8");
+  assert.match(css, /width: min\(64rem, calc\(100% - 2rem\)\)/);
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(css, /\.field input[^}]*width: 100%[^}]*min-width: 0/);
+  assert.match(css, /text-overflow: ellipsis/);
+  assert.match(css, /@media \(max-width: 640px\)/);
+  assert.match(css, /\.reportId[^}]*white-space: normal[^}]*overflow-wrap: anywhere/);
+});
