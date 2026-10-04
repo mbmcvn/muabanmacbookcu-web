@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PublicDisplayEvidence from "./PublicDisplayEvidence";
 import type { PublicDesktopDeviceCheckReport } from "@/lib/care-report/desktop-public-report";
 import type { DesktopReportHighlight } from "@/lib/care-report/desktop-report-presentation";
 import { desktopDiagnosticSummaryVi } from "@/lib/care-report/desktop-report-copy";
@@ -192,10 +193,10 @@ export default function PublicDeviceCheckReport({
           )}
           {report.device.serial && (
             <Link
-              href={`/device-check?serial=${encodeURIComponent(report.device.serial)}`}
+              href="/care"
               className="mt-3 inline-flex text-sm font-bold text-blue-200 underline decoration-blue-400 underline-offset-4 hover:text-white"
             >
-              Xem lịch sử kiểm định của máy này
+              Tra cứu lịch sử kiểm định
             </Link>
           )}
           <dl className="mt-6 grid gap-4 border-t border-white/15 pt-5 text-sm sm:grid-cols-2">
@@ -568,6 +569,9 @@ export default function PublicDeviceCheckReport({
                             </li>
                           ))}
                         </ul>
+                      )}
+                      {item.diagnostic_id === "display" && item.displayEvidence && (
+                        <PublicDisplayEvidence evidence={item.displayEvidence} />
                       )}
                     </details>
                   ))}

@@ -5,6 +5,8 @@ import { getPublicInspectionReport } from "@/data/care/public-inspection.server"
 import { publicDesktopReportMetadata } from "@/lib/care-report/desktop-public-report-view";
 import PublicDeviceCheckReport from "@/components/desktop/PublicDeviceCheckReport";
 
+export const dynamic = "force-dynamic";
+
 const loadReport = cache(getPublicInspectionReport);
 
 export async function generateMetadata(props: {
@@ -18,11 +20,13 @@ export async function generateMetadata(props: {
       robots: { index: false, follow: false },
     };
   const metadata = publicDesktopReportMetadata(report);
+  const canonical = `https://mbmc.vn/care/report/${reportId}`;
   return {
     ...metadata,
-    alternates: { canonical: `https://mbmc.vn/care/report/${reportId}` },
+    alternates: { canonical },
     robots: { index: false, follow: false },
     openGraph: {
+      url: canonical,
       title: metadata.title,
       description: metadata.description,
       type: "article",

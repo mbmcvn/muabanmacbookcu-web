@@ -1,0 +1,5 @@
+.evidence { min-width: 0; max-width: 100%; margin-top: 1.25rem; overflow-wrap: anywhere; }
+.figure { min-width: 0; max-width: 100%; margin: 1rem 0 0; }
+.screen { position: relative; width: 100%; max-width: 100%; overflow: hidden; border: 5px solid #262626; border-radius: .5rem; }
+.region { position: absolute; outline: 2px solid #ffb300; outline-offset: -2px; }
+.number { position: absolute; top: 0; left: 0; padding: 0 .2rem; border: 1px solid #111; background: #fff; color: #111; font-size: .75rem; line-height: 1.3; }

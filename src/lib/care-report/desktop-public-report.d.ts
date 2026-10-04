@@ -1,3 +1,20 @@
+// Public presentation contract supplied by mbmc-care; no local projection or validation.
+export type PublicDisplayEvidenceV1 = Readonly<{
+    version: 1;
+    coordinateSpace: "normalized";
+    origin: "top_left";
+    displayAspectRatio: number | null;
+    regions: readonly Readonly<{
+        regionId: string;
+        kind: "rectangle";
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        testColor: "white" | "black" | "red" | "green" | "blue";
+    }>[];
+}>;
+
 
 export type PublicDesktopDeviceCheckReport = Awaited<ReturnType<typeof projectPublicDesktopDeviceCheckReport>>;
 export declare function projectPublicDesktopDeviceCheckReport(value: unknown): {
@@ -98,6 +115,7 @@ export declare function projectPublicDesktopDeviceCheckReport(value: unknown): {
         unknown: number;
     };
     diagnostics: ({
+        displayEvidence?: PublicDisplayEvidenceV1;
         diagnostic_id: "display" | "battery" | "storage" | "keyboard" | "system_overview" | "trackpad" | "camera" | "microphone" | "speakers" | "wifi" | "bluetooth" | "touch_id" | "ports" | "charging";
         title: Readonly<{
             vi: string;
@@ -123,6 +141,7 @@ export declare function projectPublicDesktopDeviceCheckReport(value: unknown): {
             }>;
             summary: string | null;
         }[];
+        displayEvidence?: PublicDisplayEvidenceV1;
         diagnostic_id: "display" | "battery" | "storage" | "keyboard" | "system_overview" | "trackpad" | "camera" | "microphone" | "speakers" | "wifi" | "bluetooth" | "touch_id" | "ports" | "charging";
         title: Readonly<{
             vi: string;
@@ -260,6 +279,7 @@ export declare function projectPublicDesktopDeviceCheckReport(value: unknown): {
         unknown: number;
     };
     diagnostics: ({
+        displayEvidence?: PublicDisplayEvidenceV1;
         diagnostic_id: "display" | "battery" | "storage" | "keyboard" | "system_overview" | "trackpad" | "camera" | "microphone" | "speakers" | "wifi" | "bluetooth" | "touch_id" | "ports" | "charging";
         title: Readonly<{
             vi: string;
@@ -285,6 +305,7 @@ export declare function projectPublicDesktopDeviceCheckReport(value: unknown): {
             }>;
             summary: string | null;
         }[];
+        displayEvidence?: PublicDisplayEvidenceV1;
         diagnostic_id: "display" | "battery" | "storage" | "keyboard" | "system_overview" | "trackpad" | "camera" | "microphone" | "speakers" | "wifi" | "bluetooth" | "touch_id" | "ports" | "charging";
         title: Readonly<{
             vi: string;
