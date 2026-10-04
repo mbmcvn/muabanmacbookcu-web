@@ -1,3 +1,4 @@
+import { CareLookupForm as SharedCareLookupForm } from "@/components/care/CareLookupForm";
 import Image from "next/image";
 import type { CareMachinePresentation } from "@/data/care/care-machine-presentation.server";
 import Link from "next/link";
@@ -8,28 +9,7 @@ import styles from "./lookup.module.css";
 type PublicReport = CareLookupResult["reports"][number];
 
 export function CareLookupForm({ lookup }: { lookup: string }) {
-  return (
-    <form action="/care" className={styles.form}>
-      <label className={styles.field} htmlFor="care-lookup">
-        <span>Serial / MBMC Machine ID</span>
-        <input
-          id="care-lookup"
-          name="lookup"
-          defaultValue={lookup}
-          placeholder="Nhập Serial hoặc MBMC Machine ID"
-          required
-          maxLength={40}
-          autoCapitalize="characters"
-          spellCheck={false}
-          aria-describedby="care-lookup-help"
-        />
-      </label>
-      <button className={styles.submit} type="submit">Tra cứu</button>
-      <p id="care-lookup-help" className={styles.formHelp}>
-        Dùng Serial trên thiết bị hoặc mã MBMC Machine ID để tìm hồ sơ công khai.
-      </p>
-    </form>
-  );
+  return <SharedCareLookupForm lookup={lookup} maxLength={40} autoCapitalize="characters" />;
 }
 
 function CareWarranty({ warranty }: { warranty?: CareLookupWarranty | null }) {

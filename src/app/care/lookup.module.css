@@ -3,14 +3,6 @@
 .eyebrow { margin: 0 0 .75rem; color: var(--accent); font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .intro h1 { margin: 0 0 1rem; font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 550; letter-spacing: -.05em; line-height: 1.08; }
 .intro > p:last-child { margin: 0; color: var(--muted); font-size: 1.05rem; line-height: 1.65; }
-.form { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .75rem; row-gap: .5rem; margin-bottom: 2.5rem; }
-.field { display: grid; min-width: 0; gap: .6rem; font-size: .875rem; font-weight: 600; }
-.field input { width: 100%; min-width: 0; min-height: 3.5rem; padding: .85rem 1rem; border: 1px solid var(--border-strong); border-radius: .65rem; background: var(--surface); color: var(--foreground); font-weight: 450; }
-.field input::placeholder { color: var(--subtle); }
-.field input:focus-visible { border-color: var(--accent); }
-.submit { min-height: 3.5rem; align-self: end; padding: .85rem 1.65rem; border: 1px solid var(--accent); border-radius: .65rem; background: var(--accent); color: #fff; font-weight: 650; cursor: pointer; }
-.submit:hover { background: #123d2e; }
-.formHelp { grid-column: 1 / -1; margin: .15rem 0 0; color: var(--muted); font-size: .8rem; }
 .summary { min-width: 0; padding: 1.5rem; border: 1px solid var(--border); border-radius: .85rem; background: var(--surface); overflow-wrap: anywhere; }
 .summaryHeading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: .75rem 1.5rem; }
 .summaryHeading > div { min-width: 0; flex: 1 1 20rem; }
@@ -46,8 +38,6 @@
 .empty { padding: 1.5rem; border: 1px solid var(--border); border-radius: .85rem; color: var(--muted); background: var(--surface); font-size: .9rem; overflow-wrap: anywhere; }
 .empty p { margin: 0; }
 @media (max-width: 640px) {
-  .form { grid-template-columns: minmax(0, 1fr); }
-  .submit { width: 100%; }
   .summary, .empty { padding: 1rem; }
   .summaryHeading > div { flex-basis: 100%; }
   .listHeading { display: block; }
