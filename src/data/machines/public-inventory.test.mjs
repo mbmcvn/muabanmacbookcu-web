@@ -618,8 +618,8 @@ test("desktop and mobile navigation share one canonical Mac submenu and other li
       source.indexOf('label: "Khách hàng"'),
   );
   assert.ok(
-    source.indexOf('label: "Khách hàng"') <
-      source.indexOf('label: "Chính sách"'),
+    source.indexOf('label: "Chính sách"') <
+      source.indexOf('label: "Khách hàng"'),
   );
   assert.match(source, /label: contactLabel/);
   assert.match(
@@ -683,7 +683,6 @@ test("desktop and mobile navigation share one canonical Mac submenu and other li
     "selector",
     "inventory",
     "people",
-    "policy",
     "sell",
     "contact",
   ])

@@ -18,6 +18,7 @@ function load(path) {
   const compiledModule = { exports: {} }; modules.set(path, compiledModule);
   const source = ts.transpileModule(readFileSync(path, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText;
   new Function("require", "module", "exports", source)(name => {
+    if (name.endsWith(".module.css")) return Object.fromEntries(["anchor", "trigger", "panel", "popover", "mobile", "mobilePanel"].map(key => [key, `submenu_${key}`]));
     if (name === "react") return { ...React,
       useState: (...args) => hooks ? hooks.state(...args) : React.useState(...args),
       useRef: (...args) => hooks ? hooks.ref(...args) : React.useRef(...args),
@@ -37,6 +38,7 @@ function load(path) {
   return compiledModule.exports;
 }
 const { MacNavigation, isNavigationPathCurrent } = load("src/components/layout/MacNavigation.tsx");
+const { NavigationSubmenu } = load("src/components/layout/NavigationSubmenu.tsx");
 const { SiteHeader } = load("src/components/layout/SiteHeader.tsx");
 const { InventoryPageView } = load("src/app/(sales)/may-dang-co/_components/InventoryPageView.tsx");
 const links = [
@@ -58,9 +60,9 @@ function mount(props = {}) {
   const render = () => {
     cleanups.forEach(cleanup => cleanup?.()); context.effects = []; stateIndex = 0; refIndex = 0;
     hooks = context;
-    tree = MacNavigation({ links, pathname: "/care", ...props });
+    tree = NavigationSubmenu({ name: "mac", label: "Mac", links, pathname: "/care", ...props });
     hooks = null;
-    refs[0].current = { contains: target => target === inside, querySelector: selector => { assert.equal(selector, ".mac-navigation-submenu a"); return ({ focus: () => { childFocused = true; } }); } };
+    refs[0].current = { contains: target => target === inside, querySelector: selector => { assert.equal(selector, ".navigation-group-submenu a"); return ({ focus: () => { childFocused = true; } }); } };
     refs[1].current = { focus: () => { focused = true; tree.props.onFocus(); } };
     cleanups = context.effects.map(effect => effect());
     return tree;
@@ -74,19 +76,21 @@ function mount(props = {}) {
   };
 }
 
-test("shared top navigation has one Mac trigger and keeps all other destinations", () => {
+test("shared top navigation groups Mac and Care and keeps all other destinations", () => {
   const html = renderToStaticMarkup(React.createElement(SiteHeader));
   const nav = html.match(/<nav class="desktop-navigation"[\s\S]*?<\/nav>/)[0];
-  assert.equal((nav.match(/class="mac-navigation-trigger"/g) ?? []).length, 1);
+  assert.equal((nav.match(/class="navigation-group-trigger submenu_trigger"/g) ?? []).length, 2);
   assert.match(nav, /href="\/may-dang-co"[^>]*>Mac<\/a>/);
-  assert.doesNotMatch(nav, /mac-navigation-chevron|⌄/);
+  assert.doesNotMatch(nav, /navigation-group-chevron|⌄/);
   assert.doesNotMatch(nav, /Máy đang có/);
   assert.match(nav, /href="\/may-dang-co"/);
   assert.match(nav, /href="\/chon-macbook"/);
   for (const [href, label] of [["/people", "Khách hàng"], ["/chinh-sach", "Chính sách"], ["/phan-mem", "Phần mềm"]]) { assert.match(nav, new RegExp(`href="${href}"`)); assert.match(nav, new RegExp(label)); }
   assert.match(nav, /Bán máy cho MBMC/);
   assert.match(nav, /Messenger/);
-  assert.doesNotMatch(nav, /href="\/care"/);
+  assert.match(nav, /href="\/care"[^>]*>Care<\/a>/);
+  assert.doesNotMatch(nav, /class="desktop-nav-label-full">Chính sách/);
+  assert.match(nav, /<span>Chính sách<\/span><small>Bảo hành, MBMC Care và các chính sách liên quan<\/small>/);
 });
 
 test("Mac and child active states cover inventory and chooser routes without prefix collisions", () => {
@@ -157,8 +161,8 @@ test("inventory page omits the chooser callout and keeps intro before filters", 
   }
   const css = readFileSync("src/app/globals.css", "utf8");
   assert.doesNotMatch(css, /inventory-chooser-callout/);
-  assert.match(css, /\.desktop-navigation \.mac-navigation-submenu\[hidden\] \{ display: none;/);
-  assert.match(css, /\.mac-navigation--mobile \.mac-navigation-submenu \{ position: static; width: 100%/);
+
+
 });
 
 test("ArrowDown opens the disclosure and moves focus to its first link; focused links survive pointer leave", () => {
@@ -179,27 +183,153 @@ test("ArrowDown opens the disclosure and moves focus to its first link; focused 
 });
 
 test("desktop Mac submenu is an independent vertical popover in the header stacking layer", () => {
-  const css = readFileSync("src/app/globals.css", "utf8");
+  const globalCss = readFileSync("src/app/globals.css", "utf8");
+  const css = readFileSync("src/components/layout/NavigationSubmenu.module.css", "utf8") + globalCss;
   const rule = selector => {
     const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const match = css.match(new RegExp(escaped + " \\{([^}]+)\\}"));
     assert.ok(match, selector);
     return match[1];
   };
-  assert.match(rule(".desktop-navigation .mac-navigation"), /position: relative;/);
-  const popover = rule(".desktop-navigation .mac-navigation-submenu");
-  for (const declaration of ["position: absolute;", "top: calc(100% + 8px);", "left: 0;", "z-index: 1;", "display: grid;", "grid-template-columns: minmax(0, 1fr);", "width: 300px;", "padding: 12px;", "background: var(--surface);"]) {
+  assert.match(rule(".anchor"), /position: relative;/);
+  const popover = rule(".popover");
+  for (const declaration of ["position: absolute;", "top: calc(100% + 8px);", "left: 0;", "z-index: 1;", "width: 300px;", "padding: 12px;", "background: var(--surface);"]) {
     assert.ok(popover.includes(declaration), declaration);
   }
   assert.match(popover, /border: 1px solid var\(--border\);/);
   assert.match(popover, /box-shadow:/);
-  assert.match(rule(".desktop-navigation .mac-navigation-submenu::before"), /height: 8px;/);
-  assert.match(css, /\.desktop-navigation \.mac-navigation-submenu a,[^{]+\{ display: grid;/);
-  assert.match(css, /\.desktop-navigation \.mac-navigation-submenu a > small \{ display: block;/);
+  assert.match(rule(".popover::before"), /height: 8px;/);
+  assert.match(rule(".panel"), /display: grid;[\s\S]*grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(rule(".panel.panel > a"), /display: grid;/);
+  assert.match(rule(".panel[hidden]"), /display: none;/);
+  assert.match(css, /\.panel > a > small \{ display: block;/);
   assert.match(rule(".site-header"), /z-index: 50;/);
   assert.match(rule(".site-header, .header-inner, .desktop-navigation"), /overflow: visible;/);
-  for (const selector of ["html", "body", ".container", ".site-header", ".header-inner", ".desktop-navigation", ".desktop-navigation .mac-navigation"]) {
+  for (const selector of ["html", "body", ".container", ".site-header", ".header-inner", ".desktop-navigation", ".anchor"]) {
     assert.doesNotMatch(rule(selector), /(?:overflow(?:-y)?:\s*(?:hidden|clip)|transform:|filter:|isolation:)/);
   }
-  assert.match(rule(".mac-navigation--mobile .mac-navigation-submenu"), /position: static; width: 100%;/);
+  assert.match(rule(".mobilePanel"), /position: static;[\s\S]*width: 100%;/);
+});
+
+const careLinks = [
+  { href: "/care", label: "Tra cứu Care", description: "Tra cứu hồ sơ máy, bảo hành và báo cáo kiểm tra" },
+  { href: "/chinh-sach", label: "Chính sách", description: "Bảo hành, MBMC Care và các chính sách liên quan" },
+];
+const careProps = { name: "care", label: "Care", links: careLinks };
+
+test("Care and its corresponding child activate only Care and policy route families", () => {
+  for (const [pathname, child] of [["/care", 0], ["/care/report/abc", 0], ["/chinh-sach", 1], ["/chinh-sach/bao-hanh", 1], ["/chinh-sach/mbmc-care", 1]]) {
+    const menu = mount({ ...careProps, pathname });
+    try {
+      assert.equal(menu.button().props["data-active"], true);
+      assert.equal(menu.panel().props.children[child].props["aria-current"], "page");
+      assert.equal(menu.panel().props.children[1 - child].props["aria-current"], undefined);
+    } finally { menu.cleanup(); }
+  }
+  for (const pathname of ["/careless", "/chinh-sach-extra", "/may-dang-co", "/chon-macbook", "/people", "/phan-mem"]) {
+    const menu = mount({ ...careProps, pathname });
+    try { assert.equal(menu.button().props["data-active"], undefined); }
+    finally { menu.cleanup(); }
+  }
+});
+
+test("Care is a direct link with hover, focus, ArrowDown, Escape and outside access", () => {
+  const menu = mount(careProps);
+  const previousRAF = globalThis.requestAnimationFrame;
+  globalThis.requestAnimationFrame = callback => callback();
+  try {
+    assert.equal(menu.button().props.href, "/care");
+    assert.equal(menu.button().props.children, "Care");
+    assert.equal(menu.button().props.onClick, undefined);
+    assert.equal(menu.button().props["aria-controls"], "desktop-care-navigation");
+    assert.equal(menu.tree.props.className, "navigation-group submenu_anchor");
+    assert.equal(menu.panel().props.className, "navigation-group-submenu submenu_panel submenu_popover");
+    assert.equal(menu.panel().props.hidden, true);
+    menu.button().props.onKeyDown({ key: "Enter", preventDefault: () => assert.fail("Enter intercepted") });
+    menu.render(); assert.equal(menu.panel().props.hidden, true);
+    menu.tree.props.onMouseEnter(); menu.render(); assert.equal(menu.panel().props.hidden, false);
+    menu.tree.props.onMouseLeave(); menu.render(); assert.equal(menu.panel().props.hidden, true);
+    menu.tree.props.onFocus(); menu.render(); assert.equal(menu.panel().props.hidden, false);
+    menu.tree.props.onBlur({ currentTarget: { contains: () => true }, relatedTarget: menu.inside });
+    menu.render(); assert.equal(menu.panel().props.hidden, false);
+    assert.deepEqual(menu.panel().props.children.map(child => child.props.href), ["/care", "/chinh-sach"]);
+    menu.event("keydown", { key: "Escape" }); menu.render();
+    assert.equal(menu.panel().props.hidden, true); assert.equal(menu.focused, true);
+    let prevented = false;
+    menu.button().props.onKeyDown({ key: "ArrowDown", preventDefault: () => { prevented = true; } });
+    menu.render(); assert.equal(prevented, true); assert.equal(menu.childFocused, true);
+    assert.equal(menu.panel().props.hidden, false);
+    menu.event("pointerdown", { target: {} }); menu.render(); assert.equal(menu.panel().props.hidden, true);
+  } finally { menu.cleanup(); globalThis.requestAnimationFrame = previousRAF; }
+});
+
+test("mobile Care exposes both child links and the primary link navigates without interception", () => {
+  let navigations = 0;
+  const menu = mount({ ...careProps, mobile: true, onNavigate: () => { navigations++; } });
+  try {
+    assert.equal(menu.button().props.href, "/care");
+    assert.equal(menu.button().props["aria-controls"], "mobile-care-navigation");
+    assert.equal(menu.panel().props.hidden, false);
+    assert.deepEqual(menu.panel().props.children.map(child => child.props.href), ["/care", "/chinh-sach"]);
+    menu.button().props.onClick(); assert.equal(navigations, 1);
+    menu.panel().props.children[1].props.onClick(); assert.equal(navigations, 2);
+    menu.render(); assert.equal(menu.panel().props.hidden, false);
+  } finally { menu.cleanup(); }
+});
+
+test("opened mobile header groups policies under Care and preserves all other primary links", () => {
+  hooks = {
+    effects: [],
+    state: initial => [{ ...initial, open: true }, () => {}],
+    ref: () => ({ current: null }),
+  };
+  let html;
+  try { html = renderToStaticMarkup(React.createElement(SiteHeader)); }
+  finally { hooks = null; }
+  const nav = html.match(/<nav id="mobile-navigation-menu"[\s\S]*?<\/nav>/)[0];
+  assert.match(nav, /href="\/care"[^>]*>Care<\/a>/);
+  assert.match(nav, /id="mobile-care-navigation" class="navigation-group-submenu submenu_panel submenu_mobilePanel"><a href="\/care"[^>]*><span>Tra cứu Care<\/span>/);
+  assert.match(nav, /href="\/chinh-sach"[^>]*><span>Chính sách<\/span><small>/);
+  assert.equal((nav.match(/href="\/chinh-sach"/g) ?? []).length, 1);
+  for (const href of ["/may-dang-co", "/chon-macbook", "/people", "/phan-mem"]) assert.ok(nav.includes('href="' + href + '"'));
+  assert.match(nav, /Bán máy cho MBMC/);
+  assert.ok(nav.indexOf('>Mac</a>') < nav.indexOf('>Care</a>'));
+  assert.ok(nav.indexOf('>Care</a>') < nav.indexOf('>Khách hàng</span>'));
+});
+
+
+test("Mac and Care carry their own anchor and overlay, independently of a horizontal nav ancestor", () => {
+  const mac = MacNavigation({ links, pathname: "/may-dang-co" });
+  assert.equal(mac.type, NavigationSubmenu);
+  const headerSource = readFileSync("src/components/layout/SiteHeader.tsx", "utf8");
+  assert.match(headerSource, /<NavigationSubmenu name="care" label="Care" links={careLinks}/);
+  assert.match(readFileSync("src/components/layout/NavigationSubmenu.tsx", "utf8"), /import styles from "\.\/NavigationSubmenu\.module\.css"/);
+  const css = readFileSync("src/components/layout/NavigationSubmenu.module.css", "utf8");
+  assert.doesNotMatch(css, /desktop-navigation|mac-navigation|care-navigation/);
+  assert.match(css, /\.anchor\s*{[^}]*position: relative;[^}]*overflow: visible;/);
+  assert.match(css, /\.popover\s*{[^}]*position: absolute;[^}]*top: calc\(100% \+ 8px\);[^}]*left: 0;[^}]*z-index: 1;/);
+  for (const props of [mac.props, { ...careProps, pathname: "/care" }]) {
+    const menu = mount(props);
+    try {
+      assert.equal(menu.tree.type, "div");
+      assert.equal(menu.tree.props.className, "navigation-group submenu_anchor");
+      assert.equal(menu.tree.props.children.length, 2);
+      const [trigger, panel] = menu.tree.props.children;
+      assert.equal(trigger.props.href, props.links[0].href);
+      assert.equal(panel.type, "div");
+      assert.equal(panel.props.className, "navigation-group-submenu submenu_panel submenu_popover");
+      assert.equal(panel.props.children.length, 2);
+      assert.deepEqual(panel.props.children.map(child => child.props.href), props.links.map(link => link.href));
+      menu.tree.props.onMouseEnter(); menu.render();
+      assert.equal(menu.panel().props.hidden, false);
+      assert.equal(menu.panel().props.className, panel.props.className);
+    } finally { menu.cleanup(); }
+    const mobile = mount({ ...props, mobile: true });
+    try {
+      assert.equal(mobile.tree.props.className, "navigation-group submenu_anchor navigation-group--mobile submenu_mobile");
+      assert.equal(mobile.panel().props.className, "navigation-group-submenu submenu_panel submenu_mobilePanel");
+      assert.equal(mobile.panel().props.hidden, false);
+      assert.equal(mobile.button().props.href, props.links[0].href);
+    } finally { mobile.cleanup(); }
+  }
 });

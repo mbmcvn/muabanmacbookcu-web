@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { MacNavigation, isNavigationPathCurrent } from "./MacNavigation";
+import { NavigationSubmenu } from "./NavigationSubmenu";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
 import { contactChannels } from "@/config/contact";
 import {
@@ -21,7 +22,6 @@ type HeaderIconName =
   | "contact"
   | "inventory"
   | "people"
-  | "policy"
   | "sell"
   | "software"
   | "selector";
@@ -54,12 +54,6 @@ const iconPaths: Record<HeaderIconName, ReactNode> = {
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-    </>
-  ),
-  policy: (
-    <>
-      <path d="m12 2 8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4Z" />
-      <path d="m8.5 12 2.2 2.2 4.8-5" />
     </>
   ),
   software: (
@@ -112,16 +106,15 @@ export function SiteHeader() {
     { href: withContactChannel("/may-dang-co", channel, shareReferralCode), label: "Mac đang có", description: "Xem những máy đang sẵn sàng bán" },
     { href: withContactChannel("/chon-macbook", channel, shareReferralCode), label: "Chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
   ];
+  const careLinks = [
+    { href: withContactChannel("/care", channel), label: "Tra cứu Care", description: "Tra cứu hồ sơ máy, bảo hành và báo cáo kiểm tra" },
+    { href: withContactChannel("/chinh-sach", channel), label: "Chính sách", description: "Bảo hành, MBMC Care và các chính sách liên quan" },
+  ];
   const links: readonly HeaderLink[] = [
     {
       href: withContactChannel("/people", channel),
       label: "Khách hàng",
       icon: "people",
-    },
-    {
-      href: withContactChannel("/chinh-sach", channel),
-      label: "Chính sách",
-      icon: "policy",
     },
     {
       href: withContactChannel("/phan-mem", channel),
@@ -223,6 +216,7 @@ export function SiteHeader() {
         </Link>
         <nav className="desktop-navigation" aria-label="Điều hướng chính">
           <MacNavigation links={macLinks} pathname={pathname} />
+          <NavigationSubmenu name="care" label="Care" links={careLinks} pathname={pathname} />
           {links.map((link) => renderLink(link))}
         </nav>
         <div
@@ -260,6 +254,7 @@ export function SiteHeader() {
               aria-label="Điều hướng chính trên di động"
             >
               <MacNavigation links={macLinks} pathname={pathname} mobile onNavigate={closeMenu} />
+              <NavigationSubmenu name="care" label="Care" links={careLinks} pathname={pathname} mobile onNavigate={closeMenu} />
               {links
                 .filter((link) => !link.contact)
                 .map((link) => renderLink(link, true))}

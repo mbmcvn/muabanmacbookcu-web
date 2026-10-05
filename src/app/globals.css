@@ -853,21 +853,7 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
   .public-machine-sticky a { min-height: 2.55rem; padding-inline: .6rem; font-size: .78rem; }
 }
 
-.mac-navigation { position: relative; min-width: 0; }
-.mac-navigation-trigger { display: flex; align-items: center; gap: .45rem; min-height: 2.75rem; padding: 0; border: 0; background: transparent; color: #494945; cursor: pointer; }
-.mac-navigation-trigger:hover, .mac-navigation-trigger[data-active="true"] { color: var(--accent); }
-.desktop-navigation .mac-navigation { position: relative; overflow: visible; }
-.desktop-navigation .mac-navigation-submenu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr); width: 300px; padding: 12px; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); box-shadow: 0 .5rem 1.5rem rgb(24 24 23 / 8%); }
-/* Keep the hover target continuous across the popover's visual gap. */
-.desktop-navigation .mac-navigation-submenu::before { content: ""; position: absolute; top: -8px; left: 0; width: 100%; height: 8px; }
 .site-header, .header-inner, .desktop-navigation { overflow: visible; }
-.mac-navigation-submenu[hidden], .desktop-navigation .mac-navigation-submenu[hidden] { display: none; }
-.desktop-navigation .mac-navigation-submenu a, .mobile-header-menu .mac-navigation-submenu a { display: grid; gap: .2rem; min-width: 0; padding: .65rem .75rem; border-radius: .4rem; white-space: normal; }
-.mac-navigation-submenu a:hover, .mac-navigation-submenu a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
-.desktop-navigation .mac-navigation-submenu a > span, .desktop-navigation .mac-navigation-submenu a > small { display: block; }
-.mac-navigation-submenu small { color: var(--muted); font-size: .75rem; line-height: 1.5; }
-.mac-navigation--mobile .mac-navigation-trigger { width: 100%; justify-content: space-between; min-height: 2.9rem; padding: .55rem .7rem; border-radius: .45rem; }
-.mac-navigation--mobile .mac-navigation-submenu { position: static; width: 100%; padding: 0 0 .3rem .6rem; border: 0; background: transparent; box-shadow: none; }
 /* Match the inventory controls' existing mobile mode. */
 @media (max-width: 39.99rem) {
   .inventory-page { padding-top: 1rem; }

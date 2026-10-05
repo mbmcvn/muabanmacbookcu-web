@@ -1,0 +1,79 @@
+.anchor {
+  position: relative;
+  min-width: 0;
+  overflow: visible;
+}
+
+.anchor > .trigger {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 2.75rem;
+  padding: 0;
+  color: #494945;
+  cursor: pointer;
+}
+
+.anchor > .trigger:hover,
+.anchor > .trigger[data-active="true"] { color: var(--accent); }
+
+/* Desktop geometry belongs to the primitive, independently of its nav ancestor. */
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1;
+  width: 300px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  background: var(--surface);
+  box-shadow: 0 .5rem 1.5rem rgb(24 24 23 / 8%);
+}
+
+/* Keep hover continuous across the visual gap. */
+.popover::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 100%;
+  height: 8px;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.panel[hidden] { display: none; }
+
+/* Outrank the header's broad horizontal-link rules regardless of CSS order. */
+.panel.panel > a {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+  padding: .65rem .75rem;
+  border-radius: .4rem;
+  white-space: normal;
+}
+.panel > a:hover,
+.panel > a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+.panel > a > span,
+.panel > a > small { display: block; }
+.panel > a > small { color: var(--muted); font-size: .75rem; line-height: 1.5; }
+
+.mobile > .trigger {
+  width: 100%;
+  justify-content: space-between;
+  min-height: 2.9rem;
+  padding: .55rem .7rem;
+  border-radius: .45rem;
+}
+.mobilePanel {
+  position: static;
+  width: 100%;
+  padding: 0 0 .3rem .6rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
