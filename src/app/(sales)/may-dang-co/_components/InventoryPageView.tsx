@@ -1,22 +1,12 @@
-import Link from "next/link";
 import type { PublicMachineSummaryV2 } from "@/models";
 import { InventoryExplorer } from "./InventoryExplorer";
-import { InventoryIntro } from "./InventoryIntro";
+import type { InventoryUrlState } from "@/data/machines/public-inventory-query";
 import { InventoryTrustStatement } from "./InventoryTrustStatement";
-import { NoPublishedMachinesState } from "./InventoryEmptyState";
 
-export function InventoryPageView({ machines }: { machines: PublicMachineSummaryV2[] }) {
+export function InventoryPageView({ machines, initialState }: { machines: PublicMachineSummaryV2[]; initialState?: InventoryUrlState }) {
   return (
     <div className="container inventory-page">
-      <InventoryIntro total={machines.length} />
-      <aside className="inventory-chooser-callout" aria-label="Gợi ý chọn Mac">
-        <div>
-          <h2>Chưa biết bắt đầu từ đâu?</h2>
-          <p>Hãy để MBMC gợi ý chiếc Mac phù hợp theo nhu cầu và ngân sách của bạn.</p>
-        </div>
-        <Link href="/chon-macbook">Để MBMC gợi ý <span aria-hidden="true">→</span></Link>
-      </aside>
-      {machines.length ? <InventoryExplorer machines={machines} /> : <NoPublishedMachinesState />}
+      <InventoryExplorer machines={machines} initialState={initialState} />
       <InventoryTrustStatement />
     </div>
   );

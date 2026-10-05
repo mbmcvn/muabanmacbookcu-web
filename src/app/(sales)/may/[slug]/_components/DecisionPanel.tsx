@@ -3,6 +3,7 @@
 import type { PublicMachineDetailV3 } from "@/models";
 import { phoneContact } from "@/config/contact";
 import { ContactActionLink } from "@/components/contact/ContactActionLink";
+import { MachineIdentity } from "./MachineIdentity";
 import { CopyMachineLink } from "@/components/contact/CopyMachineLink";
 import {
   formatCurrencyVnd,
@@ -29,7 +30,8 @@ export function DecisionPanel({ machine }: { machine: PublicMachineDetailV3 }) {
   return (
     <section className="detail-decision" aria-labelledby="machine-title">
       <div className="detail-status">
-        <span>
+        <MachineIdentity code={summary.code} />
+        <span className="machine-availability-status">
           {formatMachineAvailability(
             summary.availability,
             summary.reservationKind,

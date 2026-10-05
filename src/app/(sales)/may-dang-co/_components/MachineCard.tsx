@@ -17,7 +17,7 @@ import {
   formatMachineCardSpecs,
   getMachineCardFamilyFact,
 } from "./machine-card-presentation";
-import { CopyMachineCardLink } from "./CopyMachineCardLink";
+import { publicMachineId } from "@/lib/public-machine-id";
 
 export function MachineCard({
   machine,
@@ -27,6 +27,7 @@ export function MachineCard({
   headingAs?: "h2" | "h3";
 }) {
   const { channel } = useContactChannel();
+  const machineId = publicMachineId(machine.code);
   const price = formatCurrencyVnd(machine.price);
   const displayName = formatPublicMachineDisplayName(machine.displayName);
   const specs = formatMachineCardSpecs({
@@ -91,7 +92,7 @@ export function MachineCard({
             </div>
           </dl>
           <div className="machine-card-footer">
-            <span className="machine-code">{machine.code}</span>
+            {machineId ? <span className="machine-code">{machineId}</span> : null}
             <span className="machine-card-cta">
               {reserved ? (
                 "Xem thông tin"
@@ -108,7 +109,6 @@ export function MachineCard({
           </div>
         </div>
       </Link>
-      <CopyMachineCardLink code={machine.code} slug={machine.slug} />
     </article>
   );
 }

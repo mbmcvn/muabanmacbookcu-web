@@ -1,3 +1,4 @@
+import { parseInventoryUrlState } from "@/data/machines/public-inventory-query";
 import type { Metadata } from "next";
 import { getAvailableMachines } from "@/data/machines/get-available-machines";
 import { InventoryPageView } from "./_components/InventoryPageView";
@@ -11,9 +12,14 @@ async function loadPublicMachines() {
   return loadPublicInventoryState(getAvailableMachines);
 }
 
-export default async function InventoryPage() {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    for (const entry of Array.isArray(value) ? value : value === undefined ? [] : [value]) params.append(key, entry);
+  }
+  const initialState = parseInventoryUrlState(params);
   const state = await loadPublicMachines();
   return state.status === "ready"
-    ? <InventoryPageView machines={state.machines} />
+    ? <InventoryPageView machines={state.machines} initialState={initialState} />
     : <div className="container inventory-page"><InventoryUnavailable /></div>;
 }

@@ -27,7 +27,7 @@ function load(path) {
     if (name === "next/link") return function TestLink({ children, ...props }) { return React.createElement("a", props, children); };
     if (name === "next/navigation") return { usePathname: () => "/care" };
     if (name === "@/hooks/useContactChannel") return { useContactChannel: () => ({ channel: null, contactLabel: "Messenger", contactUrl: null }), withContactChannel: href => href };
-    if (name === "./InventoryExplorer") return { InventoryExplorer: () => React.createElement("div", { id: "inventory-filters" }) };
+    if (name === "./InventoryExplorer") return { InventoryExplorer: ({ machines, children }) => React.createElement(React.Fragment, null, React.createElement("header", { className: "inventory-signal" }), children, machines.length ? React.createElement("div", { id: "inventory-filters" }) : null) };
     if (name.startsWith(".") || name.startsWith("@/")) {
       const base = name.startsWith("@/") ? resolve("src", name.slice(2)) : resolve(dirname(path), name);
       return load(/\.tsx?$/.test(base) ? base : existsSync(base + ".ts") ? base + ".ts" : base + ".tsx");
@@ -60,8 +60,8 @@ function mount(props = {}) {
     hooks = context;
     tree = MacNavigation({ links, pathname: "/care", ...props });
     hooks = null;
-    refs[0].current = { contains: target => target === inside, querySelector: () => ({ focus: () => { childFocused = true; } }) };
-    refs[1].current = { focus: () => { focused = true; } };
+    refs[0].current = { contains: target => target === inside, querySelector: selector => { assert.equal(selector, ".mac-navigation-submenu a"); return ({ focus: () => { childFocused = true; } }); } };
+    refs[1].current = { focus: () => { focused = true; tree.props.onFocus(); } };
     cleanups = context.effects.map(effect => effect());
     return tree;
   };
@@ -78,7 +78,8 @@ test("shared top navigation has one Mac trigger and keeps all other destinations
   const html = renderToStaticMarkup(React.createElement(SiteHeader));
   const nav = html.match(/<nav class="desktop-navigation"[\s\S]*?<\/nav>/)[0];
   assert.equal((nav.match(/class="mac-navigation-trigger"/g) ?? []).length, 1);
-  assert.match(nav, />Mac /);
+  assert.match(nav, /href="\/may-dang-co"[^>]*>Mac<\/a>/);
+  assert.doesNotMatch(nav, /mac-navigation-chevron|⌄/);
   assert.doesNotMatch(nav, /Máy đang có/);
   assert.match(nav, /href="\/may-dang-co"/);
   assert.match(nav, /href="\/chon-macbook"/);
@@ -101,55 +102,64 @@ test("Mac and child active states cover inventory and chooser routes without pre
   assert.equal(isNavigationPathCurrent("/chon-macbook", "/chon-macbook?contact=zalo"), true);
 });
 
-test("desktop hover, click, outside, Escape and focus departure operate the actual Mac disclosure", () => {
+test("desktop hover, focus, outside, Escape and focus departure operate the actual Mac disclosure", () => {
   const menu = mount();
   try {
     assert.equal(menu.button().props["aria-expanded"], false);
     assert.equal(menu.panel().props.hidden, true);
     menu.tree.props.onMouseEnter(); menu.render(); assert.equal(menu.panel().props.hidden, false);
     menu.tree.props.onMouseLeave(); menu.render(); assert.equal(menu.panel().props.hidden, true);
-    menu.button().props.onClick(); menu.render(); assert.equal(menu.button().props["aria-expanded"], true);
-    assert.equal(menu.button().props.type, "button");
+    menu.tree.props.onFocus(); menu.render(); assert.equal(menu.button().props["aria-expanded"], true);
+    assert.equal(menu.button().props.href, "/may-dang-co");
+    assert.equal(menu.button().props.onClick, undefined);
     assert.equal(menu.button().props["aria-controls"], menu.panel().props.id);
     assert.deepEqual(menu.panel().props.children.map(child => child.props.href), links.map(link => link.href));
     menu.event("pointerdown", { target: menu.inside }); menu.render(); assert.equal(menu.panel().props.hidden, false);
     menu.event("keydown", { key: "Escape" }); menu.render(); assert.equal(menu.panel().props.hidden, true); assert.equal(menu.focused, true);
-    menu.button().props.onClick(); menu.render();
+    menu.tree.props.onFocus(); menu.render();
     menu.event("pointerdown", { target: {} }); menu.render(); assert.equal(menu.panel().props.hidden, true);
-    menu.button().props.onClick(); menu.render();
+    menu.tree.props.onFocus(); menu.render();
     menu.tree.props.onBlur({ currentTarget: { contains: target => target === menu.inside }, relatedTarget: menu.inside }); menu.render(); assert.equal(menu.panel().props.hidden, false);
     menu.tree.props.onBlur({ currentTarget: { contains: () => false }, relatedTarget: null }); menu.render(); assert.equal(menu.panel().props.hidden, true);
   } finally { menu.cleanup(); }
 });
 
-test("mobile Mac expands on tap with both child links and closes the parent after navigation", () => {
+test("mobile Mac navigates and exposes both destinations without disclosure", () => {
   let navigated = false;
   const menu = mount({ mobile: true, onNavigate: () => { navigated = true; } });
   try {
     assert.equal(menu.tree.props.onMouseEnter, undefined);
-    menu.button().props.onClick(); menu.render(); assert.equal(menu.panel().props.hidden, false);
-    assert.equal(menu.panel().props.id, "mobile-mac-navigation");
-    menu.button().props.onClick(); menu.render(); assert.equal(menu.panel().props.hidden, true);
-    menu.button().props.onClick(); menu.render();
-    menu.panel().props.children[0].props.onClick(); menu.render(); assert.equal(menu.panel().props.hidden, true); assert.equal(navigated, true);
-    assert.match(readFileSync("src/components/layout/SiteHeader.tsx", "utf8"), /<MacNavigation[^>]*mobile onNavigate=\{closeMenu\}/);
+    assert.equal(menu.button().props.href, "/may-dang-co");
+    assert.equal(menu.panel().props.hidden, false);
+    assert.deepEqual(menu.panel().props.children.map(child => child.props.href), links.map(link => link.href));
+    menu.button().props.onClick(); menu.render(); assert.equal(navigated, true);
+    navigated = false;
+    menu.panel().props.children[1].props.onClick(); assert.equal(navigated, true);
+    assert.equal(menu.panel().props.hidden, false);
   } finally { menu.cleanup(); }
 });
 
-test("inventory chooser callout is after live intro and before filters, including empty inventory", () => {
-  for (const machines of [[{}], []]) {
-    const html = renderToStaticMarkup(React.createElement(InventoryPageView, { machines }));
-    assert.match(html, /Chưa biết bắt đầu từ đâu\?/);
-    assert.match(html, /href="\/chon-macbook">Để MBMC gợi ý/);
-    assert.ok(html.indexOf("inventory-signal") < html.indexOf("inventory-chooser-callout"));
-    if (machines.length) assert.ok(html.indexOf("inventory-chooser-callout") < html.indexOf("inventory-filters"));
-  }
-  const css = readFileSync("src/app/globals.css", "utf8");
-  assert.match(css, /\.mac-navigation-submenu\[hidden\] \{ display: none;/);
-  assert.match(css, /\.mac-navigation--mobile \.mac-navigation-submenu \{ position: static; width: 100%/);
-  assert.match(css, /@media \(max-width: 40rem\) \{ \.inventory-chooser-callout[^}]*flex-direction: column/);
+test("Mac link activation and Enter do not toggle or intercept navigation", () => {
+  const menu = mount();
+  try {
+    assert.equal(menu.button().props.href, "/may-dang-co");
+    assert.equal(menu.button().props.onClick, undefined);
+    menu.button().props.onKeyDown({ key: "Enter", preventDefault: () => assert.fail("Enter intercepted") });
+    menu.render(); assert.equal(menu.panel().props.hidden, true);
+  } finally { menu.cleanup(); }
 });
 
+test("inventory page omits the chooser callout and keeps intro before filters", () => {
+  for (const machines of [[{}], []]) {
+    const html = renderToStaticMarkup(React.createElement(InventoryPageView, { machines }));
+    assert.doesNotMatch(html, /inventory-chooser-callout|Chưa biết bắt đầu từ đâu|Để MBMC gợi ý|href="\/chon-macbook"/);
+    if (machines.length) assert.ok(html.indexOf("inventory-signal") < html.indexOf("inventory-filters"));
+  }
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.doesNotMatch(css, /inventory-chooser-callout/);
+  assert.match(css, /\.desktop-navigation \.mac-navigation-submenu\[hidden\] \{ display: none;/);
+  assert.match(css, /\.mac-navigation--mobile \.mac-navigation-submenu \{ position: static; width: 100%/);
+});
 
 test("ArrowDown opens the disclosure and moves focus to its first link; focused links survive pointer leave", () => {
   const menu = mount();
@@ -166,4 +176,30 @@ test("ArrowDown opens the disclosure and moves focus to its first link; focused 
     menu.tree.props.onMouseLeave(); menu.render();
     assert.equal(menu.panel().props.hidden, false);
   } finally { menu.cleanup(); globalThis.requestAnimationFrame = previousRAF; }
+});
+
+test("desktop Mac submenu is an independent vertical popover in the header stacking layer", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const rule = selector => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = css.match(new RegExp(escaped + " \\{([^}]+)\\}"));
+    assert.ok(match, selector);
+    return match[1];
+  };
+  assert.match(rule(".desktop-navigation .mac-navigation"), /position: relative;/);
+  const popover = rule(".desktop-navigation .mac-navigation-submenu");
+  for (const declaration of ["position: absolute;", "top: calc(100% + 8px);", "left: 0;", "z-index: 1;", "display: grid;", "grid-template-columns: minmax(0, 1fr);", "width: 300px;", "padding: 12px;", "background: var(--surface);"]) {
+    assert.ok(popover.includes(declaration), declaration);
+  }
+  assert.match(popover, /border: 1px solid var\(--border\);/);
+  assert.match(popover, /box-shadow:/);
+  assert.match(rule(".desktop-navigation .mac-navigation-submenu::before"), /height: 8px;/);
+  assert.match(css, /\.desktop-navigation \.mac-navigation-submenu a,[^{]+\{ display: grid;/);
+  assert.match(css, /\.desktop-navigation \.mac-navigation-submenu a > small \{ display: block;/);
+  assert.match(rule(".site-header"), /z-index: 50;/);
+  assert.match(rule(".site-header, .header-inner, .desktop-navigation"), /overflow: visible;/);
+  for (const selector of ["html", "body", ".container", ".site-header", ".header-inner", ".desktop-navigation", ".desktop-navigation .mac-navigation"]) {
+    assert.doesNotMatch(rule(selector), /(?:overflow(?:-y)?:\s*(?:hidden|clip)|transform:|filter:|isolation:)/);
+  }
+  assert.match(rule(".mac-navigation--mobile .mac-navigation-submenu"), /position: static; width: 100%;/);
 });

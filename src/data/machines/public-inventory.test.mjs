@@ -1884,7 +1884,7 @@ test("mobile card keeps title specs price condition and CTA without inspection p
   );
   assert.match(
     css,
-    /\.machine-code, \.machine-card-cta-long \{ display: none; \}/,
+    /\.machine-code \{[^}]*color: var\(--muted\); font-size: \.75rem;/,
   );
 });
 
@@ -3585,7 +3585,7 @@ test("Dòng máy is the only family selector and exposes all compact machine lin
     "utf8",
   );
   for (const line of ["MacBook Air", "MacBook Pro", "iMac", "Mac mini"])
-    assert.match(filters, new RegExp(`label: "${line}"`));
+    assert.match(readFileSync(new URL("../../app/(sales)/may-dang-co/_components/inventory-facet-options.ts", import.meta.url), "utf8"), new RegExp(`label: "${line}"`));
   assert.doesNotMatch(filters, /productLine/);
   assert.doesNotMatch(filters, /Dòng máy · \$\{selected\.length\}/);
   const explorer = readFileSync(
@@ -3593,7 +3593,7 @@ test("Dòng máy is the only family selector and exposes all compact machine lin
     "utf8",
   );
   assert.doesNotMatch(explorer, /machine-family-filters|<nav/);
-  assert.match(intro, /<h1>Mac đang có<\/h1>/);
+  assert.match(intro, /buildInventoryHeading\(facets\)/);
   assert.doesNotMatch(intro, /MacBook đang có/);
 });
 

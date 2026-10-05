@@ -25,6 +25,8 @@ import {
   type InventoryUrlState,
   type MultiFacetGroup,
 } from "@/data/machines/public-inventory-query";
+import { InventoryIntro } from "./InventoryIntro";
+import { NoPublishedMachinesState } from "./InventoryEmptyState";
 import { InventoryEmptyState } from "./InventoryEmptyState";
 import { InventoryFilters, type FacetCountMap } from "./InventoryFilters";
 import { InventoryToolbar } from "./InventoryToolbar";
@@ -44,11 +46,13 @@ const defaultState = (): InventoryUrlState => ({
 
 export function InventoryExplorer({
   machines,
+  initialState,
 }: {
   machines: PublicMachineSummaryV2[];
+  initialState?: InventoryUrlState;
 }) {
   const { channel, referralEvidence } = useContactChannel();
-  const [state, setState] = useState<InventoryUrlState>(defaultState);
+  const [state, setState] = useState<InventoryUrlState>(() => initialState ?? defaultState());
   const normalized = useMemo(
     () => normalizePublicInventory(machines),
     [machines],
@@ -118,69 +122,74 @@ export function InventoryExplorer({
 
   return (
     <>
-      <div className="inventory-controls">
-        <label className="search-field" htmlFor="inventory-search">
-          <span className="visually-hidden">Tìm trong danh sách máy</span>
-          <span aria-hidden="true">⌕</span>
-          <input
-            id="inventory-search"
-            type="search"
-            placeholder="Tìm model, chip, RAM, SSD, Fusion Drive, HDD…"
-            value={state.query}
-            onChange={(event) =>
-              commit({ ...state, query: event.target.value }, "replace")
-            }
-          />
-        </label>
-        <InventoryFilters
-          facets={state.facets}
-          sort={state.sort}
-          counts={counts}
-          showModernChip={showModernChip}
-          onPriceChange={(price) =>
-            commit({ ...state, facets: { ...state.facets, price } })
-          }
-          onFamilyChange={(family) =>
-            commit({
-              ...state,
-              facets: selectMachineFamily(state.facets, family),
-            })
-          }
-          onMultiChange={(group: MultiFacetGroup, values: string[]) =>
-            commit({
-              ...state,
-              facets: { ...state.facets, [group]: values },
-            })
-          }
-          onSortChange={(sort) => commit({ ...state, sort })}
-          onRemove={(group, value) =>
-            commit({
-              ...state,
-              facets: removeFacetOption(state.facets, group, value),
-            })
-          }
-          onClearAll={() =>
-            commit({ ...state, facets: emptyInventoryFacets() })
-          }
-          shareAction={<CopyInventoryLink state={state} />}
-        />
-      </div>
-      <InventoryToolbar
-        total={results.length}
-        sort={state.sort}
-        onSortChange={(sort) => commit({ ...state, sort })}
-      />
-      {results.length ? (
-        <MachineCatalog machines={results} />
-      ) : (
+      <InventoryIntro total={results.length} facets={state.facets} />
+      {machines.length ? (
         <>
-          <InventoryEmptyState />
-          <DesiredSpecDemand
-            state={state}
-            referralEvidence={referralEvidence}
+          <div className="inventory-controls">
+            <label className="search-field" htmlFor="inventory-search">
+              <span className="visually-hidden">Tìm trong danh sách máy</span>
+              <span aria-hidden="true">⌕</span>
+              <input
+                id="inventory-search"
+                type="search"
+                placeholder="Tìm model, chip, RAM, SSD, Fusion Drive, HDD…"
+                value={state.query}
+                onChange={(event) =>
+                  commit({ ...state, query: event.target.value }, "replace")
+                }
+              />
+            </label>
+            <InventoryFilters
+              facets={state.facets}
+              sort={state.sort}
+              counts={counts}
+              showModernChip={showModernChip}
+              onPriceChange={(price) =>
+                commit({ ...state, facets: { ...state.facets, price } })
+              }
+              onFamilyChange={(family) =>
+                commit({
+                  ...state,
+                  facets: selectMachineFamily(state.facets, family),
+                })
+              }
+              onMultiChange={(group: MultiFacetGroup, values: string[]) =>
+                commit({
+                  ...state,
+                  facets: { ...state.facets, [group]: values },
+                })
+              }
+              onSortChange={(sort) => commit({ ...state, sort })}
+              onRemove={(group, value) =>
+                commit({
+                  ...state,
+                  facets: removeFacetOption(state.facets, group, value),
+                })
+              }
+              onClearAll={() =>
+                commit({ ...state, facets: emptyInventoryFacets() })
+              }
+              shareAction={<CopyInventoryLink state={state} />}
+            />
+          </div>
+          <InventoryToolbar
+            total={results.length}
+            sort={state.sort}
+            onSortChange={(sort) => commit({ ...state, sort })}
           />
+          {results.length ? (
+            <MachineCatalog machines={results} />
+          ) : (
+            <>
+              <InventoryEmptyState />
+              <DesiredSpecDemand
+                state={state}
+                referralEvidence={referralEvidence}
+              />
+            </>
+          )}
         </>
-      )}
+      ) : <NoPublishedMachinesState />}
     </>
   );
 }
