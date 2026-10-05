@@ -595,7 +595,7 @@ test("desktop and mobile navigation share one canonical Mac submenu and other li
     "utf8",
   );
   for (const label of [
-    "Chọn MacBook",
+    "Hướng dẫn chọn MacBook",
     "Mac đang có",
     "Khách hàng",
     "Chính sách",

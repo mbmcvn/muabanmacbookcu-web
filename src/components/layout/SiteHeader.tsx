@@ -104,10 +104,10 @@ export function SiteHeader() {
   );
   const macLinks = [
     { href: withContactChannel("/may-dang-co", channel, shareReferralCode), label: "Mac đang có", description: "Xem những máy đang sẵn sàng bán" },
-    { href: withContactChannel("/chon-macbook", channel, shareReferralCode), label: "Chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
+    { href: withContactChannel("/chon-macbook", channel, shareReferralCode), label: "Hướng dẫn chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
   ];
   const careLinks = [
-    { href: withContactChannel("/care", channel), label: "Tra cứu Care", description: "Tra cứu hồ sơ máy, bảo hành và báo cáo kiểm tra" },
+    { href: withContactChannel("/care", channel), label: "Tra cứu máy", description: "Hồ sơ máy, bảo hành và lịch sử kiểm định" },
     { href: withContactChannel("/chinh-sach", channel), label: "Chính sách", description: "Bảo hành, MBMC Care và các chính sách liên quan" },
   ];
   const links: readonly HeaderLink[] = [
@@ -216,7 +216,7 @@ export function SiteHeader() {
         </Link>
         <nav className="desktop-navigation" aria-label="Điều hướng chính">
           <MacNavigation links={macLinks} pathname={pathname} />
-          <NavigationSubmenu name="care" label="Care" links={careLinks} pathname={pathname} />
+          <NavigationSubmenu name="care" label="Tra cứu" links={careLinks} pathname={pathname} />
           {links.map((link) => renderLink(link))}
         </nav>
         <div
@@ -254,7 +254,7 @@ export function SiteHeader() {
               aria-label="Điều hướng chính trên di động"
             >
               <MacNavigation links={macLinks} pathname={pathname} mobile onNavigate={closeMenu} />
-              <NavigationSubmenu name="care" label="Care" links={careLinks} pathname={pathname} mobile onNavigate={closeMenu} />
+              <NavigationSubmenu name="care" label="Tra cứu" links={careLinks} pathname={pathname} mobile onNavigate={closeMenu} />
               {links
                 .filter((link) => !link.contact)
                 .map((link) => renderLink(link, true))}

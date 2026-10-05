@@ -11,5 +11,5 @@ export function MacNavigation(props: {
   mobile?: boolean;
   onNavigate?: () => void;
 }) {
-  return <NavigationSubmenu name="mac" label="Mac" {...props} />;
+  return <NavigationSubmenu name="mac" label="Chọn Mac" {...props} />;
 }

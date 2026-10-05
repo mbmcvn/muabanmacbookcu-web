@@ -43,7 +43,7 @@ const { SiteHeader } = load("src/components/layout/SiteHeader.tsx");
 const { InventoryPageView } = load("src/app/(sales)/may-dang-co/_components/InventoryPageView.tsx");
 const links = [
   { href: "/may-dang-co", label: "Mac đang có", description: "Xem những máy đang sẵn sàng bán" },
-  { href: "/chon-macbook", label: "Chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
+  { href: "/chon-macbook", label: "Hướng dẫn chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
 ];
 
 function mount(props = {}) {
@@ -60,7 +60,7 @@ function mount(props = {}) {
   const render = () => {
     cleanups.forEach(cleanup => cleanup?.()); context.effects = []; stateIndex = 0; refIndex = 0;
     hooks = context;
-    tree = NavigationSubmenu({ name: "mac", label: "Mac", links, pathname: "/care", ...props });
+    tree = NavigationSubmenu({ name: "mac", label: "Chọn Mac", links, pathname: "/care", ...props });
     hooks = null;
     refs[0].current = { contains: target => target === inside, querySelector: selector => { assert.equal(selector, ".navigation-group-submenu a"); return ({ focus: () => { childFocused = true; } }); } };
     refs[1].current = { focus: () => { focused = true; tree.props.onFocus(); } };
@@ -80,15 +80,18 @@ test("shared top navigation groups Mac and Care and keeps all other destinations
   const html = renderToStaticMarkup(React.createElement(SiteHeader));
   const nav = html.match(/<nav class="desktop-navigation"[\s\S]*?<\/nav>/)[0];
   assert.equal((nav.match(/class="navigation-group-trigger submenu_trigger"/g) ?? []).length, 2);
-  assert.match(nav, /href="\/may-dang-co"[^>]*>Mac<\/a>/);
+  assert.match(nav, /href="\/may-dang-co"[^>]*>Chọn Mac<\/a>/);
   assert.doesNotMatch(nav, /navigation-group-chevron|⌄/);
+  assert.doesNotMatch(nav, />Mac<\/a>|>Care<\/a>|<span>Chọn MacBook<\/span>/);
+  assert.match(nav, /<span>Hướng dẫn chọn MacBook<\/span><small>Để MBMC gợi ý theo nhu cầu và ngân sách<\/small>/);
+  assert.match(nav, /<span>Tra cứu máy<\/span><small>Hồ sơ máy, bảo hành và lịch sử kiểm định<\/small>/);
   assert.doesNotMatch(nav, /Máy đang có/);
   assert.match(nav, /href="\/may-dang-co"/);
   assert.match(nav, /href="\/chon-macbook"/);
   for (const [href, label] of [["/people", "Khách hàng"], ["/chinh-sach", "Chính sách"], ["/phan-mem", "Phần mềm"]]) { assert.match(nav, new RegExp(`href="${href}"`)); assert.match(nav, new RegExp(label)); }
   assert.match(nav, /Bán máy cho MBMC/);
   assert.match(nav, /Messenger/);
-  assert.match(nav, /href="\/care"[^>]*>Care<\/a>/);
+  assert.match(nav, /href="\/care"[^>]*>Tra cứu<\/a>/);
   assert.doesNotMatch(nav, /class="desktop-nav-label-full">Chính sách/);
   assert.match(nav, /<span>Chính sách<\/span><small>Bảo hành, MBMC Care và các chính sách liên quan<\/small>/);
 });
@@ -212,10 +215,10 @@ test("desktop Mac submenu is an independent vertical popover in the header stack
 });
 
 const careLinks = [
-  { href: "/care", label: "Tra cứu Care", description: "Tra cứu hồ sơ máy, bảo hành và báo cáo kiểm tra" },
+  { href: "/care", label: "Tra cứu máy", description: "Hồ sơ máy, bảo hành và lịch sử kiểm định" },
   { href: "/chinh-sach", label: "Chính sách", description: "Bảo hành, MBMC Care và các chính sách liên quan" },
 ];
-const careProps = { name: "care", label: "Care", links: careLinks };
+const careProps = { name: "care", label: "Tra cứu", links: careLinks };
 
 test("Care and its corresponding child activate only Care and policy route families", () => {
   for (const [pathname, child] of [["/care", 0], ["/care/report/abc", 0], ["/chinh-sach", 1], ["/chinh-sach/bao-hanh", 1], ["/chinh-sach/mbmc-care", 1]]) {
@@ -239,7 +242,7 @@ test("Care is a direct link with hover, focus, ArrowDown, Escape and outside acc
   globalThis.requestAnimationFrame = callback => callback();
   try {
     assert.equal(menu.button().props.href, "/care");
-    assert.equal(menu.button().props.children, "Care");
+    assert.equal(menu.button().props.children, "Tra cứu");
     assert.equal(menu.button().props.onClick, undefined);
     assert.equal(menu.button().props["aria-controls"], "desktop-care-navigation");
     assert.equal(menu.tree.props.className, "navigation-group submenu_anchor");
@@ -287,14 +290,14 @@ test("opened mobile header groups policies under Care and preserves all other pr
   try { html = renderToStaticMarkup(React.createElement(SiteHeader)); }
   finally { hooks = null; }
   const nav = html.match(/<nav id="mobile-navigation-menu"[\s\S]*?<\/nav>/)[0];
-  assert.match(nav, /href="\/care"[^>]*>Care<\/a>/);
-  assert.match(nav, /id="mobile-care-navigation" class="navigation-group-submenu submenu_panel submenu_mobilePanel"><a href="\/care"[^>]*><span>Tra cứu Care<\/span>/);
+  assert.match(nav, /href="\/care"[^>]*>Tra cứu<\/a>/);
+  assert.match(nav, /id="mobile-care-navigation" class="navigation-group-submenu submenu_panel submenu_mobilePanel"><a href="\/care"[^>]*><span>Tra cứu máy<\/span>/);
   assert.match(nav, /href="\/chinh-sach"[^>]*><span>Chính sách<\/span><small>/);
   assert.equal((nav.match(/href="\/chinh-sach"/g) ?? []).length, 1);
   for (const href of ["/may-dang-co", "/chon-macbook", "/people", "/phan-mem"]) assert.ok(nav.includes('href="' + href + '"'));
   assert.match(nav, /Bán máy cho MBMC/);
-  assert.ok(nav.indexOf('>Mac</a>') < nav.indexOf('>Care</a>'));
-  assert.ok(nav.indexOf('>Care</a>') < nav.indexOf('>Khách hàng</span>'));
+  assert.ok(nav.indexOf('>Chọn Mac</a>') < nav.indexOf('>Tra cứu</a>'));
+  assert.ok(nav.indexOf('>Tra cứu</a>') < nav.indexOf('>Khách hàng</span>'));
 });
 
 
@@ -302,7 +305,7 @@ test("Mac and Care carry their own anchor and overlay, independently of a horizo
   const mac = MacNavigation({ links, pathname: "/may-dang-co" });
   assert.equal(mac.type, NavigationSubmenu);
   const headerSource = readFileSync("src/components/layout/SiteHeader.tsx", "utf8");
-  assert.match(headerSource, /<NavigationSubmenu name="care" label="Care" links={careLinks}/);
+  assert.match(headerSource, /<NavigationSubmenu name="care" label="Tra cứu" links={careLinks}/);
   assert.match(readFileSync("src/components/layout/NavigationSubmenu.tsx", "utf8"), /import styles from "\.\/NavigationSubmenu\.module\.css"/);
   const css = readFileSync("src/components/layout/NavigationSubmenu.module.css", "utf8");
   assert.doesNotMatch(css, /desktop-navigation|mac-navigation|care-navigation/);
