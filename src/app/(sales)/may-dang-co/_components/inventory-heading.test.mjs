@@ -19,7 +19,7 @@ function load(path) {
   const source = ts.transpileModule(readFileSync(path, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText;
   new Function("require", "module", "exports", source)(name => {
     if (name === "react") return { ...React, useState: initial => harness ? [harness.state ??= typeof initial === "function" ? initial() : initial, value => { harness.state = value; }] : React.useState(initial), useMemo: fn => harness ? fn() : React.useMemo(fn, []), useEffect: fn => { if (harness) harness.effect = fn; } };
-    if (name === "@/hooks/useContactChannel") return { useContactChannel: () => ({ channel: null }), withContactChannel: value => value };
+    if (name === "@/hooks/useContactChannel") return { useContactChannel: () => ({ channel: null, shareReferralCode: null }), withContactChannel: value => value, resolveContactChannel: value => value === "zalo" || value === "messenger" ? value : null };
     if (name === "next/link") return function TestLink({ children, ...props }) { return React.createElement("a", props, children); };
     if (name === "./InventoryFilters") return { InventoryFilters: function Filters() {} };
     if (name === "./InventoryToolbar") return { InventoryToolbar: function Toolbar() {} };

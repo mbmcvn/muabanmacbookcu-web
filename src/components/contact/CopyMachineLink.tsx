@@ -8,7 +8,7 @@ import { canonicalMachineUrl } from "@/lib/public-machine-url";
 type Feedback = "idle" | "copied" | "failed";
 
 export function CopyMachineLink({ slug }: { slug: string }) {
-  const { referralCode } = useContactChannel();
+  const { shareReferralCode: referralCode } = useContactChannel();
   const [feedback, setFeedback] = useState<Feedback>("idle");
   const resetTimer = useRef<number | null>(null);
 

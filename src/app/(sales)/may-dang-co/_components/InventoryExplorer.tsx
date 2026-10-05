@@ -34,7 +34,9 @@ import { MachineCatalog } from "./MachineCatalog";
 import {
   useContactChannel,
   withContactChannel,
+  resolveContactChannel,
 } from "@/hooks/useContactChannel";
+import { referralForQueryUpdate } from "@/lib/contact-routing";
 import { CopyInventoryLink } from "@/components/contact/CopyInventoryLink";
 import { DesiredSpecDemand } from "./DesiredSpecDemand";
 
@@ -51,7 +53,7 @@ export function InventoryExplorer({
   machines: PublicMachineSummaryV2[];
   initialState?: InventoryUrlState;
 }) {
-  const { channel, referralEvidence } = useContactChannel();
+  const { channel, referralEvidence, shareReferralCode } = useContactChannel();
   const [state, setState] = useState<InventoryUrlState>(() => initialState ?? defaultState());
   const normalized = useMemo(
     () => normalizePublicInventory(machines),
@@ -73,7 +75,10 @@ export function InventoryExplorer({
     mode: "push" | "replace" = "push",
   ) => {
     setState(next);
-    const url = `${withContactChannel(`${window.location.pathname}${serializeInventoryUrlState(next)}`, channel)}${window.location.hash}`;
+    const currentSearch = window.location.search;
+    const requestedChannel = resolveContactChannel(new URLSearchParams(currentSearch).get("channel")) ?? channel;
+    const preservedRef = referralForQueryUpdate(currentSearch, shareReferralCode);
+    const url = `${withContactChannel(`${window.location.pathname}${serializeInventoryUrlState(next)}`, requestedChannel, preservedRef)}${window.location.hash}`;
     window.history[mode === "push" ? "pushState" : "replaceState"](
       null,
       "",

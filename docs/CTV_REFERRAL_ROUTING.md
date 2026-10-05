@@ -3,7 +3,7 @@
 ## Document status
 
 - **State:** VERIFIED CURRENT STATE
-- **Verified:** 2026-08-09
+- **Verified:** 2026-10-05
 - **Scope:** public CTV ownership, contact-channel composition, persistence, and share links
 
 This note is the website implementation reference for CTV referral routing.
@@ -18,7 +18,7 @@ ref = WHO owns the contact
 channel = HOW that owner is contacted
 ```
 
-- `ref` identifies a CTV contact owner by public `referral_code`. An absent,
+- `ref=MBMC` is the locally registered house code and always resolves to MBMC without a partner RPC. Other valid codes identify a CTV contact owner by public `referral_code`. An absent,
   malformed, unknown, inactive, or failed referral falls back to MBMC.
 - `channel` accepts `zalo` or `messenger`. An explicit channel is applied to
   the resolved owner, not globally to MBMC.
@@ -53,11 +53,13 @@ and `2MDE`. The website trims input, uppercases it, and validates the exact
 format before resolution. Phone-shaped referral values are obsolete and are
 ignored safely.
 
-The only resolver is:
+Partner codes are resolved only through:
 
 ```sql
 public.resolve_public_ctv_referral(p_referral_code text)
 ```
+
+MBMC is reserved by the website and uses the canonical `MBMC_CONTACTS` configuration. It is not a CTV partner and is never sent to this RPC.
 
 The browser calls this RPC with the anonymous public credential. It does not
 read `ctv_partners` directly and does not use a service-role credential. The
@@ -82,16 +84,15 @@ Owner resolution order is:
 
 1. valid current URL `ref`;
 2. valid persisted referral cookie;
-3. MBMC.
+3. canonical MBMC house attribution.
 
-A valid new URL referral replaces the persisted owner. An invalid new value
+A valid new URL referral, including MBMC, replaces the persisted owner. Explicit MBMC therefore clears a stale partner owner even if a partner lookup is in flight. An invalid new value
 does not erase a valid persisted context. An obsolete phone-shaped cookie is
 ignored without a resolver call. Cookie persistence allows the same browser to
-navigate through clean internal URLs while retaining its CTV owner.
+navigate through clean internal URLs while retaining its contact owner.
 
 A cookie does not travel when the address-bar URL is copied to another browser.
-Shared links must therefore carry `ref` explicitly when CTV ownership should
-travel with the link.
+Shared links carry the resolved `ref` when partner ownership or an explicitly selected/persisted MBMC house context should travel with the link. Organic MBMC shares remain clean.
 
 ## Channel state and owner-scoped fallback
 
@@ -117,7 +118,8 @@ Messenger, because that would unexpectedly change the contact owner.
 CTV routing is centralized through:
 
 - `ContactActionLink`;
-- `useContactChannel`;
+- `useContactChannel` (one atomic external-store snapshot);
+- `ContactAttributionObserver` (a narrow Suspense sibling in the sales layout);
 - shared contact-routing helpers.
 
 Inherited surfaces include the site header, homepage contact actions, Machine
@@ -127,7 +129,7 @@ conditionals.
 
 ## Shipped share behavior
 
-Both referral-aware share surfaces are implemented in the current worktree.
+Both referral-aware share surfaces consume the same resolved attribution as the CTAs. The canonical browsing ref defaults to MBMC; share ref remains null for organic house browsing. Explicit or persisted MBMC shares carry `ref=MBMC` to override stale partner cookies in the receiving browser. Internal ref propagation is restricted to `/`, `/may-dang-co`, `/may/...`, and `/chon-macbook`; Care, policies, people and software URLs remain clean. Inventory history updates preserve an explicit valid ref and channel even while a lookup is pending.
 
 ### Machine detail
 
@@ -156,8 +158,8 @@ temporary visitor/request choice rather than ownership.
 
 ## Accepted MVP limitation
 
-CTV resolution is client-side. The safe MBMC CTA can therefore appear briefly
-while the RPC resolves. No incorrect CTV identity is displayed, resolver
+Partner resolution remains client-side. Server rendering and initial hydration use the same immutable MBMC snapshot. MBMC itself resolves locally and synchronously when the browser URL is observed. The safe MBMC CTA can therefore appear briefly
+while the RPC resolves. All subscribed surfaces switch label, destination, canonical ref, lead evidence and share context together. Request revisions discard late completions; RPC promises are keyed by code. No stale CTV identity is restored, resolver
 failures do not crash public pages, and the existing MBMC contact remains
 usable. This is accepted for the narrow MVP.
 
@@ -188,3 +190,11 @@ codes, subdomains, or TikTok.
 A future, non-binding direction may introduce public consultant/contact-owner
 profiles and customer selection or matching by advising style. No schema or
 implementation contract is approved for that direction.
+
+## Lead evidence and scope
+
+Demand capture exists in the chooser and zero-results inventory flow. Its existing API forwards `p_referral_evidence` to `create_captcha_soft_demand_v1`; backend validation and ownership remain authoritative. The browser now supplies the canonical successfully resolved partner code, or null for house/fallback/pending attribution. It no longer sends independently read raw URL/cookie values that could disagree with the contact owner. No schema, lead API contract, distributor accounting or commission calculation was changed. There is no general analytics SDK in this repository.
+
+Channel storage is written to localStorage key `mbmc_contact_channel` for compatibility; the hook does not restore it. Explicit channel wins; otherwise partner preference or house Zalo applies. It is independent of the 30-day referral cookie.
+
+See [public attribution audit](PUBLIC_ATTRIBUTION_AUDIT.md) for the reproduced failure, limitations and verification.
