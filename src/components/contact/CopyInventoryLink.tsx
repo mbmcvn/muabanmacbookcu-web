@@ -9,7 +9,7 @@ import {
 import { useContactChannel } from "@/hooks/useContactChannel";
 
 export function CopyInventoryLink({ state }: { state: InventoryUrlState }) {
-  const { referralCode } = useContactChannel();
+  const { shareReferralCode: referralCode } = useContactChannel();
   const [feedback, setFeedback] = useState<"idle" | "copied" | "failed">(
     "idle",
   );

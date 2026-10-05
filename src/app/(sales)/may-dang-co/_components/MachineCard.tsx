@@ -26,7 +26,7 @@ export function MachineCard({
   machine: PublicMachineSummaryV2;
   headingAs?: "h2" | "h3";
 }) {
-  const { channel } = useContactChannel();
+  const { channel, shareReferralCode } = useContactChannel();
   const machineId = publicMachineId(machine.code);
   const price = formatCurrencyVnd(machine.price);
   const displayName = formatPublicMachineDisplayName(machine.displayName);
@@ -50,7 +50,7 @@ export function MachineCard({
     <article className="machine-card">
       <Link
         className="machine-card-link"
-        href={withContactChannel(`/may/${machine.slug}`, channel)}
+        href={withContactChannel(`/may/${machine.slug}`, channel, shareReferralCode)}
         aria-label={`Xem ${displayName}, ${price}`}
       >
         <div className="machine-image">

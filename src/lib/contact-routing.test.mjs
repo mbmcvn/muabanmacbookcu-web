@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   MBMC_CONTACTS,
+  DEFAULT_REFERRAL_CONTEXT,
+  withFunnelReferral,
+  referralForQueryUpdate,
   buildMachineShareUrl,
   canonicalReferralCode,
   copyMachineShareUrl,
@@ -10,6 +13,8 @@ import {
   resolveReferralContext,
   validFacebookContactUrl,
 } from "./contact-routing.ts";
+import { createContactAttributionStore, createReferralLookup, SERVER_CONTACT_SNAPSHOT } from "./contact-attribution.ts";
+import { buildInventoryShareUrl, emptyInventoryFacets, parseInventoryUrlState, serializeInventoryUrlState } from "../data/machines/public-inventory-query.ts";
 import { canonicalMachineUrl } from "./public-machine-url.ts";
 
 const zaloCtv = {
@@ -234,17 +239,14 @@ test("browser resolver sends only the canonical referral-code RPC argument", () 
   assert.doesNotMatch(source, /p_referral_phone|referral_phone/);
 });
 
-test("contact owner hydration starts from the same organic state on server and client", () => {
-  const source = readFileSync(
-    new URL("../hooks/useContactChannel.ts", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    source,
-    /const \[owner, setOwner\] = useState<CtvContactOwner \| null>\(null\)/,
-  );
-  assert.doesNotMatch(source, /useState<CtvContactOwner \| null>\(cachedOwner\)/);
-  assert.match(source, /if \(cachedReferralCode === referralCode\) return cachedOwner/);
+test("contact owner hydration uses the same immutable safe server snapshot", () => {
+  const source = readFileSync(new URL("../hooks/useContactChannel.ts", import.meta.url), "utf8");
+  assert.match(source, /useSyncExternalStore\(store.subscribe, store.getSnapshot, store.getServerSnapshot\)/);
+  assert.doesNotMatch(source, /useState.*cachedOwner|pendingReferral/);
+  const store = createContactAttributionStore();
+  assert.equal(store.getSnapshot(), store.getServerSnapshot());
+  assert.equal(store.getServerSnapshot(), SERVER_CONTACT_SNAPSHOT);
+  assert.equal(store.getSnapshot().referralCode, "MBMC");
 });
 
 test("machine cards use the canonical encoded detail URL", () => {
@@ -302,4 +304,131 @@ test("clipboard success and failure return safe feedback state", async () => {
     ),
     false,
   );
+});
+
+const kris = { displayName: "Kris Trần", zaloPhone: "0900000001", facebookContactUrl: "https://m.me/kris.test", preferredChannel: "messenger" };
+const lookup = async code => code === "5DZE" ? kris : code === "XMG4" ? zaloCtv : null;
+
+test("organic no-ref resolves to the canonical MBMC house configuration", async () => {
+  const context = await resolveReferralContext(null, null, lookup);
+  assert.deepEqual(context, DEFAULT_REFERRAL_CONTEXT);
+  assert.equal(context.referralCode, "MBMC");
+  assert.equal(resolveContact(context.owner, null).label, MBMC_CONTACTS.zalo.label);
+  assert.equal(context.referralEvidence, null);
+  assert.equal(context.shareReferralCode, null);
+});
+
+test("5DZE and MBMC resolve from one canonical owner object with URL-over-cookie precedence", async () => {
+  for (const [query, persisted, expected] of [["5DZE", null, "5DZE"], ["MBMC", null, "MBMC"], [" mbmc ", "5DZE", "MBMC"], ["5DZE", "MBMC", "5DZE"], [null, "MBMC", "MBMC"], [null, "5DZE", "5DZE"]]) {
+    const calls = [];
+    const context = await resolveReferralContext(query, persisted, async code => { calls.push(code); return lookup(code); });
+    assert.equal(context.referralCode, expected);
+    const contact = resolveContact(context.owner, null);
+    if (expected === "MBMC") {
+      assert.equal(context.owner, null);
+      assert.equal(contact.href, MBMC_CONTACTS.zalo.href);
+      assert.equal(contact.label, MBMC_CONTACTS.zalo.label);
+      assert.equal(context.referralEvidence, null);
+      assert.deepEqual(calls, []);
+    } else {
+      assert.equal(contact.label, "Nhắn Kris Trần trên Messenger");
+      assert.equal(contact.href, kris.facebookContactUrl);
+      assert.equal(context.referralEvidence, "5DZE");
+    }
+    assert.equal(context.shareReferralCode, expected);
+    assert.equal(context.referralToPersist, query === null ? null : expected);
+  }
+});
+
+test("invalid or unavailable refs fall back to valid persisted context, then MBMC, with matching evidence", async () => {
+  for (const ref of ["INVALID", "ABCD", "0968610151", ""]) {
+    const fallback = await resolveReferralContext(ref, null, lookup);
+    assert.equal(fallback.referralCode, "MBMC");
+    assert.equal(fallback.referralEvidence, null);
+    const persisted = await resolveReferralContext(ref, "5DZE", lookup);
+    assert.equal(persisted.referralCode, "5DZE");
+    assert.equal(persisted.referralEvidence, "5DZE");
+  }
+  const failed = await resolveReferralContext("XMG4", "MBMC", async () => { throw new Error("network error"); });
+  assert.equal(failed.referralCode, "MBMC");
+  const unusable = await resolveReferralContext("XMG4", null, async () => ({ ...kris, zaloPhone: null, facebookContactUrl: null }));
+  assert.equal(unusable.referralCode, "MBMC");
+  assert.equal(unusable.referralEvidence, null);
+});
+
+test("a shared browsing snapshot resets stale partner CTA, evidence and cookie together for explicit MBMC", async () => {
+  const store = createContactAttributionStore();
+  let cookie = "5DZE";
+  const persist = code => { cookie = code; };
+  await store.synchronize("?ref=5DZE", cookie, lookup, persist);
+  assert.equal(store.getSnapshot().contactLabel, "Nhắn Kris Trần trên Messenger");
+  await store.synchronize("?ref=MBMC", cookie, lookup, persist);
+  assert.equal(cookie, "MBMC");
+  assert.equal(store.getSnapshot().referralCode, "MBMC");
+  assert.equal(store.getSnapshot().contactUrl, MBMC_CONTACTS.zalo.href);
+  assert.equal(store.getSnapshot().contactLabel, MBMC_CONTACTS.zalo.label);
+  assert.equal(store.getSnapshot().referralEvidence, null);
+  assert.equal(store.getSnapshot().shareReferralCode, "MBMC");
+  await store.synchronize("", cookie, lookup, persist);
+  assert.equal(store.getSnapshot().referralCode, "MBMC");
+  assert.equal(store.getServerSnapshot(), SERVER_CONTACT_SNAPSHOT);
+  assert.equal(store.getServerSnapshot().contactLabel, store.getSnapshot().contactLabel);
+});
+
+test("out-of-order RPC completion cannot restore an older owner or persisted referral", async () => {
+  const store = createContactAttributionStore();
+  let finish, cookie = "MBMC";
+  const oldRequest = store.synchronize("?ref=5DZE", cookie, () => new Promise(resolve => { finish = resolve; }), code => { cookie = code; });
+  await store.synchronize("?ref=MBMC", cookie, lookup, code => { cookie = code; });
+  finish(kris); await oldRequest;
+  assert.equal(store.getSnapshot().referralCode, "MBMC");
+  assert.equal(cookie, "MBMC");
+});
+
+test("lookup cache deduplicates the same code while separating concurrent owners and retrying failures", async () => {
+  const finishes = new Map(), calls = [];
+  const resolve = createReferralLookup(code => { calls.push(code); return new Promise(done => finishes.set(code, done)); });
+  const one = resolve("5DZE"), repeat = resolve("5DZE"), other = resolve("XMG4");
+  await Promise.resolve();
+  assert.equal(one, repeat);
+  assert.deepEqual(calls, ["5DZE", "XMG4"]);
+  finishes.get("XMG4")(zaloCtv); finishes.get("5DZE")(kris);
+  assert.equal(await one, kris); assert.equal(await other, zaloCtv);
+  assert.equal(await resolve("5DZE"), kris);
+  let attempts = 0;
+  const retry = createReferralLookup(async () => { if (++attempts === 1) throw new Error("offline"); return kris; });
+  assert.equal(await retry("5DZE"), null); assert.equal(await retry("5DZE"), kris);
+});
+
+test("filter URL edits retain explicit ref intent even before RPC completion and preserve canonical shares", async () => {
+  const store = createContactAttributionStore();
+  let cookie = "5DZE";
+  await store.synchronize("?ref=MBMC", cookie, lookup, code => { cookie = code; });
+  const state = { query: "", sort: "price-asc", facets: { ...emptyInventoryFacets(), family: "air", chip: ["m1"] } };
+  const serialized = serializeInventoryUrlState(state);
+  const ref = referralForQueryUpdate("?ref=MBMC", store.getSnapshot().shareReferralCode);
+  const filteredUrl = withFunnelReferral("/may-dang-co" + serialized, ref);
+  assert.equal(new URL(filteredUrl, "https://mbmc.vn").searchParams.get("ref"), "MBMC");
+  await store.synchronize(filteredUrl.split("?")[1], cookie, lookup, code => { cookie = code; });
+  assert.equal(store.getSnapshot().referralCode, "MBMC");
+  assert.equal(referralForQueryUpdate("?ref=5DZE", null), "5DZE");
+  assert.equal(buildInventoryShareUrl("https://mbmc.vn", state, store.getSnapshot().shareReferralCode), "https://mbmc.vn/may-dang-co?family=air&chip=m1&sort=price-asc&ref=MBMC");
+  assert.deepEqual(parseInventoryUrlState(new URLSearchParams(serialized)), state);
+  assert.equal(buildInventoryShareUrl("https://mbmc.vn", state, null).includes("ref="), false);
+});
+
+test("explicit ownership propagates only through intended funnel routes and not Care or unrelated routes", () => {
+  for (const route of ["/", "/may-dang-co", "/may/mbmc-ftff", "/chon-macbook"]) assert.equal(new URL(withFunnelReferral(route, "MBMC"), "https://mbmc.vn").searchParams.get("ref"), "MBMC");
+  for (const route of ["/care", "/care/MBMC-FTFF", "/people", "/chinh-sach", "/phan-mem", "https://example.com/", "//example.com/"]) assert.equal(withFunnelReferral(route, "5DZE"), route);
+  assert.equal(withFunnelReferral("/may-dang-co?chip=m1&ref=5DZE#filters", "MBMC"), "/may-dang-co?chip=m1&ref=MBMC#filters");
+  assert.equal(buildMachineShareUrl("https://mbmc.vn/may/mbmc-ftff?channel=messenger", "MBMC"), "https://mbmc.vn/may/mbmc-ftff?ref=MBMC");
+});
+
+test("an unresolved same-URL ref re-evaluates a changed valid cookie instead of retaining stale ownership", async () => {
+  const store = createContactAttributionStore();
+  await store.synchronize("?ref=ABCD", "5DZE", lookup, () => {});
+  assert.equal(store.getSnapshot().referralCode, "5DZE");
+  await store.synchronize("?ref=ABCD", "MBMC", lookup, () => {});
+  assert.equal(store.getSnapshot().referralCode, "MBMC");
+  assert.equal(store.getSnapshot().referralEvidence, null);
 });

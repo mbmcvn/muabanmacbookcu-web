@@ -102,30 +102,66 @@ export function canonicalReferralCode(value: string): string | null {
   return /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{4}$/.test(code) ? code : null;
 }
 
+export const HOUSE_REFERRAL_CODE = "MBMC";
+
+export type ReferralContext = Readonly<{
+  owner: CtvContactOwner | null;
+  referralCode: string;
+  referralToPersist: string | null;
+  shareReferralCode: string | null;
+  referralEvidence: string | null;
+}>;
+
+export const DEFAULT_REFERRAL_CONTEXT: ReferralContext = {
+  owner: null,
+  referralCode: HOUSE_REFERRAL_CODE,
+  referralToPersist: null,
+  shareReferralCode: null,
+  referralEvidence: null,
+};
+
+/** The house code is registered locally; partners remain RPC-owned. */
+export function registeredReferralContext(code: string, explicit: boolean): ReferralContext | null {
+  return code === HOUSE_REFERRAL_CODE
+    ? { ...DEFAULT_REFERRAL_CONTEXT, shareReferralCode: code, referralToPersist: explicit ? code : null }
+    : null;
+}
+
 export async function resolveReferralContext(
   currentReferral: string | null,
   persistedReferral: string | null,
   lookup: (referral: string) => Promise<CtvContactOwner | null>,
-): Promise<{
-  owner: CtvContactOwner | null;
-  referralCode: string | null;
-  referralToPersist: string | null;
-}> {
-  if (currentReferral !== null) {
-    const code = canonicalReferralCode(currentReferral);
-    if (code) {
+): Promise<ReferralContext> {
+  const resolve = async (raw: string | null, explicit: boolean): Promise<ReferralContext | null> => {
+    const code = raw === null ? null : canonicalReferralCode(raw);
+    if (!code) return null;
+    const registered = registeredReferralContext(code, explicit);
+    if (registered) return registered;
+    try {
       const owner = await lookup(code);
-      if (owner) return { owner, referralCode: code, referralToPersist: code };
-    }
-  }
-  if (persistedReferral) {
-    const code = canonicalReferralCode(persistedReferral);
-    if (code) {
-      const owner = await lookup(code);
-      if (owner) return { owner, referralCode: code, referralToPersist: null };
-    }
-  }
-  return { owner: null, referralCode: null, referralToPersist: null };
+      if (owner && resolveContact(owner, null).ownerType === "ctv") {
+        return { owner, referralCode: code, referralToPersist: explicit ? code : null, shareReferralCode: code, referralEvidence: code };
+      }
+    } catch { /* A failed public lookup cannot break browsing. */ }
+    return null;
+  };
+  return await resolve(currentReferral, true) ?? await resolve(persistedReferral, false) ?? DEFAULT_REFERRAL_CONTEXT;
+}
+
+/** Only the existing sales funnel carries explicit ownership in internal URLs. */
+export function withFunnelReferral(pathname: string, referralCode: string | null): string {
+  const url = new URL(pathname, "https://mbmc.vn");
+  if (!pathname.startsWith("/") || pathname.startsWith("//") ||
+      !(url.pathname === "/" || url.pathname === "/may-dang-co" || url.pathname === "/chon-macbook" || url.pathname.startsWith("/may/"))) return pathname;
+  const code = referralCode ? canonicalReferralCode(referralCode) : null;
+  if (code) url.searchParams.set("ref", code);
+  return url.pathname + url.search + url.hash;
+}
+
+/** Keep explicit URL intent while a partner RPC is still pending during filter edits. */
+export function referralForQueryUpdate(search: string, resolvedShareCode: string | null): string | null {
+  const requested = new URLSearchParams(search).get("ref");
+  return (requested === null ? null : canonicalReferralCode(requested)) ?? resolvedShareCode;
 }
 
 export function buildMachineShareUrl(

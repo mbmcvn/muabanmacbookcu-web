@@ -20,7 +20,7 @@ export function PublicMachineDetailView({
 }: {
   machine: PublicMachineDetailV3;
 }) {
-  const { channel } = useContactChannel();
+  const { channel, shareReferralCode } = useContactChannel();
   const summary = machine.summary;
   const displayName = formatPublicMachineDisplayName(summary.displayName);
   const hasSuitableAudiences = Boolean(machine.suitableAudiences?.length);
@@ -28,7 +28,7 @@ export function PublicMachineDetailView({
     <PublicMachineMediaProvider images={machine.gallery} title={displayName}>
       <div className="container public-detail-page">
         <nav className="detail-breadcrumb" aria-label="Đường dẫn">
-          <Link href={withContactChannel("/may-dang-co", channel)}>
+          <Link href={withContactChannel("/may-dang-co", channel, shareReferralCode)}>
             Máy đang có
           </Link>
           <span aria-hidden="true">/</span>

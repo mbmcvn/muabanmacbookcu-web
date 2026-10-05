@@ -1,3 +1,4 @@
+import { ContactAttributionObserver } from "@/components/contact/ContactAttributionObserver";
 import { Suspense } from "react";
 import { ContextReturnBar } from "@/components/layout/ContextReturnBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -7,6 +8,7 @@ import "./sales-bottom-stack.css";
 export default function SalesLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <Suspense fallback={null}><ContactAttributionObserver /></Suspense>
       <Suspense fallback={null}>
         <ContextReturnBar />
       </Suspense>

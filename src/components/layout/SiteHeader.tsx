@@ -97,7 +97,7 @@ function HeaderNavIcon({ name }: { name: HeaderIconName }) {
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { channel, contactLabel, contactUrl } = useContactChannel();
+  const { channel, contactLabel, contactUrl, shareReferralCode } = useContactChannel();
   const defaultContact = contactChannels[0];
   const resolvedContactHref = contactUrl ?? defaultContact.href;
   const [menuState, setMenuState] = useState({ open: false, pathname });
@@ -109,8 +109,8 @@ export function SiteHeader() {
     [pathname],
   );
   const macLinks = [
-    { href: withContactChannel("/may-dang-co", channel), label: "Mac đang có", description: "Xem những máy đang sẵn sàng bán" },
-    { href: withContactChannel("/chon-macbook", channel), label: "Chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
+    { href: withContactChannel("/may-dang-co", channel, shareReferralCode), label: "Mac đang có", description: "Xem những máy đang sẵn sàng bán" },
+    { href: withContactChannel("/chon-macbook", channel, shareReferralCode), label: "Chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
   ];
   const links: readonly HeaderLink[] = [
     {
@@ -218,7 +218,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link className="brand" href={withContactChannel("/", channel)}>
+        <Link className="brand" href={withContactChannel("/", channel, shareReferralCode)}>
           MBMC
         </Link>
         <nav className="desktop-navigation" aria-label="Điều hướng chính">
