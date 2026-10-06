@@ -13,7 +13,7 @@
 }
 
 .breadcrumbs a {
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
 }
 .breadcrumbs a:hover {
@@ -24,7 +24,7 @@
 }
 .eyebrow {
   margin-bottom: 0.75rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.78rem;
   font-weight: 720;
   letter-spacing: 0.13em;
@@ -160,9 +160,9 @@
 .checkerMark {
   display: grid;
   place-items: center;
-  border: 1px solid #c9d3cc;
-  background: #edf2ef;
-  color: #2f5d49;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--positive);
 }
 .checkerMark span {
   width: 2.55rem;
@@ -345,7 +345,7 @@
 }
 .productEyebrow {
   margin: 1.25rem 0 0.45rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.75rem;
   font-weight: 720;
   letter-spacing: 0.11em;
@@ -412,8 +412,8 @@
 .splitDownloadPrimary,
 .releaseMenuTrigger {
   min-height: 3.5rem;
-  border: 1px solid var(--accent);
-  background: var(--accent);
+  border: 1px solid var(--accent-strong);
+  background: var(--accent-strong);
   color: white;
 }
 .splitDownloadPrimary {
@@ -461,7 +461,7 @@
   place-items: center;
   padding: 0;
   border-left-color: rgb(255 255 255 / 26%);
-  background: color-mix(in srgb, var(--accent) 88%, black);
+  background: var(--accent-hover);
   border-radius: 0 0.55rem 0.55rem 0;
   cursor: pointer;
 }
@@ -482,12 +482,12 @@
 .splitDownloadPrimary:focus-visible,
 .releaseMenuTrigger:hover,
 .releaseMenuTrigger:focus-visible {
-  background: color-mix(in srgb, var(--accent) 82%, black);
+  background: var(--accent-hover);
 }
 .splitDownloadPrimary:focus-visible,
 .releaseMenuTrigger:focus-visible,
 .releaseMenuItem:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 .releaseMenu {
@@ -543,7 +543,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius: 999px;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.66rem;
   font-style: normal;
   font-weight: 720;
@@ -680,7 +680,7 @@
   place-items: center;
   border-radius: 0.5rem;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 760;
 }
 .hubAccessCode p {
@@ -736,7 +736,7 @@
 .capabilityNumber {
   display: block;
   margin-bottom: 0.2rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.68rem;
   font-weight: 740;
   letter-spacing: 0.08em;
@@ -774,7 +774,7 @@
   border-right: 0;
 }
 .hubUsageSteps li::before {
-  color: var(--accent);
+  color: var(--accent-text);
   content: counter(hub-step, decimal-leading-zero);
   font-size: 0.7rem;
   font-weight: 740;
@@ -831,7 +831,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
   border-radius: 0.7rem;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .moduleIcon svg {
   width: 1.3rem;
@@ -966,7 +966,7 @@
 .featureCard > span {
   display: block;
   margin-bottom: 1.8rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.76rem;
   font-weight: 720;
   letter-spacing: 0.08em;
@@ -1286,3 +1286,5 @@
     border-bottom: 1px solid var(--border);
   }
 }
+
+.splitDownloadPrimary:active, .releaseMenuTrigger:active { background: var(--accent-pressed); }

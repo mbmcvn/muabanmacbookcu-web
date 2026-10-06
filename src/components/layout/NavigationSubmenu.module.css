@@ -15,7 +15,7 @@
 }
 
 .anchor > .trigger:hover,
-.anchor > .trigger[data-active="true"] { color: var(--accent); }
+.anchor > .trigger[data-active="true"] { color: var(--accent-text); }
 
 /* Desktop geometry belongs to the primitive, independently of its nav ancestor. */
 .popover {
@@ -57,7 +57,7 @@
   white-space: normal;
 }
 .panel > a:hover,
-.panel > a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+.panel > a[aria-current="page"] { background: var(--accent-soft); color: var(--accent-text); }
 .panel > a > span,
 .panel > a > small { display: block; }
 .panel > a > small { color: var(--muted); font-size: .75rem; line-height: 1.5; }

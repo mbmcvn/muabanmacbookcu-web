@@ -1,6 +1,6 @@
 .page { width: min(64rem, calc(100% - 2rem)); min-width: 0; margin-inline: auto; padding-block: clamp(2rem, 5vw, 4rem) 6rem; }
 .intro { max-width: 43rem; margin-bottom: 2rem; }
-.eyebrow { margin: 0 0 .75rem; color: var(--accent); font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.eyebrow { margin: 0 0 .75rem; color: var(--accent-text); font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .intro h1 { margin: 0 0 1rem; font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 550; letter-spacing: -.05em; line-height: 1.08; }
 .intro > p:last-child { margin: 0; color: var(--muted); font-size: 1.05rem; line-height: 1.65; }
 .summary { min-width: 0; padding: 1.5rem; border: 1px solid var(--border); border-radius: .85rem; background: var(--surface); overflow-wrap: anywhere; }
@@ -13,7 +13,7 @@
 .identity dt { color: var(--muted); font-size: .8rem; }
 .identity dd { margin: .3rem 0 0; font-size: .95rem; }
 .machineId { font-weight: 650; letter-spacing: .015em; }
-.passportLink { display: inline-flex; gap: .75rem; align-items: center; min-height: 2.75rem; margin-top: .75rem; color: var(--accent); font-size: .9rem; font-weight: 650; }
+.passportLink { display: inline-flex; gap: .75rem; align-items: center; min-height: 2.75rem; margin-top: .75rem; color: var(--accent-text); font-size: .9rem; font-weight: 650; }
 .identityNote { margin-top: 1.25rem; padding: 1rem; border-radius: .6rem; background: var(--background); }
 .identityNote p:first-child { margin: 0 0 .35rem; font-size: .9rem; font-weight: 600; }
 .identityNote p:last-child { max-width: 47rem; margin: 0; color: var(--muted); font-size: .85rem; line-height: 1.6; }
@@ -52,8 +52,8 @@
 .warranty { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .warrantyStatus { display: flex; align-items: center; gap: .5rem; margin: 0; font-size: .9rem; font-weight: 600; }
 .warrantyDot { width: .5rem; height: .5rem; flex: 0 0 auto; border-radius: 50%; }
-.warrantyStatus[data-warranty-status="active"] { color: var(--accent); }
-.warrantyStatus[data-warranty-status="active"] .warrantyDot { background: var(--accent); }
+.warrantyStatus[data-warranty-status="active"] { color: var(--accent-text); }
+.warrantyStatus[data-warranty-status="active"] .warrantyDot { background: var(--positive); }
 .warrantyStatus[data-warranty-status="expired"] { color: #9b3830; }
 .warrantyStatus[data-warranty-status="expired"] .warrantyDot { background: #9b3830; }
 .warrantyAbsent { margin: 0; color: var(--muted); font-size: .85rem; }

@@ -50,7 +50,7 @@
 
 .customer {
   margin: 0 0 0.65rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.75rem;
   font-weight: 720;
   letter-spacing: 0.075em;
@@ -82,7 +82,7 @@
 .cta {
   display: inline-block;
   margin-top: 1rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.875rem;
   font-weight: 650;
 }

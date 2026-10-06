@@ -7,6 +7,7 @@ import {
   inventoryShareLabel,
 } from "@/data/machines/public-inventory-query";
 import { useContactChannel } from "@/hooks/useContactChannel";
+import { copyText } from "@/lib/copy-text";
 
 export function CopyInventoryLink({ state }: { state: InventoryUrlState }) {
   const { shareReferralCode: referralCode } = useContactChannel();
@@ -27,7 +28,7 @@ export function CopyInventoryLink({ state }: { state: InventoryUrlState }) {
       window.location.origin,
       state,
       referralCode,
-      (value) => navigator.clipboard.writeText(value),
+      copyText,
     );
     setFeedback(copied ? "copied" : "failed");
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);

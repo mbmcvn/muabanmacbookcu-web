@@ -51,7 +51,7 @@ test("quiz recommendation contact uses canonical organic and CTV destinations wh
   assert.equal(resolveContact(null, null).href, "https://zalo.me/0326147088");
   assert.equal(resolveContact(zaloCtv, null).href, "https://zalo.me/0968610151");
   assert.match(source, /useContactChannel\(\)/);
-  assert.match(source, /navigator\.clipboard\.writeText\(summary\)/);
+  assert.match(source, /copyText\(summary\)/);
   assert.match(source, /window\.location\.href = contactUrl/);
   assert.doesNotMatch(source, /window\.location\.href = "https:\/\/zalo\.me\/0326147088"/);
 });

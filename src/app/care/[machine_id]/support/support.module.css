@@ -67,7 +67,7 @@
 }
 .progress span[data-active="true"],
 .progress span[data-complete="true"] {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 700;
 }
 .card {
@@ -104,11 +104,11 @@
   cursor: pointer;
 }
 .options label[data-selected="true"] {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   background: var(--accent-soft);
 }
 .options input {
-  accent-color: var(--accent);
+  accent-color: var(--accent-text);
 }
 .field {
   display: grid;

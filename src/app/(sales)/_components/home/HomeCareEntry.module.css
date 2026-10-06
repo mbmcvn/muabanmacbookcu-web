@@ -1,7 +1,13 @@
-.entry { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; gap: 1.5rem clamp(1.5rem, 3vw, 3rem); margin-block: 2rem; padding: clamp(1.5rem, 3vw, 2rem); border: 1px solid var(--border); border-radius: .75rem; background: #fafbf8; }
-.copy { min-width: 0; }
-.eyebrow { margin: 0 0 .5rem; color: var(--accent); font-size: .7rem; font-weight: 700; letter-spacing: .1em; }
+.entry { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; gap: 1.5rem clamp(1.5rem, 3vw, 3rem); margin-block: 2rem; padding: clamp(1.5rem, 3vw, 2rem); border: 1px solid var(--care-border); border-radius: .75rem; background: var(--care-surface); }
+.copy { position: relative; z-index: 1; min-width: 0; }
+.eyebrow { margin: 0 0 .5rem; color: var(--accent-text); font-size: .7rem; font-weight: 700; letter-spacing: .1em; }
 .copy h2 { margin: 0 0 .65rem; font-size: clamp(1.5rem, 2.5vw, 1.75rem); font-weight: 600; letter-spacing: -.025em; }
 .copy > p:last-child { margin: 0; max-width: 34ch; color: var(--muted); font-size: .875rem; line-height: 1.7; }
-.entry .form { min-width: 0; margin: 0; }
+.entry .form { position: relative; z-index: 2; min-width: 0; margin: 0; }
 @media (max-width: 56rem) { .entry { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; padding: 1.25rem; } }
+
+/* A static physical machine peeks behind the utility, never intercepting input. */
+.machinePeek { display: none; pointer-events: none; }
+@media (min-width: 56.01rem) {
+  .machinePeek { display: block; position: absolute; z-index: 0; right: -4rem; bottom: -7rem; width: 26rem; height: 20rem; background: url("/images/home/mid-image.webp") 52% 72% / 44rem auto no-repeat; opacity: .38; mask-image: linear-gradient(to right, transparent, #000 45%), linear-gradient(to bottom, transparent, #000 35%); mask-composite: intersect; }
+}

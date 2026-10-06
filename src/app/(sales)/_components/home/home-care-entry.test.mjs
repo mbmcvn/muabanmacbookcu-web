@@ -129,10 +129,28 @@ test("grouped input and button share height; surfaces stay quiet and Care avoids
   const css = readFileSync("src/components/care/CareLookupForm.module.css", "utf8");
   assert.match(css, /\.inputArea input[^}]*min-height: 3\.75rem/);
   assert.match(css, /\.submit \{[^}]*min-height: 3\.75rem/);
-  assert.match(css, /\.control:focus-within[^}]*border-color: var\(--accent\)/);
+  assert.match(css, /\.control:focus-within[^}]*border-color: var\(--accent-text\)/);
   assert.match(css, /\.submit:focus-visible/);
   assert.doesNotMatch(css, /gradient|box-shadow|border-strong/);
   const pageCss = readFileSync("src/app/care/lookup.module.css", "utf8");
   assert.match(pageCss, /\.searchModule[^}]*minmax\(0, 2fr\) minmax\(0, 3fr\)/);
   assert.doesNotMatch(pageCss.match(/\.searchModule \{[^}]*\}/)[0], /background|border-radius|box-shadow/);
+});
+
+test("Care machine peek is decorative, desktop-only and below the unchanged GET form", () => {
+  const entry = HomeCareEntry();
+  const visual = entry.props.children[2];
+  assert.equal(visual.props["aria-hidden"], "true");
+  assert.equal(visual.props.className, "machinePeek");
+  assert.equal(entry.props.children[1].type, CareLookupForm);
+  const css = readFileSync(directory + "HomeCareEntry.module.css", "utf8");
+  assert.match(css, /\.entry \{ position: relative; isolation: isolate; overflow: hidden;/);
+  assert.match(css, /\.copy \{ position: relative; z-index: 1;/);
+  assert.match(css, /\.entry \.form \{ position: relative; z-index: 2;/);
+  assert.match(css, /\.machinePeek \{ display: none; pointer-events: none;/);
+  assert.match(css, /@media \(min-width: 56\.01rem\) \{\s*\.machinePeek \{ display: block; position: absolute; z-index: 0;/);
+  assert.match(css, /url\("\/images\/home\/mid-image\.webp"\)/);
+  assert.ok(existsSync("public/images/home/mid-image.webp"));
+  assert.match(css, /mask-image:/);
+  assert.doesNotMatch(css, /animation:|transition:/);
 });

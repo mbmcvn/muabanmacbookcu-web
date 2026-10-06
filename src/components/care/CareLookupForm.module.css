@@ -1,15 +1,16 @@
 .form { display: grid; min-width: 0; gap: .65rem; margin: 0; }
 .field { color: var(--foreground); font-size: .8125rem; font-weight: 600; }
 .control { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; border: 1px solid var(--border); border-radius: .65rem; background: var(--surface); }
-.control:focus-within { border-color: var(--accent); outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+.control:focus-within { border-color: var(--accent-text); outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .inputArea { display: flex; align-items: center; gap: .65rem; min-width: 0; padding-left: 1rem; }
 .searchIcon { width: 1.1rem; height: 1.1rem; flex: 0 0 auto; color: var(--muted); }
 .inputArea input { width: 100%; min-width: 0; min-height: 3.75rem; padding: .9rem .75rem .9rem 0; border: 0; border-radius: .65rem; background: transparent; color: var(--foreground); font-size: .9375rem; font-weight: 450; }
 .inputArea input::placeholder { color: var(--muted); }
 .inputArea input:focus-visible { outline: none; }
-.submit { min-height: 3.75rem; padding: .9rem 1.35rem; border: 0; border-radius: 0 .6rem .6rem 0; background: var(--accent); color: #fff; font-size: .9375rem; font-weight: 600; cursor: pointer; }
-.submit:hover { background: #123d2e; }
-.submit:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.submit { min-height: 3.75rem; padding: .9rem 1.35rem; border: 0; border-radius: 0 .6rem .6rem 0; background: var(--accent-strong); color: #fff; font-size: .9375rem; font-weight: 600; cursor: pointer; }
+.submit:hover:not(:disabled) { background: var(--accent-hover); }
+.submit:active:not(:disabled) { background: var(--accent-pressed); }
+.submit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 .formHelp { margin: .1rem 0 0; color: var(--muted); font-size: .75rem; line-height: 1.6; }
 @media (max-width: 640px) {
   .control { grid-template-columns: minmax(0, 1fr); }

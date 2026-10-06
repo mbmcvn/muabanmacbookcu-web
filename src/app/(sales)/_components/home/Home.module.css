@@ -36,7 +36,7 @@
   align-items: center;
   gap: 0.65rem;
   margin-bottom: 0.8rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.76rem;
   font-weight: 720;
   letter-spacing: 0.11em;
@@ -124,7 +124,7 @@
 }
 
 .heroTrustIndicators li > span {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .heroImage {
@@ -164,8 +164,8 @@
 }
 
 .desktopSpotlightCopy .primaryAction {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
 }
 
 .desktopSpotlightCopy .primaryAction svg {
@@ -327,7 +327,7 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .desktopAccessCodeIcon {
@@ -368,7 +368,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
   border-radius: 999px;
   background: white;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.82rem;
 }
 
@@ -435,7 +435,7 @@
 }
 
 .desktopFeatureNumber {
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.7rem;
   font-weight: 740;
   letter-spacing: 0.07em;
@@ -480,11 +480,11 @@
   flex: 0 0 auto;
   width: 1.05rem;
   height: 1.05rem;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .desktopSupportLink {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 680;
   text-decoration: none;
 }
@@ -552,7 +552,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius: 50%;
   background: transparent;
-  color: #144735;
+  color: var(--accent-text);
   font-family: Georgia, serif;
   font-size: 1.2rem;
   font-weight: 600;
@@ -616,7 +616,7 @@
   justify-content: center;
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius: 50%;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.9rem;
   line-height: 1;
 }
@@ -662,7 +662,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius: 50%;
   background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
-  color: #144735;
+  color: var(--accent-text);
   font-size: 0.78rem;
   font-weight: 760;
   letter-spacing: 0.05em;
@@ -700,7 +700,7 @@
   justify-content: center;
   padding: clamp(2rem, 4vw, 3rem);
   border-radius: calc(var(--home-radius) * 1.35);
-  background: #173f32;
+  background: var(--accent-strong);
   color: white;
 }
 
@@ -709,7 +709,7 @@
   min-height: 4rem;
   border-color: white;
   background: white;
-  color: #173f32;
+  color: var(--accent-strong);
   font-size: 1.02rem;
 }
 
@@ -782,7 +782,7 @@
   align-items: center;
   gap: 0.4rem;
   margin-top: 1.25rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 680;
 }
 
@@ -805,7 +805,7 @@
 
 .trustList li > span {
   padding-top: 0.12rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.75rem;
   font-weight: 740;
   letter-spacing: 0.06em;
@@ -839,8 +839,8 @@
   }
 
   .desktopSpotlightCopy .primaryAction:hover {
-    border-color: color-mix(in srgb, var(--accent) 88%, black);
-    background: color-mix(in srgb, var(--accent) 88%, black);
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
   }
 }
 
@@ -1193,3 +1193,10 @@
     gap: 1.5rem;
   }
 }
+
+.desktopSpotlightCopy .primaryAction:active { background: var(--accent-pressed); border-color: var(--accent-pressed); }
+
+/* Hero actions retain their neutral black/inverse role. */
+.hero .primaryAction { background: var(--foreground); border-color: var(--foreground); color: white; }
+.hero .primaryAction:hover { background: #2a2a2a; border-color: #2a2a2a; }
+.hero .primaryAction:active { background: #111111; border-color: #111111; }

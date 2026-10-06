@@ -46,8 +46,8 @@
 }
 .verified,
 .active {
-  background: #eaf5eb;
-  color: #25612f !important;
+  background: var(--accent-soft);
+  color: var(--positive) !important;
 }
 .pending {
   background: #fff1dc;
@@ -304,14 +304,14 @@
   font-size: 0.85rem;
 }
 .coveredPolicy {
-  border-color: #cde2cf !important;
-  background: #f3faf3;
+  border-color: var(--accent-border) !important;
+  background: var(--accent-surface);
 }
 .coveredPolicy h3 {
-  color: #25612f;
+  color: var(--positive);
 }
 .coveredPolicy h3 span {
-  background: #dceede;
+  background: var(--accent-border);
 }
 .policyHighlights {
   display: flex;
@@ -326,14 +326,14 @@
   gap: 0.4rem;
   align-items: center;
   padding: 0.4rem 0.6rem;
-  border: 1px solid #cde2cf;
+  border: 1px solid var(--accent-border);
   border-radius: 999px;
-  background: #f3faf3;
-  color: #345a3a;
+  background: var(--accent-surface);
+  color: var(--positive);
   font-size: 0.78rem;
 }
 .policyHighlights span {
-  color: #25612f;
+  color: var(--positive);
   font-weight: 800;
 }
 .textLink {
@@ -408,8 +408,8 @@
   font-size: 0.82rem;
 }
 .primaryAction {
-  border-color: #184f3b;
-  background: #184f3b;
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
   color: #fff;
 }
 .primaryAction .actionIcon {
@@ -417,7 +417,7 @@
   color: #fff;
 }
 .primaryAction small {
-  color: #dcebe5;
+  color: var(--accent-border);
 }
 .secondaryAction {
   border-color: #c9c9c2;
@@ -436,9 +436,9 @@
   line-height: 1.5;
 }
 .success {
-  border-color: #b9dabb;
-  background: #edf8ee;
-  color: #245d2d;
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--positive);
 }
 .error {
   border-color: #e2b9b2;
@@ -535,8 +535,8 @@
   margin-top: 0;
 }
 .supportLink {
-  border-color: #184f3b;
-  background: #184f3b;
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
 }
 @media (max-width: 40rem) {
   .serviceGrid {
@@ -572,3 +572,6 @@
     grid-template-columns: 1fr;
   }
 }
+
+.primaryAction:hover, .supportLink:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.primaryAction:active, .supportLink:active { background: var(--accent-pressed); border-color: var(--accent-pressed); }

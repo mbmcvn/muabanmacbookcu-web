@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CopyMachineLink } from "@/components/contact/CopyMachineLink";
 import { MachineImage } from "@/components/machine/MachineImage";
 import {
   useContactChannel,
@@ -109,6 +110,7 @@ export function MachineCard({
           </div>
         </div>
       </Link>
+      <CopyMachineLink slug={machine.slug} machineId={machineId} compact />
     </article>
   );
 }

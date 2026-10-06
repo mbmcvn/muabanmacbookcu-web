@@ -8,6 +8,8 @@ const supabaseImagePattern = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  // Explicit local Tailscale preview host; never allow arbitrary dev origins.
+  allowedDevOrigins: ["100.103.44.105"],
   images: {
     remotePatterns: [
       ...supabaseImagePattern,

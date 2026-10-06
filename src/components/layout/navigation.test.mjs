@@ -40,11 +40,79 @@ function load(path) {
 const { MacNavigation, isNavigationPathCurrent } = load("src/components/layout/MacNavigation.tsx");
 const { NavigationSubmenu } = load("src/components/layout/NavigationSubmenu.tsx");
 const { SiteHeader } = load("src/components/layout/SiteHeader.tsx");
+const { InventoryFilters } = load("src/app/(sales)/may-dang-co/_components/InventoryFilters.tsx");
 const { InventoryPageView } = load("src/app/(sales)/may-dang-co/_components/InventoryPageView.tsx");
 const links = [
   { href: "/may-dang-co", label: "Mac đang có", description: "Xem những máy đang sẵn sàng bán" },
   { href: "/chon-macbook", label: "Hướng dẫn chọn MacBook", description: "Để MBMC gợi ý theo nhu cầu và ngân sách" },
 ];
+
+function interactionMount(component, props = {}) {
+  const states = [], refs = [], listeners = new Map();
+  let stateIndex = 0, refIndex = 0, cleanups = [];
+  const oldWindow = globalThis.window, oldDocument = globalThis.document;
+  globalThis.window = { isSecureContext: false, matchMedia: () => ({ matches: true, addEventListener() {}, removeEventListener() {} }), requestAnimationFrame: fn => fn() };
+  globalThis.document = { addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
+  const context = {
+    effects: [],
+    state(initial) { const i = stateIndex++; if (!(i in states)) states[i] = initial; return [states[i], value => { states[i] = typeof value === "function" ? value(states[i]) : value; }]; },
+    ref(initial) { const i = refIndex++; refs[i] ??= { current: initial }; return refs[i]; },
+  };
+  return {
+    render() {
+      cleanups.forEach(fn => fn?.()); stateIndex = 0; refIndex = 0; context.effects = []; hooks = context;
+      try { const tree = component(props); cleanups = context.effects.map(fn => fn()); return tree; } finally { hooks = null; }
+    },
+    event(name, event) { listeners.get(name)?.(event); },
+    cleanup() { cleanups.forEach(fn => fn?.()); globalThis.window = oldWindow; globalThis.document = oldDocument; hooks = null; },
+  };
+}
+function nodes(tree) {
+  if (!tree || typeof tree !== "object") return [];
+  if (Array.isArray(tree)) return tree.flatMap(nodes);
+  return [tree, ...nodes(tree.props?.children)];
+}
+
+test("actual header handler toggles mobile menu, unmounts its layer, and closes on Escape/outside/destination", () => {
+  const app = interactionMount(SiteHeader);
+  const trigger = tree => nodes(tree).find(node => node.props?.className === "mobile-menu-trigger");
+  const panel = tree => nodes(tree).find(node => node.props?.id === "mobile-navigation-menu");
+  try {
+    let tree = app.render();
+    assert.equal(panel(tree), undefined);
+    trigger(tree).props.onClick(); tree = app.render();
+    assert.equal(trigger(tree).props["aria-expanded"], true);
+    const groups = nodes(panel(tree)).filter(node => node.props?.mobile);
+    assert.equal(groups.length, 2);
+    assert.deepEqual(groups.flatMap(node => node.props.links.map(link => link.href)), ["/may-dang-co", "/chon-macbook", "/care", "/chinh-sach"]);
+    trigger(tree).props.onClick(); tree = app.render(); assert.equal(panel(tree), undefined);
+    trigger(tree).props.onClick(); app.render(); app.event("keydown", { key: "Escape" }); assert.equal(panel(app.render()), undefined);
+    trigger(app.render()).props.onClick(); app.render(); app.event("pointerdown", { target: {} }); assert.equal(panel(app.render()), undefined);
+    trigger(app.render()).props.onClick(); tree = app.render(); nodes(panel(tree)).find(node => node.props?.mobile).props.onNavigate(); assert.equal(panel(app.render()), undefined);
+  } finally { app.cleanup(); }
+});
+
+test("actual inventory filter handlers open each panel, select a value and close with no nav layer", () => {
+  const selection = [];
+  const app = interactionMount(InventoryFilters, {
+    facets: { price: null, family: null, chip: [], ram: [], screen: [], display: [], storageType: [], storage: [] },
+    sort: "relevance", counts: { "family:air": 11 }, showModernChip: true,
+    onFamilyChange: value => selection.push(value), onPriceChange() {}, onMultiChange() {}, onSortChange() {}, onRemove() {}, onClearAll() {}, shareAction: null,
+  });
+  try {
+    app.render(); let tree = app.render();
+    const controls = nodes(tree).filter(node => node.props?.className === "facet-trigger").map(node => node.props["aria-controls"]);
+    for (const id of controls) {
+      nodes(tree).find(node => node.props?.["aria-controls"] === id).props.onClick(); tree = app.render();
+      assert.ok(nodes(tree).some(node => node.props?.id === id));
+      nodes(tree).find(node => node.props?.["aria-controls"] === id).props.onClick(); tree = app.render();
+      assert.ok(!nodes(tree).some(node => node.props?.id === id));
+    }
+    nodes(tree).find(node => node.props?.["aria-controls"] === "facet-panel-family").props.onClick(); tree = app.render();
+    nodes(tree).find(node => node.type === "button" && node.key === "air").props.onClick(); tree = app.render();
+    assert.deepEqual(selection, ["air"]); assert.ok(!nodes(tree).some(node => node.props?.id === "facet-panel-family"));
+  } finally { app.cleanup(); }
+});
 
 function mount(props = {}) {
   const states = [], refs = [], listeners = new Map();

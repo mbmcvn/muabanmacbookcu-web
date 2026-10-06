@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { copyText } from "@/lib/copy-text";
 import { buildZaloSummary } from "./recommendation-engine";
 import { loadInventoryMatches } from "./inventory-match.actions";
 import {
@@ -88,7 +89,7 @@ export function RecommendationView({
   );
   const openZalo = async () => {
     try {
-      await navigator.clipboard.writeText(summary);
+      await copyText(summary);
     } catch {}
     window.location.href = contactUrl;
   };

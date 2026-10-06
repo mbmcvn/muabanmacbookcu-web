@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { copyText } from "@/lib/copy-text";
 import { copyPublicMachineId, publicMachineId } from "@/lib/public-machine-id";
 
 export function MachineIdentity({ code }: { code?: string | null }) {
@@ -13,7 +14,7 @@ export function MachineIdentity({ code }: { code?: string | null }) {
 
   if (!id) return null;
   const copy = async () => {
-    const copied = await copyPublicMachineId(id, value => navigator.clipboard.writeText(value));
+    const copied = await copyPublicMachineId(id, copyText);
     setFeedback(copied ? "copied" : "failed");
     if (resetTimer.current !== null) clearTimeout(resetTimer.current);
     resetTimer.current = setTimeout(() => setFeedback("idle"), 2200);

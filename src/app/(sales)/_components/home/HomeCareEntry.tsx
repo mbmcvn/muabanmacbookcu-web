@@ -10,6 +10,7 @@ export function HomeCareEntry() {
         <p>Mở hồ sơ máy, bảo hành và báo cáo kiểm tra công khai bằng Serial hoặc MBMC Machine ID.</p>
       </div>
       <CareLookupForm id="home-care-lookup" className={styles.form} />
+      <div className={styles.machinePeek} aria-hidden="true" />
     </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { canonicalPublicReportPath } from "@/lib/care-report/desktop-public-report-view";
+import { copyText } from "@/lib/copy-text";
 
 export default function CopyReportLinkButton({
   reportId,
@@ -33,7 +34,7 @@ export default function CopyReportLinkButton({
 
   async function copy(value: string, confirmation: string) {
     try {
-      await navigator.clipboard.writeText(value);
+      await copyText(value);
       setMessage(confirmation);
     } catch {
       setMessage("Không thể sao chép");

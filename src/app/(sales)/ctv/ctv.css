@@ -104,7 +104,7 @@
 }
 .ctv-success-actions a + a {
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .ctv-success-note {
   color: var(--muted);

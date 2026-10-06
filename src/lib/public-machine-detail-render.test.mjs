@@ -9,6 +9,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { publicMachineId, copyPublicMachineId } from "./public-machine-id.ts";
 import * as presentation from "./presentation/machine.ts";
+import { copyText } from "./copy-text.ts";
 
 const require = createRequire(import.meta.url);
 const componentDir = new URL("../app/(sales)/may/[slug]/_components/", import.meta.url);
@@ -67,6 +68,7 @@ for (const [availability, reservationKind] of [
 
 let copyHarness;
 const { MachineIdentity } = loadComponent("MachineIdentity.tsx", {
+  "@/lib/copy-text": { copyText },
   "@/lib/public-machine-id": { publicMachineId, copyPublicMachineId },
   react: { ...React,
     useState: initial => copyHarness ? [copyHarness.feedback, value => { copyHarness.feedback = value; }] : React.useState(initial),
@@ -82,6 +84,7 @@ const { DecisionPanel } = loadComponent("DecisionPanel.tsx", {
   "./MachineIdentity": { MachineIdentity },
 });
 const { MachineCard } = loadComponent("../../../may-dang-co/_components/MachineCard.tsx", {
+  "@/components/contact/CopyMachineLink": { CopyMachineLink: () => React.createElement("button", { className: "machine-card-copy" }, "Sao chép liên kết") },
   "@/lib/presentation": presentation,
   "@/lib/public-machine-id": { publicMachineId },
   "@/components/machine/MachineImage": { MachineImage: () => null },
@@ -109,10 +112,11 @@ test("public detail places the canonical Machine ID copy tag first in the top st
   assert.match(html, /aria-live="polite" aria-atomic="true"/);
 });
 
-test("inventory cards show the full Machine ID as plain text with no copy controls", () => {
+test("inventory cards show plain Machine ID and a separate link-copy control, never an ID-copy control", () => {
   const html = renderToStaticMarkup(React.createElement(MachineCard, { machine: summary }));
   assert.match(html, /class="machine-code">MBMC-FTFF<\/span>/);
-  assert.doesNotMatch(html, /<button|Sao chép|copy-link|machine-id-copy/);
+  assert.doesNotMatch(html, /machine-id-copy/);
+  assert.match(html, /<\/a><button class="machine-card-copy">Sao chép liên kết<\/button>/);
   const footer = html.match(/<div class="machine-card-footer">([\s\S]*?)<\/div>/)[1];
   assert.ok(footer.indexOf("machine-code") < footer.indexOf("machine-card-cta"));
   assert.match(html, /href="\/may\/fixture"/);
@@ -124,7 +128,7 @@ test("missing, shorthand and internal IDs omit public identity text and copy act
   for (const code of [undefined, null, "", "FTFF", "12345678-1234-1234-1234-123456789abc"]) {
     assert.equal(renderToStaticMarkup(React.createElement(MachineIdentity, { code })), "");
     const card = renderToStaticMarkup(React.createElement(MachineCard, { machine: { ...summary, code } }));
-    assert.doesNotMatch(card, /class="machine-code"|machine-id-copy|<button/);
+    assert.doesNotMatch(card, /class="machine-code"|machine-id-copy/);
     const detail = renderToStaticMarkup(React.createElement(DecisionPanel, { machine: { summary: { ...summary, code } } }));
     assert.doesNotMatch(detail, /public-machine-identity|machine-id-copy/);
   }
