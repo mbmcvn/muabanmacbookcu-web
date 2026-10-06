@@ -51,6 +51,15 @@ test("mobile spacing separates the existing blocks without a fixed card height",
  assert.match(mobile, /grid-row: 4; margin: \.5rem \.85rem \.85rem;/);
  assert.doesNotMatch(mobile, /\.machine-card \{[^}]*(?:height|padding):/);
 });
+test("desktop shares one copy control with the availability track, away from the bottom CTA",()=>{
+ assert.equal((card.match(/<CopyMachineLink /g) ?? []).length, 1);
+ assert.match(css, /@media \(min-width: 40rem\) \{\s*\.machine-card \{ display: grid;/);
+ assert.match(css, /\.machine-card-body \{ grid-row: 2;/);
+ assert.match(css, /\.machine-card-status \{ min-height: 44px; padding-right: 52px;/);
+ assert.match(css, /\.machine-card-copy \{ position: relative; grid-column: 1; grid-row: 2;[^}]*width: 44px; height: 44px;/);
+ assert.match(css, /\.machine-card-copy:hover::before/);
+ assert.match(card, /Xem chiếc máy này/);
+});
 test("mobile captions hide visually while gallery labels, selection and ordering remain",()=>{
  assert.match(css, /@media \(max-width: 39\.99rem\) \{[^]*?\.public-detail-page \.detail-thumbnails button > span \{ display: none;/);
  const gallery=readFileSync("src/app/(sales)/may/[slug]/_components/PublicMachineGallery.tsx","utf8");

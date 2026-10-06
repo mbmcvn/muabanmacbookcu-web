@@ -903,6 +903,17 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 /* Mobile sharing sits outside the card anchor, at the right thumb edge. */
 .machine-card-copy { display: none; }
 .machine-card-price-region { display: contents; }
+/* Keep one copy button outside the card link, sharing its content track. */
+@media (min-width: 40rem) {
+  .machine-card { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .machine-card-link { display: grid; grid-column: 1; grid-row: 1 / 3; grid-template-rows: subgrid; }
+  .machine-card .machine-image { grid-row: 1; }
+  .machine-card-body { grid-row: 2; }
+  .machine-card-status { min-height: 44px; padding-right: 52px; }
+  .machine-card-copy { position: relative; grid-column: 1; grid-row: 2; align-self: start; justify-self: end; margin: 1.15rem 1.15rem 0 0; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+  .machine-card-copy:hover::before { border-color: var(--accent-border); background: var(--accent-surface); }
+  .machine-card-copy[data-feedback="copied"]:hover::before { border-color: var(--accent-strong); background: var(--accent-soft); }
+}
 @media (max-width: 39.99rem) {
   .machine-card-link { min-height: 0; }
   /* Separate identity, decision information and action through whitespace only. */
@@ -925,10 +936,12 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
     .machine-card-copy { grid-column: 2; grid-row: 3; align-self: center; justify-self: end; position: relative; z-index: 1; right: auto; bottom: auto; margin-right: .85rem; }
   }
   .machine-card:has(> .machine-card-link:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+  .public-detail-page .detail-thumbnails button > span { display: none; }
+}
+
+/* Shared compact copy appearance and feedback across card breakpoints. */
   .machine-card-copy::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); }
   .machine-card-copy[data-feedback="copied"] { color: var(--accent-strong); }
   .machine-card-copy[data-feedback="copied"]::before { border-color: var(--accent-strong); background: var(--accent-soft); }
   .machine-card-copy-error { position: absolute; right: 0; bottom: calc(100% + 4px); width: max-content; max-width: 160px; padding: .3rem .5rem; border: 1px solid var(--border); border-radius: .3rem; background: var(--surface); color: var(--foreground); font-size: .75rem; }
   .machine-card-copy svg { position: relative; width: 16px; height: 16px; }
-  .public-detail-page .detail-thumbnails button > span { display: none; }
-}
