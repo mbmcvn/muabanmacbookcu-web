@@ -76,10 +76,12 @@ export function MachineCard({
           </div>
           <Heading>{displayName}</Heading>
           <p className="machine-configuration">{specs}</p>
-          <p className="machine-price">{price}</p>
-          {condition ? (
-            <p className="machine-card-condition">{condition}</p>
-          ) : null}
+          <div className="machine-card-price-region">
+            <p className="machine-price">{price}</p>
+            {condition ? (
+              <p className="machine-card-condition">{condition}</p>
+            ) : null}
+          </div>
           <dl className="decision-facts">
             {familyFact ? (
               <div>

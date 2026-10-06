@@ -902,12 +902,33 @@ body:has(.public-machine-sticky) .site-footer { padding-bottom: 9rem; }
 
 /* Mobile sharing sits outside the card anchor, at the right thumb edge. */
 .machine-card-copy { display: none; }
+.machine-card-price-region { display: contents; }
 @media (max-width: 39.99rem) {
-  .machine-card-footer { min-height: 44px; padding-right: 48px; gap: .25rem; }
-  .machine-card-footer .machine-card-cta { font-size: .75rem; }
-  .machine-card-copy { position: absolute; right: .85rem; bottom: .85rem; display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; border: 1px solid var(--accent-border); border-radius: .4rem; background: var(--surface); color: var(--accent-text); cursor: pointer; }
-  .machine-card-copy[data-feedback="copied"] { border-color: var(--accent-strong); background: var(--accent-soft); color: var(--accent-strong); }
+  .machine-card-link { min-height: 0; }
+  /* Separate identity, decision information and action through whitespace only. */
+  .machine-card-body > :is(h2, h3) { margin-bottom: .09375rem; }
+  .machine-card-body > .machine-configuration { margin-bottom: .375rem; }
+  .machine-card-price-region { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 44px; margin: .375rem 0; padding-right: 52px; }
+  .machine-card-price-region .machine-price { margin: 0 0 .09375rem; }
+  .machine-card-footer { flex-wrap: nowrap; min-height: 28px; gap: .45rem; margin-top: .5rem; padding-top: 0; }
+  .machine-card-copy { position: absolute; right: .85rem; bottom: calc(.85rem + 28px + .5rem + .375rem + .1rem); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+  /* Share the price track while preserving a real, keyboard-focusable card link. */
+  @supports (grid-template-rows: subgrid) {
+    .machine-card { display: grid; grid-template-columns: 38% minmax(0, 1fr); }
+    .machine-card-link { display: grid; grid-column: 1 / -1; grid-row: 1 / 5; grid-template-columns: subgrid; grid-template-rows: subgrid; }
+    .machine-card-body { display: contents; }
+    .machine-card .machine-image { grid-column: 1; grid-row: 1 / 5; }
+    .machine-card-body > :is(h2, h3) { grid-column: 2; grid-row: 1; margin: .85rem .85rem .09375rem; }
+    .machine-card-body > .machine-configuration { grid-column: 2; grid-row: 2; margin-inline: .85rem; }
+    .machine-card-price-region { grid-column: 2; grid-row: 3; margin-inline: .85rem; }
+    .machine-card-footer { grid-column: 2; grid-row: 4; margin: .5rem .85rem .85rem; }
+    .machine-card-copy { grid-column: 2; grid-row: 3; align-self: center; justify-self: end; position: relative; z-index: 1; right: auto; bottom: auto; margin-right: .85rem; }
+  }
+  .machine-card:has(> .machine-card-link:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+  .machine-card-copy::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); }
+  .machine-card-copy[data-feedback="copied"] { color: var(--accent-strong); }
+  .machine-card-copy[data-feedback="copied"]::before { border-color: var(--accent-strong); background: var(--accent-soft); }
   .machine-card-copy-error { position: absolute; right: 0; bottom: calc(100% + 4px); width: max-content; max-width: 160px; padding: .3rem .5rem; border: 1px solid var(--border); border-radius: .3rem; background: var(--surface); color: var(--foreground); font-size: .75rem; }
-  .machine-card-copy svg { width: 18px; height: 18px; }
+  .machine-card-copy svg { position: relative; width: 16px; height: 16px; }
   .public-detail-page .detail-thumbnails button > span { display: none; }
 }

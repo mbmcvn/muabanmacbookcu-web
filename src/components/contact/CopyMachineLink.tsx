@@ -42,7 +42,7 @@ export function CopyMachineLink({ slug, machineId, compact = false }: { slug: st
 
   return (
     <button className={compact ? "machine-card-copy" : "machine-share-action"} type="button" data-feedback={feedback} title={label} aria-label={compact ? `Sao chép liên kết máy ${machineId ?? ""}`.trim() : undefined} onClick={copy}>
-      {compact ? <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">{feedback === "copied" ? <path d="m5 12 4 4L19 6" /> : <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V4H4v12h4" /></>}</svg> : null}
+      {compact ? <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{feedback === "copied" ? <path d="m5 12 4 4L19 6" /> : <path d="m9 15 6-6M11 7l1.5-1.5a4.24 4.24 0 0 1 6 6L17 13M7 11l-1.5 1.5a4.24 4.24 0 0 0 6 6L13 17" />}</svg> : null}
       <span className={compact ? "visually-hidden" : undefined} aria-live="polite">{label}</span>
       {compact && feedback === "failed" ? <span className="machine-card-copy-error">Không thể sao chép</span> : null}
     </button>

@@ -48,16 +48,20 @@ test("real copy handler prevents navigation, copies attributed canonical URL, sh
   globalThis.window = { isSecureContext: true, setTimeout: (fn, ms) => { reset = fn; delay = ms; return 1; }, clearTimeout: () => cleared++ };
   try {
     feedback = "idle";
+    const initialButton = render();
+    assert.equal(initialButton.props["aria-label"], "Sao chép liên kết máy MBMC-FTFF");
+    assert.match(initialButton.props.children[0].props.children.props.d, /^m9 15 6-6M11 7/);
     await render().props.onClick({ preventDefault: () => prevented++, stopPropagation: () => stopped++ });
     assert.equal(written, "https://mbmc.vn/may/mbmc-ftff?ref=MBMC");
     assert.equal(prevented, 1); assert.equal(stopped, 1);
     const button = render(); assert.equal(button.props["data-feedback"], "copied");
+    assert.equal(button.props["aria-label"], initialButton.props["aria-label"]);
     assert.equal(button.props.children[0].props.children.type, "path");
     assert.equal(button.props.children[0].props.children.props.d, "m5 12 4 4L19 6");
     assert.equal(delay, 1200); reset(); assert.equal(render().props["data-feedback"], "idle");
     cleanup(); assert.ok(cleared > 0);
     const css = readFileSync("src/app/globals.css", "utf8");
-    assert.match(css, /\.machine-card-copy\[data-feedback="copied"\] \{ border-color: var\(--accent-strong\); background: var\(--accent-soft\);/);
+    assert.match(css, /\.machine-card-copy\[data-feedback="copied"\]::before \{ border-color: var\(--accent-strong\); background: var\(--accent-soft\);/);
   } finally {
     globalThis.window = oldWindow;
     if (oldNavigator) Object.defineProperty(globalThis, "navigator", oldNavigator); else delete globalThis.navigator;

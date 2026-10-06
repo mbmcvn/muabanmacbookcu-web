@@ -117,8 +117,9 @@ test("inventory cards show plain Machine ID and a separate link-copy control, ne
   assert.match(html, /class="machine-code">MBMC-FTFF<\/span>/);
   assert.doesNotMatch(html, /machine-id-copy/);
   assert.match(html, /<\/a><button class="machine-card-copy">Sao chép liên kết<\/button>/);
-  const footer = html.match(/<div class="machine-card-footer">([\s\S]*?)<\/div>/)[1];
-  assert.ok(footer.indexOf("machine-code") < footer.indexOf("machine-card-cta"));
+  assert.match(html, /<div class="machine-card-price-region"><p class="machine-price">/);
+  assert.match(html, /<div class="machine-card-footer"><span class="machine-code">MBMC-FTFF<\/span><span class="machine-card-cta">/);
+  assert.doesNotMatch(html, /machine-card-utility|machine-card-primary/);
   assert.match(html, /href="\/may\/fixture"/);
   const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.doesNotMatch(css, /\.machine-code[^}]*display: none/);

@@ -4,7 +4,10 @@ import { readFileSync } from "node:fs";
 const card=readFileSync("src/app/(sales)/may-dang-co/_components/MachineCard.tsx","utf8");
 const copy=readFileSync("src/components/contact/CopyMachineLink.tsx","utf8");
 const css=readFileSync("src/app/globals.css","utf8");
-test("mobile machine copy is outside the navigation anchor and follows ID/CTA in the footer",()=>{
+test("mobile price/condition region holds the copy utility while the compact footer holds ID and CTA",()=>{
+ assert.match(card, /className="machine-card-price-region">\s*<p className="machine-price">{price}<\/p>\s*{condition \? \(\s*<p className="machine-card-condition"/);
+ assert.match(card, /className="machine-card-footer">\s*{machineId \? <span className="machine-code"[^]*?<span className="machine-card-cta"/);
+ assert.doesNotMatch(card, /machine-card-utility|machine-card-primary/);
  assert.ok(card.indexOf('className="machine-code"') < card.indexOf('className="machine-card-cta"'));
  assert.match(card, /<\/Link>\s*<CopyMachineLink slug={machine.slug} machineId={machineId} compact/);
  assert.match(copy, /copyMachineShareUrl\(\s*canonicalMachineUrl\(slug\),\s*referralCode,/);
@@ -16,11 +19,37 @@ test("mobile machine copy is outside the navigation anchor and follows ID/CTA in
  assert.match(copy, /feedback === "copied" \? <path/);
  assert.match(copy, /aria-live="polite"/);
 });
-test("mobile copy target is rightmost and isolated from desktop layout",()=>{
+test("mobile copy shares the price grid row with a 44px target and no dedicated height-adding row",()=>{
  assert.match(css, /\.machine-card-copy \{ display: none; \}/);
- assert.match(css, /@media \(max-width: 39\.99rem\) \{\s*\.machine-card-footer \{ min-height: 44px; padding-right: 48px;/);
- assert.match(css, /\.machine-card-copy \{ position: absolute; right: \.85rem; bottom: \.85rem;[^}]*width: 44px; height: 44px;/);
+ assert.match(css, /\.machine-card-price-region \{ display: contents; \}/);
+ assert.match(css, /\.machine-card-link \{ min-height: 0; \}/);
+ assert.match(css, /grid-template-columns: 38% minmax\(0, 1fr\)/);
+ assert.match(css, /\.machine-card-link \{ display: grid;[^}]*grid-template-rows: subgrid;/);
+ assert.doesNotMatch(css, /\.machine-card-link[^}]*display: contents;/);
+ assert.match(css, /\.machine-card-price-region \{[^}]*min-height: 44px;[^}]*padding-right: 52px;/);
+ assert.match(css, /\.machine-card-price-region \{ grid-column: 2; grid-row: 3;/);
+ assert.match(css, /\.machine-card-footer \{ flex-wrap: nowrap; min-height: 28px;/);
+ assert.match(css, /\.machine-card-footer \{ grid-column: 2; grid-row: 4;/);
+ assert.match(css, /\.machine-card-copy \{[^}]*width: 44px; height: 44px;[^}]*border-radius: 50%;/);
+ assert.match(css, /\.machine-card-copy \{ grid-column: 2; grid-row: 3; align-self: center; justify-self: end;[^}]*margin-right: \.85rem;/);
+ assert.match(css, /@supports \(grid-template-rows: subgrid\)/);
+ assert.doesNotMatch(css, /machine-card-utility|--machine-card-primary-height|--machine-card-footer-gap/);
+ assert.match(css, /\.machine-card:has\(> \.machine-card-link:focus-visible\) \{ outline: 3px solid var\(--focus-ring\);/);
+ assert.match(css, /\.machine-card-copy::before \{[^}]*inset: 4px; border: 1px solid var\(--border\); border-radius: 50%;/);
+ assert.match(copy, /<path d="m9 15 6-6M11 7/);
+ assert.doesNotMatch(copy, /<rect/);
  assert.match(css, /\.machine-code \{[^}]*min-width: 0;[^}]*overflow-wrap: anywhere;/);
+});
+test("mobile spacing separates the existing blocks without a fixed card height",()=>{
+ const mobile=css.slice(css.indexOf("/* Mobile sharing sits outside"));
+ assert.match(mobile, /@media \(max-width: 39\.99rem\)/);
+ assert.match(mobile, /machine-card-body > :is\(h2, h3\) \{ margin-bottom: \.09375rem;/);
+ assert.match(mobile, /machine-card-body > \.machine-configuration \{ margin-bottom: \.375rem;/);
+ assert.match(mobile, /machine-card-price-region \{[^}]*margin: \.375rem 0;/);
+ assert.match(mobile, /machine-card-price-region \.machine-price \{ margin: 0 0 \.09375rem;/);
+ assert.match(mobile, /machine-card-footer \{[^}]*margin-top: \.5rem; padding-top: 0;/);
+ assert.match(mobile, /grid-row: 4; margin: \.5rem \.85rem \.85rem;/);
+ assert.doesNotMatch(mobile, /\.machine-card \{[^}]*(?:height|padding):/);
 });
 test("mobile captions hide visually while gallery labels, selection and ordering remain",()=>{
  assert.match(css, /@media \(max-width: 39\.99rem\) \{[^]*?\.public-detail-page \.detail-thumbnails button > span \{ display: none;/);
