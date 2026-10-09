@@ -18,13 +18,24 @@ export type DesktopRelease = {
 export const MBMC_DESKTOP_RELEASES: readonly DesktopRelease[] = [
   {
     version: "1.0.0",
-    build: 3,
+    build: 5,
     minMacOS: "13+",
     architecture: "Universal · arm64 + x86_64",
     notarized: true,
     downloadUrl: MBMC_DESKTOP_DOWNLOAD_URL,
-    filename: "MBMC-Desktop-1.0.0-3.dmg",
+    filename: "MBMC-Desktop-1.0.0-5-Local-First-RC9-QA.dmg",
     current: true,
+  },
+  {
+    version: "1.0.0",
+    build: 3,
+    minMacOS: "13+",
+    architecture: "Universal · arm64 + x86_64",
+    notarized: true,
+    downloadUrl: "https://download.mbmc.vn/mbmc-desktop/MBMC-Desktop-1.0.0-3.dmg",
+    filename: "MBMC-Desktop-1.0.0-3.dmg",
+    legacy: true,
+    current: false,
   },
   {
     version: "1.0.0 Beta",
@@ -57,3 +68,7 @@ export const CURRENT_MBMC_DESKTOP_RELEASE =
   DOWNLOADABLE_MBMC_DESKTOP_RELEASES.find((release) => release.current) ??
   DOWNLOADABLE_MBMC_DESKTOP_RELEASES[0];
 
+export const LEGACY_MBMC_DESKTOP_RELEASES =
+  DOWNLOADABLE_MBMC_DESKTOP_RELEASES.filter(
+    (release) => release.legacy && !release.current,
+  );

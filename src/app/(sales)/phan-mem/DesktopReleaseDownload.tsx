@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
   CURRENT_MBMC_DESKTOP_RELEASE,
-  DOWNLOADABLE_MBMC_DESKTOP_RELEASES,
+  LEGACY_MBMC_DESKTOP_RELEASES,
   type DesktopRelease,
 } from "@/config/desktop-releases";
 import styles from "./software.module.css";
@@ -57,6 +57,9 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
     <div
       className={`${styles.releaseDownload}${className ? ` ${className}` : ""}`}
       ref={rootRef}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) closeMenu();
+      }}
     >
       <div className={styles.splitDownload}>
         <a
@@ -76,7 +79,7 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
           ref={triggerRef}
           className={styles.releaseMenuTrigger}
           type="button"
-          aria-label="Chọn phiên bản MBMC Desktop"
+          aria-label="Phiên bản cũ"
           aria-expanded={open}
           aria-controls={menuId}
           aria-haspopup="menu"
@@ -87,7 +90,7 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
               openAndFocus(0);
             } else if (event.key === "ArrowUp") {
               event.preventDefault();
-              openAndFocus(DOWNLOADABLE_MBMC_DESKTOP_RELEASES.length - 1);
+              openAndFocus(LEGACY_MBMC_DESKTOP_RELEASES.length - 1);
             } else if (event.key === "Escape" && open) {
               event.preventDefault();
               closeMenu(true);
@@ -109,7 +112,7 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
           className={styles.releaseMenu}
           id={menuId}
           role="menu"
-          aria-label="Các phiên bản MBMC Desktop"
+          aria-label="Các phiên bản cũ MBMC Desktop"
           onKeyDown={(event) => {
             const activeIndex = itemRefs.current.indexOf(
               document.activeElement as HTMLAnchorElement,
@@ -117,17 +120,18 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
 
             if (event.key === "Escape") {
               event.preventDefault();
+              event.stopPropagation();
               closeMenu(true);
             } else if (event.key === "ArrowDown") {
               event.preventDefault();
               itemRefs.current[
-                (activeIndex + 1) % DOWNLOADABLE_MBMC_DESKTOP_RELEASES.length
+                (activeIndex + 1) % LEGACY_MBMC_DESKTOP_RELEASES.length
               ]?.focus();
             } else if (event.key === "ArrowUp") {
               event.preventDefault();
               itemRefs.current[
-                (activeIndex - 1 + DOWNLOADABLE_MBMC_DESKTOP_RELEASES.length) %
-                  DOWNLOADABLE_MBMC_DESKTOP_RELEASES.length
+                (activeIndex - 1 + LEGACY_MBMC_DESKTOP_RELEASES.length) %
+                  LEGACY_MBMC_DESKTOP_RELEASES.length
               ]?.focus();
             } else if (event.key === "Home") {
               event.preventDefault();
@@ -135,7 +139,7 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
             } else if (event.key === "End") {
               event.preventDefault();
               itemRefs.current[
-                DOWNLOADABLE_MBMC_DESKTOP_RELEASES.length - 1
+                LEGACY_MBMC_DESKTOP_RELEASES.length - 1
               ]?.focus();
             } else if (
               (event.key === "Enter" || event.key === " ") &&
@@ -146,10 +150,10 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
             }
           }}
         >
-          {DOWNLOADABLE_MBMC_DESKTOP_RELEASES.map((release, index) => (
+          {LEGACY_MBMC_DESKTOP_RELEASES.map((release, index) => (
             <div className={styles.releaseMenuGroup} key={release.downloadUrl}>
               <span className={styles.releaseMenuGroupLabel}>
-                {release.current ? "Hiện tại" : "Bản cũ"}
+                Bản cũ
               </span>
               <a
                 ref={(element) => {
@@ -164,12 +168,9 @@ export function DesktopReleaseDownload({ className }: { className?: string }) {
               >
                 <span className={styles.releaseMenuHeading}>
                   <strong>{releaseLabel(release)}</strong>
-                  {release.current ? <em>Hiện tại</em> : null}
                 </span>
                 <span className={styles.releaseMenuMetadata}>
-                  {release.current
-                    ? `macOS ${release.minMacOS} · Universal · Apple notarized`
-                    : release.architecture}
+                  {release.architecture}
                 </span>
                 <small className={styles.releaseFilename}>
                   {release.filename}
