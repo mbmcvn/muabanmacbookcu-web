@@ -6,7 +6,7 @@ import type { CareLookupResult, CareLookupWarranty } from "@/data/care/public-in
 import { PageState } from "@/components/ui/PageState";
 import styles from "./lookup.module.css";
 
-type PublicReport = CareLookupResult["reports"][number];
+type PublicReport = CareLookupResult["inspection_reports"][number];
 
 export function CareLookupForm({ lookup }: { lookup: string }) {
   return <SharedCareLookupForm lookup={lookup} maxLength={40} autoCapitalize="characters" />;
@@ -36,7 +36,7 @@ function CareWarranty({ warranty }: { warranty?: CareLookupWarranty | null }) {
 }
 
 export function CareLookupSummary({ result, machine = null }: { result: CareLookupResult; machine?: CareMachinePresentation | null }) {
-  const name = result.reports[0]?.display_name;
+  const name = result.inspection_reports[0]?.display_name;
   return (
     <section className={styles.summary} aria-labelledby="care-summary-title">
       <div className={styles.summaryHeading}>
@@ -44,7 +44,7 @@ export function CareLookupSummary({ result, machine = null }: { result: CareLook
           <p className={styles.eyebrow}>Hồ sơ công khai</p>
           <h2 id="care-summary-title">{result.machine_id ? "Hồ sơ máy MBMC" : name || "Hồ sơ máy MBMC"}</h2>
         </div>
-        <p className={styles.reportCount}>{result.reports.length} báo cáo công khai</p>
+        <p className={styles.reportCount}>{result.inspection_reports.length} kết quả kiểm định</p>
       </div>
       <div className={result.machine_id ? styles.machineBody : undefined}>
         {result.machine_id && <div className={styles.machinePhoto}>
@@ -80,16 +80,17 @@ function CareReportRow({ report }: { report: PublicReport }) {
   });
   return (
     <li>
-      <Link className={styles.reportRow} href={report.report_path}>
+      <Link className={styles.reportRow} href={report.report_path} rel="nofollow">
         <div className={styles.reportIdentity}>
-          <h3>{report.display_name}</h3>
+          <h3>{report.inspector_display_name}</h3>
+          <p>{report.publication_type === "verified_inspection" ? "Kiểm định xác minh" : "Kiểm định được ủy quyền"} · {report.display_name}</p>
           <p className={styles.reportId}>{report.report_id}</p>
         </div>
         <div className={styles.reportTime}>
           <span>Tiếp nhận · GMT+7</span>
           <time dateTime={report.accepted_at}>{timestamp}</time>
         </div>
-        <span className={styles.arrow} aria-hidden="true">→</span>
+        <span className={styles.arrow}>Xem báo cáo</span>
       </Link>
     </li>
   );
@@ -100,8 +101,8 @@ export function CareReportList({ reports }: { reports: PublicReport[] }) {
     <section className={styles.reports} aria-labelledby="care-reports-title">
       <header className={styles.listHeading}>
         <div>
-          <h2 id="care-reports-title">Danh sách báo cáo kiểm tra công khai</h2>
-          <p>Các báo cáo kiểm tra đã được công khai, sắp xếp theo thời gian mới nhất.</p>
+          <h2 id="care-reports-title">Kết quả kiểm định</h2>
+          <p>Báo cáo từ kiểm định viên hoặc đối tác đã xác minh.</p>
         </div>
         <span className={styles.listCount}>{reports.length} báo cáo</span>
       </header>
@@ -110,7 +111,7 @@ export function CareReportList({ reports }: { reports: PublicReport[] }) {
           {reports.map(report => <CareReportRow key={report.report_id} report={report} />)}
         </ul>
       ) : (
-        <PageState className={styles.empty} role="status" description="Chưa có báo cáo kiểm tra công khai cho máy này." />
+        <PageState className={styles.empty} role="status" description="Chưa có kết quả kiểm định từ đối tác/kiểm định viên." />
       )}
     </section>
   );

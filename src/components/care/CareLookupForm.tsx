@@ -1,4 +1,5 @@
 import styles from "./CareLookupForm.module.css";
+import type { FormEvent } from "react";
 
 // Native GET submission preserves the entered value and lets /care own lookup.
 // The required field prevents empty navigation without client state or API calls.
@@ -8,12 +9,16 @@ export function CareLookupForm({
   placeholder = "Nhập Serial, MBMC-NSXS hoặc NSXS",
   helper = "Dùng Serial trên máy, MBMC Machine ID hoặc 4 ký tự cuối của mã.",
   autoCapitalize = "none",
+  onSubmit,
+  disabled = false,
 }: {
   lookup?: string; id?: string; className?: string; maxLength?: number;
   label?: string; placeholder?: string; helper?: string; autoCapitalize?: string;
+  onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
+  disabled?: boolean;
 }) {
   return (
-    <form method="get" action="/care" className={`${styles.form} ${className}`.trim()}>
+    <form method={onSubmit ? "post" : "get"} action={onSubmit ? undefined : "/care"} onSubmit={onSubmit} className={`${styles.form} ${className}`.trim()}>
       <label className={styles.field} htmlFor={id}>{label}</label>
       <div className={styles.control}>
         <div className={styles.inputArea}>
@@ -25,7 +30,7 @@ export function CareLookupForm({
             required maxLength={maxLength} autoCapitalize={autoCapitalize} spellCheck={false}
             aria-describedby={`${id}-help`} />
         </div>
-        <button className={styles.submit} type="submit">Tra cứu</button>
+        <button className={styles.submit} type="submit" disabled={disabled}>{disabled ? "Đang tra cứu…" : "Tra cứu"}</button>
       </div>
       <p id={`${id}-help`} className={styles.formHelp}>{helper}</p>
     </form>

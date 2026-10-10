@@ -1,4 +1,6 @@
 import test from "node:test";
+import jsQR from "jsqr";
+import { PNG } from "pngjs";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -214,4 +216,35 @@ test("unknown Display findings and unrelated issue cards do not gain compact evi
   const highlights = html.slice(html.indexOf('id="issues-title"'), html.indexOf('id="detail-title"'));
   assert.doesNotMatch(highlights, /data-display-schematic|data-display-variant="compact"/);
   assert.match(html.slice(html.indexOf('id="detail-title"')), /data-display-variant="detail"/);
+});
+
+const qr = load("src/lib/care-report/report-qr.server.ts");
+test("QR decodes to the exact canonical URL, without private fields or query parameters", async () => {
+  const expected = `https://mbmc.vn/care/report/${reportId}`;
+  assert.equal(qr.canonicalCareReportUrl(reportId), expected);
+  for (const id of ["bad", `${reportId}?token=secret`, `../${reportId}`]) assert.throws(() => qr.canonicalCareReportUrl(id));
+  const png = PNG.sync.read(Buffer.from((await qr.careReportQr(reportId)).split(",")[1], "base64"));
+  const decoded = jsQR(new Uint8ClampedArray(png.data), png.width, png.height);
+  assert.equal(decoded.data, expected);
+  assert.doesNotMatch(decoded.data, /serial|token|session|payload|\?/i);
+  assert.equal(png.width, 232);
+  assert.deepEqual([...png.data.slice(0, 4)], [255, 255, 255, 255]);
+});
+
+test("direct report page independently loads report and renders canonical QR and copy controls", async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async url => { calls.push(url); return Response.json(report()); };
+  try {
+    const element = await page.default({ params: Promise.resolve({ reportId }) });
+    const html = renderToStaticMarkup(element);
+    assert.deepEqual(calls, [`https://app.mbmc.vn/api/public/desktop/report/${reportId}`]);
+    assert.match(html, /Quét mã để mở báo cáo/);
+    assert.match(html, /alt="Mã QR để mở báo cáo công khai này"/);
+    assert.match(html, /data:image\/png;base64,/);
+    assert.match(html, new RegExp(`https://mbmc.vn/care/report/${reportId}`));
+    assert.match(html, /Sao chép liên kết/);
+    const png = PNG.sync.read(Buffer.from(element.props.qrDataUrl.split(",")[1], "base64"));
+    assert.equal(jsQR(new Uint8ClampedArray(png.data), png.width, png.height).data, `https://mbmc.vn/care/report/${reportId}`);
+  } finally { globalThis.fetch = originalFetch; }
 });

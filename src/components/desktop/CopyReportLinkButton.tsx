@@ -1,36 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { canonicalPublicReportPath } from "@/lib/care-report/desktop-public-report-view";
 import { copyText } from "@/lib/copy-text";
 
 export default function CopyReportLinkButton({
   reportId,
   deviceName,
+  qrDataUrl,
 }: {
   reportId: string;
   deviceName: string;
+  qrDataUrl?: string;
 }) {
   const path = canonicalPublicReportPath(reportId);
   const [message, setMessage] = useState("");
-  const [qrOpen, setQrOpen] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
   function stableUrl() {
     return `https://mbmc.vn${path}`;
   }
-
-  useEffect(() => {
-    if (!qrOpen || !canvasRef.current) return;
-    let active = true;
-    void fetch(`https://app.mbmc.vn/api/public/desktop/report/${reportId}/qr`).then(r => r.blob()).then(createImageBitmap).then((bitmap) => {
-      if (!active || !canvasRef.current) return;
-      const canvas = canvasRef.current; canvas.width = 184; canvas.height = 184; canvas.getContext("2d")?.drawImage(bitmap, 0, 0, 184, 184); bitmap.close();
-    });
-    return () => {
-      active = false;
-    };
-  }, [reportId, qrOpen]);
 
   async function copy(value: string, confirmation: string) {
     try {
@@ -61,7 +48,7 @@ export default function CopyReportLinkButton({
   return (
     <div className="space-y-3">
       <p className="break-all font-mono text-[11px] leading-5 text-slate-300">
-        {path}
+        {stableUrl()}
       </p>
       <div className="flex flex-wrap gap-2">
         <button
@@ -85,26 +72,17 @@ export default function CopyReportLinkButton({
         >
           Sao chép mã
         </button>
-        <button
-          type="button"
-          aria-expanded={qrOpen}
-          onClick={() => setQrOpen((value) => !value)}
-          className="rounded-full border border-white/25 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-        >
-          {qrOpen ? "Ẩn mã QR" : "Hiện mã QR"}
-        </button>
       </div>
       <p aria-live="polite" className="min-h-5 text-xs text-blue-200">
         {message}
       </p>
-      {qrOpen && (
-        <div className="w-fit rounded-2xl bg-white p-3 text-center">
-          <canvas ref={canvasRef} aria-label="Mã QR dẫn đến báo cáo này" />
-          <p className="mt-1 text-[10px] font-semibold text-slate-700">
-            Quét để mở báo cáo
-          </p>
-        </div>
-      )}
+      {qrDataUrl && <div className="w-fit max-w-full rounded-2xl bg-white p-4 text-center text-slate-950">
+        {/* A local PNG with a fixed white quiet zone preserves contrast in either theme. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={qrDataUrl} width={232} height={232} alt="Mã QR để mở báo cáo công khai này" className="mx-auto h-auto max-w-full" />
+        <p className="mt-2 text-sm font-semibold">Quét mã để mở báo cáo</p>
+        <p className="mt-2 max-w-72 select-text break-all text-xs">{stableUrl()}</p>
+      </div>}
     </div>
   );
 }

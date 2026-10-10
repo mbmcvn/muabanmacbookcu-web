@@ -135,8 +135,10 @@ function HighlightList({
 
 export default function PublicDeviceCheckReport({
   report,
+  qrDataUrl,
 }: {
   report: Report;
+  qrDataUrl?: string;
 }) {
   const { issues, undetermined } = historicalHighlights(report);
   const diagnosticGroups = groupPublicDesktopDiagnostics(report.diagnostics);
@@ -225,6 +227,7 @@ export default function PublicDeviceCheckReport({
             <CopyReportLinkButton
               reportId={report.report_id}
               deviceName={deviceName}
+              qrDataUrl={qrDataUrl}
             />
           </div>
         </header>

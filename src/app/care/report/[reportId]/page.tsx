@@ -4,6 +4,7 @@ import { cache } from "react";
 import { getPublicInspectionReport } from "@/data/care/public-inspection.server";
 import { publicDesktopReportMetadata } from "@/lib/care-report/desktop-public-report-view";
 import PublicDeviceCheckReport from "@/components/desktop/PublicDeviceCheckReport";
+import { canonicalCareReportUrl, careReportQr } from "@/lib/care-report/report-qr.server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function generateMetadata(props: {
       robots: { index: false, follow: false },
     };
   const metadata = publicDesktopReportMetadata(report);
-  const canonical = `https://mbmc.vn/care/report/${reportId}`;
+  const canonical = canonicalCareReportUrl(reportId);
   return {
     ...metadata,
     alternates: { canonical },
@@ -47,5 +48,5 @@ export default async function PublicDeviceCheckPage(props: {
   const { reportId } = await props.params;
   const report = await loadReport(reportId);
   if (!report) notFound();
-  return <PublicDeviceCheckReport report={report} />;
+  return <PublicDeviceCheckReport report={report} qrDataUrl={await careReportQr(reportId)} />;
 }
