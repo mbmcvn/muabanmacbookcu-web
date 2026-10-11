@@ -248,3 +248,43 @@ test("direct report page independently loads report and renders canonical QR and
     assert.equal(jsQR(new Uint8ClampedArray(png.data), png.width, png.height).data, `https://mbmc.vn/care/report/${reportId}`);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("production smoke report renders a self-contained QR even when the former image endpoint is unavailable", async () => {
+  const id = "dcr_fxNwX0Z65JYjukFc4xKYpfzh";
+  const canonical = `https://mbmc.vn/care/report/${id}`;
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async url => {
+    calls.push(url);
+    if (url !== `https://app.mbmc.vn/api/public/desktop/report/${id}`) return new Response("Not found", { status: 404 });
+    return Response.json({ ...report(), report_id: id, private_payload: "PRIVATE_SENTINEL" });
+  };
+  try {
+    const element = await page.default({ params: Promise.resolve({ reportId: id }) });
+    const html = renderToStaticMarkup(element);
+    const images = [...html.matchAll(/<img\b[^>]*src="([^"]+)"/g)].map(match => match[1]);
+    assert.equal(images.length, 1);
+    assert.match(images[0], /^data:image\/png;base64,/);
+    assert.doesNotMatch(html, /\/qr|\/_next\/image|PRIVATE_SENTINEL/);
+    const png = PNG.sync.read(Buffer.from(images[0].split(",")[1], "base64"));
+    assert.equal(jsQR(new Uint8ClampedArray(png.data), png.width, png.height).data, canonical);
+    assert.deepEqual(calls, [`https://app.mbmc.vn/api/public/desktop/report/${id}`]);
+    assert.match(html, /Quét mã để mở báo cáo/);
+    assert.match(html, /Sao chép liên kết/);
+    assert.match(html, /Chia sẻ báo cáo/);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("malformed report IDs fail safely before any report or QR network request", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("Unexpected network request"); };
+  try {
+    for (const id of ["bad", `${reportId}?token=secret`, `../${reportId}`, `${reportId}/qr`]) {
+      assert.throws(() => qr.canonicalCareReportUrl(id), /Invalid report ID/);
+      await assert.rejects(qr.careReportQr(id), /Invalid report ID/);
+      const props = { params: Promise.resolve({ reportId: id }) };
+      await assert.rejects(page.default(props), /not_found/);
+      assert.deepEqual((await page.generateMetadata(props)).robots, { index: false, follow: false });
+    }
+  } finally { globalThis.fetch = originalFetch; }
+});
