@@ -19,16 +19,20 @@ export function createCareAccessStore(): CareAccessStore {
   async function resolveCurrent(machineCode: string) {
     const { data: machine, error: machineError } = await client
       .from("machines")
-      .select("id, machine_id, status")
+      .select("id, machine_id, status, active_purchase_entry_id")
       .eq("machine_id", normalizeMachineCode(machineCode))
       .maybeSingle();
     if (machineError || !machine) {
-      return { ownership: null, reasonCode: "CARE_NO_EFFECTIVE_OWNERSHIP" as const };
+      return {
+        ownership: null,
+        reasonCode: "CARE_NO_EFFECTIVE_OWNERSHIP" as const,
+      };
     }
     const { resolution, error } = await findEffectiveCareOwnership(client, {
       id: machine.id,
       machineCode: machine.machine_id,
       status: machine.status,
+      activePurchaseEntryId: machine.active_purchase_entry_id,
     });
     if (error || !resolution.ownership) {
       return {
@@ -100,6 +104,3 @@ export function requestOrigin(request: Request) {
 export function verificationAttemptKey(machineCode: string, request: Request) {
   return careAttemptKey(machineCode, requestOrigin(request));
 }
-
-
-

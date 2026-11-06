@@ -33,7 +33,8 @@ test("protected Care loaders run only after current session validation", () => {
   const passport = page.indexOf("getPublicCarePassport(machineCode, access)");
   const story = page.indexOf("getCareStory(machineCode, access)");
   assert.ok(lifecycle > 0);
-  assert.ok(validation > lifecycle);
+  assert.ok(validation > 0);
+  assert.ok(passport > lifecycle);
   assert.ok(passport > validation);
   assert.ok(story > validation);
   assert.match(

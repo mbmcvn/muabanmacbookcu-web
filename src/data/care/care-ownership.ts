@@ -5,7 +5,7 @@ export type CareOwnershipReason =
   | "CARE_NO_EFFECTIVE_OWNERSHIP"
   | "CARE_LEGACY_OWNERSHIP_UNSUPPORTED"
   | "CARE_AMBIGUOUS_OWNERSHIP";
-export type CareSale = Readonly<{ id: string; machine_id: string; buyer_phone: string | null; lifecycle_status: string; payment_status: string | null; handover_status: string | null; created_at: string; completed_at: string | null; sold_at: string | null }>;
+export type CareSale = Readonly<{ id: string; purchase_entry_id?: string | null; machine_id: string; buyer_phone: string | null; lifecycle_status: string; payment_status: string | null; handover_status: string | null; created_at: string; completed_at: string | null; sold_at: string | null }>;
 export type CareOwner = Readonly<{ id: string; machine_id: string; sale_id: string | null; phone: string | null; activated_at: string | null; created_at: string }>;
 export type EffectiveCareOwnership = Readonly<{ owner: CareOwner; sale: CareSale; compatibility: "modern" | "legacy_linked" | "legacy_unlinked" }>;
 export type CareOwnershipResolution = Readonly<
@@ -42,7 +42,7 @@ function isLegacyFulfilledSale(sale: CareSale) {
     (sale.handover_status === "handed_over" || sale.handover_status === "delivered");
 }
 
-export function resolveCareLifecycle(input: { machineId: string; machineCode: string; machineStatus: string | null; owners: readonly CareOwner[]; sales: readonly CareSale[] }): CareLifecycleResolution {
+export function resolveCareLifecycle(input: { machineId: string; machineCode: string; machineStatus: string | null; activePurchaseEntryId?: string | null; owners: readonly CareOwner[]; sales: readonly CareSale[] }): CareLifecycleResolution {
   const effective = resolveEffectiveCareOwnership(input);
   if (effective.ownership) {
     return {
@@ -55,7 +55,14 @@ export function resolveCareLifecycle(input: { machineId: string; machineCode: st
   if (effective.reasonCode === "CARE_AMBIGUOUS_OWNERSHIP") {
     return { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" };
   }
-  const sales = input.sales.filter((sale) => sale.machine_id === input.machineId);
+  const machineSales = input.sales.filter((sale) => sale.machine_id === input.machineId);
+  // Stock retains existing previous-customer verification for historical Care.
+  // A sold machine resolves its active Purchase, regardless of historical dates.
+  const current = input.activePurchaseEntryId
+    ? machineSales.filter(sale => sale.purchase_entry_id === input.activePurchaseEntryId)
+    : machineSales;
+  const sales = input.machineStatus === "sold" || current.some(sale => sale.lifecycle_status === "completed")
+    ? current : machineSales;
   const completed = sales.filter((sale) => sale.lifecycle_status === "completed");
   if (!completed.length) {
     return { state: "care_unavailable", sale: null, ownership: null, reasonCode: "CARE_NO_ELIGIBLE_SALE" };
@@ -89,9 +96,16 @@ export function resolveCareLifecycle(input: { machineId: string; machineCode: st
   return { state: "activation_required", sale, ownership: null, reasonCode: null };
 }
 
-export function resolveEffectiveCareOwnership(input: { machineId: string; machineCode: string; machineStatus: string | null; owners: readonly CareOwner[]; sales: readonly CareSale[] }): CareOwnershipResolution {
+export function resolveEffectiveCareOwnership(input: { machineId: string; machineCode: string; machineStatus: string | null; activePurchaseEntryId?: string | null; owners: readonly CareOwner[]; sales: readonly CareSale[] }): CareOwnershipResolution {
   const owners = input.owners.filter((owner) => owner.machine_id === input.machineCode && Boolean(owner.activated_at));
-  const sales = input.sales.filter((sale) => sale.machine_id === input.machineId);
+  const machineSales = input.sales.filter((sale) => sale.machine_id === input.machineId);
+  // Stock retains existing previous-customer verification for historical Care.
+  // A sold machine resolves its active Purchase, regardless of historical dates.
+  const current = input.activePurchaseEntryId
+    ? machineSales.filter(sale => sale.purchase_entry_id === input.activePurchaseEntryId)
+    : machineSales;
+  const sales = input.machineStatus === "sold" || current.some(sale => sale.lifecycle_status === "completed")
+    ? current : machineSales;
   if (!owners.length) return { ownership: null, reasonCode: "CARE_NO_EFFECTIVE_OWNERSHIP" };
   const completed = newestSales(sales.filter((sale) => sale.lifecycle_status === "completed"));
   if (completed.length) {
@@ -120,7 +134,7 @@ export function resolveEffectiveCareOwnership(input: { machineId: string; machin
     : { ownership: null, reasonCode: "CARE_LEGACY_OWNERSHIP_UNSUPPORTED" };
 }
 
-const CARE_SELECT = "id, machine_id, buyer_phone, lifecycle_status, payment_status, handover_status, created_at, completed_at, sold_at";
+const CARE_SELECT = "id, purchase_entry_id, machine_id, buyer_phone, lifecycle_status, payment_status, handover_status, created_at, completed_at, sold_at";
 
 async function loadCareRows(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string }>) {
   const [ownersResult, salesResult] = await Promise.all([
@@ -130,14 +144,14 @@ async function loadCareRows(client: SupabaseClient, machine: Readonly<{ id: stri
   return { ownersResult, salesResult, error: ownersResult.error ?? salesResult.error };
 }
 
-export async function findEffectiveCareOwnership(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string; status: string | null }>): Promise<{ resolution: CareOwnershipResolution; error: PostgrestError | null }> {
+export async function findEffectiveCareOwnership(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string; status: string | null; activePurchaseEntryId?: string | null }>): Promise<{ resolution: CareOwnershipResolution; error: PostgrestError | null }> {
   const { ownersResult, salesResult, error } = await loadCareRows(client, machine);
   if (error) return { resolution: { ownership: null, reasonCode: "CARE_NO_EFFECTIVE_OWNERSHIP" }, error };
-  return { resolution: resolveEffectiveCareOwnership({ machineId: machine.id, machineCode: machine.machineCode, machineStatus: machine.status, owners: (ownersResult.data ?? []) as CareOwner[], sales: (salesResult.data ?? []) as CareSale[] }), error: null };
+  return { resolution: resolveEffectiveCareOwnership({ machineId: machine.id, machineCode: machine.machineCode, machineStatus: machine.status, activePurchaseEntryId: machine.activePurchaseEntryId, owners: (ownersResult.data ?? []) as CareOwner[], sales: (salesResult.data ?? []) as CareSale[] }), error: null };
 }
 
-export async function findCareLifecycle(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string; status: string | null }>): Promise<{ resolution: CareLifecycleResolution; error: PostgrestError | null }> {
+export async function findCareLifecycle(client: SupabaseClient, machine: Readonly<{ id: string; machineCode: string; status: string | null; activePurchaseEntryId?: string | null }>): Promise<{ resolution: CareLifecycleResolution; error: PostgrestError | null }> {
   const { ownersResult, salesResult, error } = await loadCareRows(client, machine);
   if (error) return { resolution: { state: "unsafe", sale: null, ownership: null, reasonCode: "CARE_ACTIVATION_AMBIGUOUS" }, error };
-  return { resolution: resolveCareLifecycle({ machineId: machine.id, machineCode: machine.machineCode, machineStatus: machine.status, owners: (ownersResult.data ?? []) as CareOwner[], sales: (salesResult.data ?? []) as CareSale[] }), error: null };
+  return { resolution: resolveCareLifecycle({ machineId: machine.id, machineCode: machine.machineCode, machineStatus: machine.status, activePurchaseEntryId: machine.activePurchaseEntryId, owners: (ownersResult.data ?? []) as CareOwner[], sales: (salesResult.data ?? []) as CareSale[] }), error: null };
 }

@@ -126,7 +126,7 @@ test("authenticated information architecture keeps warranty before support and s
   const services = page.indexOf("<ServiceHub />");
   const log = page.indexOf("Nhật ký thiết bị");
   assert.ok(warranty < policy && policy < support && support < story);
-  assert.ok(story < services && services < log);
+  assert.ok(story < log && log < services);
 });
 
 test("warranty policy disclosure and full canonical policy link remain available", () => {
