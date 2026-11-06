@@ -6,10 +6,10 @@ const page = readFileSync(new URL("../../app/care/[machine_id]/page.tsx", import
 const activation = readFileSync(new URL("../../app/care/[machine_id]/ActivationForm.tsx", import.meta.url), "utf8");
 const route = readFileSync(new URL("../../app/care/[machine_id]/activate/route.ts", import.meta.url), "utf8");
 
-test("first-time activation is resolved before returning-owner unlock", () => {
+test("anonymous stock passport precedes the protected lifecycle workflow", () => {
   assert.ok(
-    page.indexOf("resolvePublicCareState(machineCode)") <
-      page.indexOf("readCurrentCareAccess(machineCode)"),
+    page.indexOf("getCurrentMachinePassport(machineCode)") <
+      page.indexOf("resolvePublicCareState(machineCode)"),
   );
   assert.match(page, /lifecycle\.state === "activation_required"[\s\S]*<ActivationForm/);
 });

@@ -8,25 +8,31 @@ export function VerificationForm({
   machineCode,
   failed,
   expired,
+  embedded = false,
 }: {
   machineCode: string;
   failed: boolean;
   expired?: boolean;
+  embedded?: boolean;
 }) {
   const [pending, setPending] = useState(false);
+  const Container = embedded ? "div" : "main";
+  const Heading = embedded ? "h2" : "h1";
   return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
+    <Container className={embedded ? undefined : styles.page}>
+      <div className={embedded ? undefined : styles.shell}>
         <section className={styles.card}>
           <p className={styles.eyebrow}>MBMC Care</p>
-          <h1>Mở hồ sơ Care</h1>
+          <Heading>Mở hồ sơ Care</Heading>
           <p className={styles.intro}>
             Nhập số điện thoại đã dùng khi kích hoạt bảo hành để xem hồ sơ của
             máy.
           </p>
-          <dl className={styles.facts}>
-            <Info label="Machine ID" value={machineCode} />
-          </dl>
+          {!embedded && (
+            <dl className={styles.facts}>
+              <Info label="Machine ID" value={machineCode} />
+            </dl>
+          )}
           {failed && (
             <p className={`${styles.notice} ${styles.error}`} role="alert">
               Thông tin chưa khớp. Kiểm tra lại số điện thoại đã dùng khi kích
@@ -63,9 +69,9 @@ export function VerificationForm({
             </button>
           </form>
         </section>
-        <CareActions machineCode={machineCode} />
+        {!embedded && <CareActions machineCode={machineCode} />}
       </div>
-    </main>
+    </Container>
   );
 }
 

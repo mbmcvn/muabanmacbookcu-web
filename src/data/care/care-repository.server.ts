@@ -24,7 +24,7 @@ import {
 } from "./care-ownership";
 
 const PUBLIC_MACHINE_FIELDS =
-  "id, machine_id, status, model_text, chip, ram_gb, ssd_gb, color, public_condition_note, machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover, processing_status, derivatives)";
+  "id, machine_id, status, active_purchase_entry_id, model_text, chip, ram_gb, ssd_gb, color, public_condition_note, machine_images (id, public_url, image_type, image_stage, visibility, sort_order, is_cover, processing_status, derivatives)";
 const PUBLIC_EVENT_FIELDS = "id, event_type, created_at";
 
 export async function getPublicCarePassport(
@@ -51,6 +51,7 @@ export async function getPublicCarePassport(
       id: machine.id,
       machineCode: machine.machine_id,
       status: machine.status,
+      activePurchaseEntryId: machine.active_purchase_entry_id,
     });
   if (ownershipError) {
     logCareError("CARE_OWNERSHIP_QUERY_FAILED", ownershipError.code);
@@ -242,7 +243,7 @@ export async function resolvePublicCareState(
   const client = createServerSupabaseClient();
   const { data: machine, error } = await client
     .from("machines")
-    .select("id, machine_id, status")
+    .select("id, machine_id, status, active_purchase_entry_id")
     .eq("machine_id", machineCode)
     .maybeSingle();
   if (error) {
@@ -257,6 +258,7 @@ export async function resolvePublicCareState(
     id: machine.id,
     machineCode: machine.machine_id,
     status: machine.status,
+    activePurchaseEntryId: machine.active_purchase_entry_id,
   });
   if (lifecycle.error || lifecycle.resolution.state === "unsafe") {
     return {
@@ -283,7 +285,7 @@ function createCareActivationStore(
     async resolve(machineCode) {
       const { data, error } = await client
         .from("machines")
-        .select("id, machine_id, status")
+        .select("id, machine_id, status, active_purchase_entry_id")
         .eq("machine_id", machineCode)
         .maybeSingle();
       if (error)
@@ -296,6 +298,7 @@ function createCareActivationStore(
           id: data.id,
           machineCode: data.machine_id,
           status: data.status,
+          activePurchaseEntryId: data.active_purchase_entry_id,
         },
       );
       if (lifecycleError || resolution.state === "unsafe") {
@@ -395,7 +398,7 @@ export async function submitCareSupport(
   const client = createServerSupabaseClient();
   const { data: machine } = await client
     .from("machines")
-    .select("id, machine_id, status")
+    .select("id, machine_id, status, active_purchase_entry_id")
     .eq("machine_id", machineCode)
     .maybeSingle();
   if (!machine) return "not_activated";
@@ -404,6 +407,7 @@ export async function submitCareSupport(
       id: machine.id,
       machineCode: machine.machine_id,
       status: machine.status,
+      activePurchaseEntryId: machine.active_purchase_entry_id,
     });
   const ownership = resolution.ownership;
   if (

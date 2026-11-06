@@ -149,3 +149,34 @@ test("completed resale creates a separate activation cycle", () => {
   assert.equal(result.state, "activation_required");
   assert.equal(result.sale.id, "sale-2");
 });
+
+test("active Purchase beats historical completion timestamps for a second Sale", () => {
+  const old = sale("sale-1", {
+    purchase_entry_id: "purchase-1",
+    completed_at: "2026-12-01T00:00:00Z",
+  });
+  const current = sale("sale-2", { purchase_entry_id: "purchase-2" });
+  const result = resolve(
+    [owner("old-owner", old.id), owner("new-owner", current.id)],
+    [old, current],
+    { activePurchaseEntryId: "purchase-2" },
+  );
+  assert.equal(result.ownership?.sale.id, current.id);
+  assert.equal(
+    resolve([owner("old-owner", old.id)], [old, current], {
+      activePurchaseEntryId: "purchase-2",
+    }).ownership,
+    null,
+  );
+});
+
+test("reacquired stock retains existing verified historical Care access", () => {
+  const old = sale("sale-1", { purchase_entry_id: "purchase-1" });
+  assert.equal(
+    resolve([owner("old-owner", old.id)], [old], {
+      machineStatus: "new_in_stock",
+      activePurchaseEntryId: "purchase-2",
+    }).ownership?.sale.id,
+    old.id,
+  );
+});
